@@ -1,0 +1,132 @@
+<?php
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+final class CoreTest extends TestCase
+{
+    private int $adminId;
+
+    protected function setUp(): void
+    {
+        pb_test_fresh_db();
+        $GLOBALS['pb_config'] = ['db' => pb_test_db()];
+        pb_migrate();
+        $this->adminId = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+    }
+
+    public function test_login_with_right_password_returns_the_user(): void
+    {
+        $user = pb_login('  ANA@example.com ', 'senha-de-teste-123', '10.0.0.1');
+        $this->assertSame($this->adminId, (int) $user['id']);
+    }
+
+    public function test_wrong_password_and_unknown_email_look_the_same(): void
+    {
+        $messages = [];
+        foreach (['ana@example.com', 'ninguem@example.com'] as $email) {
+            try {
+                pb_login($email, 'errada', '10.0.0.1');
+            } catch (InvalidArgumentException $e) {
+                $messages[] = $e->getMessage();
+            }
+        }
+        $this->assertSame(['E-mail ou senha incorretos.', 'E-mail ou senha incorretos.'], $messages);
+    }
+
+    public function test_login_is_blocked_after_five_failures_even_with_the_right_password(): void
+    {
+        $this->failLogins(5, '10.0.0.1');
+
+        try {
+            pb_login('ana@example.com', 'senha-de-teste-123', '10.0.0.1');
+            $this->fail('Expected login to be blocked');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Muitas tentativas', $e->getMessage());
+        }
+        // Another IP is not affected.
+        $this->assertSame($this->adminId, (int) pb_login('ana@example.com', 'senha-de-teste-123', '10.0.0.2')['id']);
+    }
+
+    public function test_successful_login_resets_the_failure_count(): void
+    {
+        $this->failLogins(4, '10.0.0.1');
+        pb_login('ana@example.com', 'senha-de-teste-123', '10.0.0.1');
+        $this->failLogins(4, '10.0.0.1');
+
+        $this->assertSame($this->adminId, (int) pb_login('ana@example.com', 'senha-de-teste-123', '10.0.0.1')['id']);
+    }
+
+    public function test_roles(): void
+    {
+        $admin = ['role' => 'admin'];
+        $editor = ['role' => 'editor'];
+        $unknown = ['role' => 'hacker'];
+
+        $this->assertTrue(pb_has_role($admin, 'admin'));
+        $this->assertTrue(pb_has_role($admin, 'editor'));
+        $this->assertTrue(pb_has_role($editor, 'editor'));
+        $this->assertFalse(pb_has_role($editor, 'admin'));
+        $this->assertFalse(pb_has_role($unknown, 'editor'));
+        $this->assertFalse(pb_has_role($admin, 'no-such-role'));
+    }
+
+    public static function invalidUsers(): array
+    {
+        return [
+            'empty name' => ['', 'x@example.com', 'senha-de-teste', 'editor'],
+            'bad e-mail' => ['Bia', 'bia-sem-arroba', 'senha-de-teste', 'editor'],
+            'short password' => ['Bia', 'bia@example.com', '1234567', 'editor'],
+            'unknown role' => ['Bia', 'bia@example.com', 'senha-de-teste', 'superadmin'],
+            'duplicate e-mail' => ['Outra Ana', 'ANA@example.com', 'senha-de-teste', 'editor'],
+        ];
+    }
+
+    #[DataProvider('invalidUsers')]
+    public function test_invalid_users_are_rejected(string $name, string $email, string $password, string $role): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        pb_create_user($name, $email, $password, $role);
+    }
+
+    public function test_users_cannot_delete_themselves_but_can_delete_others(): void
+    {
+        $editorId = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste', 'editor');
+
+        pb_delete_user($editorId, $this->adminId);
+        $this->assertNull(pb_find_user($editorId));
+
+        $this->expectException(InvalidArgumentException::class);
+        pb_delete_user($this->adminId, $this->adminId);
+    }
+
+    public function test_csrf_token_check(): void
+    {
+        $token = pb_csrf_token();
+
+        $this->assertTrue(pb_csrf_valid($token));
+        $this->assertFalse(pb_csrf_valid('forjado'));
+        $this->assertFalse(pb_csrf_valid(null));
+        $this->assertFalse(pb_csrf_valid([$token]));
+    }
+
+    public function test_escaping_and_paths(): void
+    {
+        $this->assertSame('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;', e('<script>alert("x")</script>'));
+
+        $_SERVER['SCRIPT_NAME'] = '/site/index.php';
+        $_SERVER['REQUEST_URI'] = '/site/admin/users?page=2';
+        $this->assertSame('/admin/users', pb_request_path());
+        $this->assertSame('/site/admin', pb_url('/admin'));
+    }
+
+    private function failLogins(int $times, string $ip): void
+    {
+        for ($i = 0; $i < $times; $i++) {
+            try {
+                pb_login('ana@example.com', 'errada', $ip);
+            } catch (InvalidArgumentException) {
+            }
+        }
+    }
+}
