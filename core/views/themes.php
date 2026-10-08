@@ -1,6 +1,8 @@
 <?php
-$form = function (string $slug, string $action, string $label, string $class = '', string $confirm = '') {
-    return '<form method="post" action="' . e(pb_url('/admin/themes')) . '"' . ($confirm !== '' ? ' data-confirm="' . e($confirm) . '"' : '') . '>'
+$form = function (string $slug, string $action, string $label, string $class = '', string $confirm = '', string $version = '') {
+    // With a version: installed in steps, each shown as it happens (admin.js, POST /admin/packages/step).
+    $steps = $version !== '' ? ' data-package-steps data-type="theme" data-slug="' . e($slug) . '" data-version="' . e($version) . '"' : '';
+    return '<form method="post" action="' . e(pb_url('/admin/themes')) . '"' . ($confirm !== '' ? ' data-confirm="' . e($confirm) . '"' : '') . $steps . '>'
         . pb_csrf_field() . '<input type="hidden" name="theme" value="' . e($slug) . '">'
         . '<button type="submit" name="action" value="' . e($action) . '" class="' . e($class) . '">' . e($label) . '</button></form>';
 };
@@ -41,7 +43,7 @@ $form = function (string $slug, string $action, string $label, string $class = '
                         <?= $form($slug, 'preview', __('Pré-visualizar'), 'secondary') ?>
                     <?php endif ?>
                     <?php if (isset($updates[$slug])): ?>
-                        <?= $form($slug, 'update', sprintf(__('Atualizar para %s'), $updates[$slug]['version']), 'secondary') ?>
+                        <?= $form($slug, 'update', sprintf(__('Atualizar para %s'), $updates[$slug]['version']), 'secondary', '', (string) $updates[$slug]['version']) ?>
                     <?php endif ?>
                     <?php if ($backup): ?>
                         <?= $form($slug, 'restore', sprintf(__('Voltar para %s'), $backup['version']), 'link', __('Voltar para a versão anterior deste tema?')) ?>
@@ -70,17 +72,19 @@ $form = function (string $slug, string $action, string $label, string $class = '
         <?php foreach ($available as $entry): ?>
             <li class="plugin">
                 <div><h2><?= e((string) ($entry['name'] ?? $entry['slug'])) ?> <span class="muted"><?= e((string) ($entry['version'] ?? '')) ?></span></h2><p><?= e((string) ($entry['description'] ?? '')) ?></p></div>
-                <div class="plugin-actions"><?= $form((string) $entry['slug'], 'install', __('Instalar')) ?></div>
+                <div class="plugin-actions"><?= $form((string) $entry['slug'], 'install', __('Instalar'), '', '', (string) ($entry['version'] ?? '')) ?></div>
             </li>
         <?php endforeach ?>
     </ul>
 </div>
 <?php endif ?>
 
-<form class="card" method="post" action="<?= e(pb_url('/admin/themes')) ?>" enctype="multipart/form-data">
+<form class="card" method="post" action="<?= e(pb_url('/admin/themes')) ?>" enctype="multipart/form-data" data-package-steps data-type="theme">
     <?= pb_csrf_field() ?>
     <h2><?= e(__('Enviar tema (.zip)')) ?></h2>
     <p class="help"><?= e(__('Para temas feitos pela sua agência ou comprados de um desenvolvedor. Envie só arquivos de quem você confia. Se o tema já existir, a versão atual fica guardada.')) ?></p>
     <input type="file" name="package" accept=".zip,application/zip" required aria-label="<?= e(__('Arquivo .zip do tema')) ?>">
     <button type="submit" name="action" value="upload"><?= e(__('Enviar')) ?></button>
 </form>
+
+<script type="application/json" id="pb-step-texts"><?= json_encode(pb_package_step_texts(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>

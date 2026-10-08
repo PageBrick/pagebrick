@@ -127,18 +127,15 @@
         if (message && !confirm(message)) event.preventDefault();
     });
 
-    // Updating PageBrick: each step shows up as it really happens, like the demo on pagebrick.org. The last one is
-    // the new version's first request, which opens every page. Without JavaScript the form posts as before.
-    document.addEventListener('submit', async (event) => {
-        const form = event.target;
-        if (!form.matches('[data-update-core]') || event.defaultPrevented) return;
-        event.preventDefault();
-        const text = form.dataset;
+    // Updates and installs show each step as it really happens, like the demo on pagebrick.org: one request per step,
+    // each line ticked when the server says it's done. Without JavaScript the forms post as before.
+    const stepLog = (form, texts) => {
         const log = document.createElement('ol');
         log.className = 'update-log';
         log.setAttribute('aria-live', 'polite');
         form.hidden = true;
         form.after(log);
+        let current = [];
         const line = (label, state = 'running') => {
             const item = document.createElement('li');
             item.className = state;
@@ -146,33 +143,91 @@
             log.append(item);
             return item;
         };
-        const json = async (response) => {
-            const answer = await response.json();
-            if (answer.ok === false) throw Object.assign(new Error(answer.message), {fromServer: true});
-            return answer;
-        };
-        let current = [];
-        try {
-            for (const [step, labels] of [['download', [text.download]], ['verify', [text.verify]], ['apply', [text.backup, text.swap]]]) {
+        return {
+            line,
+            // Shows the step's lines, asks the server, ticks them. A refusal comes back as the server's own message.
+            async step(labels, request) {
                 current = labels.map((label) => line(label));
-                const body = new FormData(form);
-                body.set('step', step);
-                await json(await fetch(text.stepUrl, {method: 'POST', body, headers: {Accept: 'application/json'}}));
+                const answer = await (await request()).json();
+                if (answer.ok === false) throw Object.assign(new Error(answer.message), {fromServer: true});
                 current.forEach((item) => { item.className = 'done'; });
-            }
-            current = [line(text.check)];
-            const {result} = await json(await fetch(text.resultUrl, {headers: {Accept: 'application/json'}}));
+                return answer;
+            },
+            failed(error) {
+                current.forEach((item) => { item.className = 'failed'; });
+                line(error.fromServer ? error.message : texts.failed, 'result failed');
+            },
+            done() {
+                const next = document.createElement('a');
+                next.href = location.pathname;
+                next.textContent = texts.continue;
+                log.after(next);
+            },
+            last: () => current,
+        };
+    };
+    const fill = (text, ...values) => values.reduce((out, value, i) => out.replace(`%${i + 1}$s`, value), text);
+    const post = (url, form, fields) => {
+        const body = new FormData(form);
+        Object.entries(fields).forEach(([key, value]) => body.set(key, value));
+        return () => fetch(url, {method: 'POST', body, headers: {Accept: 'application/json'}});
+    };
+
+    // PageBrick itself. The last step is the new version's first request, which opens every page.
+    document.addEventListener('submit', async (event) => {
+        const form = event.target;
+        if (!form.matches('[data-update-core]') || event.defaultPrevented) return;
+        event.preventDefault();
+        const text = form.dataset;
+        const log = stepLog(form, text);
+        try {
+            await log.step([text.download], post(text.stepUrl, form, {step: 'download'}));
+            await log.step([text.verify], post(text.stepUrl, form, {step: 'verify'}));
+            await log.step([text.backup, text.swap], post(text.stepUrl, form, {step: 'apply'}));
+            const {result} = await log.step([text.check], () => fetch(text.resultUrl, {headers: {Accept: 'application/json'}}));
             const ok = Boolean(result && result.ok);
-            current[0].className = ok ? 'done' : 'failed';
-            line(ok ? text.ok : text.undone.replace('%s', (result && result.problem) || '?'), ok ? 'result ok' : 'result rolled-back');
+            log.last()[0].className = ok ? 'done' : 'failed';
+            log.line(ok ? text.ok : text.undone.replace('%s', (result && result.problem) || '?'), ok ? 'result ok' : 'result rolled-back');
         } catch (error) {
-            current.forEach((item) => { item.className = 'failed'; });
-            line(error.fromServer ? error.message : text.failed, 'result failed');
+            log.failed(error);
         }
-        const next = document.createElement('a');
-        next.href = location.pathname;
-        next.textContent = text.continue;
-        log.after(next);
+        log.done();
+    });
+
+    // A theme or plugin: from a .zip (receive) or from the catalog (download, verify), then install, then — when it's
+    // the one in use — every page opened with it; if one breaks, the previous version is back before anyone sees it.
+    document.addEventListener('submit', async (event) => {
+        const form = event.target;
+        if (!form.matches('[data-package-steps]') || event.defaultPrevented) return;
+        event.preventDefault();
+        const text = JSON.parse(document.getElementById('pb-step-texts').textContent);
+        const {type, slug = '', version = ''} = form.dataset;
+        const ask = (step) => post(text.url, form, {type, slug, step});
+        const log = stepLog(form, text);
+        try {
+            let info;
+            if (slug) {
+                await log.step([text.downloading.replace('%s', version)], ask('download'));
+                info = await log.step([text.signature], ask('verify'));
+            } else {
+                info = await log.step([text.sending, text.package], ask('receive'));
+            }
+            await log.step([...(info.replaces ? [text.backup] : []), fill(text.installing, info.name, info.version)], ask('install'));
+            if (info.in_use) {
+                const {problem} = await log.step([text.check], ask('check'));
+                if (problem) {
+                    log.last()[0].className = 'failed';
+                    log.line(text.undone.replace('%s', problem), 'result rolled-back');
+                } else {
+                    log.line(fill(text.ok, info.name, info.version), 'result ok');
+                }
+            } else {
+                log.line(fill(info.replaces ? text.ok : text.installed, info.name, info.version), 'result ok');
+            }
+        } catch (error) {
+            log.failed(error);
+        }
+        log.done();
     });
 
     // The rich text editor doesn't take attachments: images go in image fields.
