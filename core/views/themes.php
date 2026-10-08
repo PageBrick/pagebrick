@@ -43,7 +43,11 @@ $form = function (string $slug, string $action, string $label, string $class = '
                     <?php if (!empty($state['error'])): ?>
                         <?= $form($slug, 'dismiss', __('Dispensar aviso'), 'link') ?>
                     <?php endif ?>
-                    <?php if ($slug !== $active && $slug !== PB_FALLBACK_THEME): ?>
+                    <?php if ($slug === PB_FALLBACK_THEME): ?>
+                        <p class="help"><?= e(__('Este é o tema de segurança: se outro tema der erro, o site aparece com ele. Por isso não pode ser excluído.')) ?></p>
+                    <?php elseif ($slug === $active): ?>
+                        <p class="help"><?= e(__('Para excluir este tema, ative outro antes.')) ?></p>
+                    <?php else: ?>
                         <?= $form($slug, 'delete', __('Excluir'), 'link danger', sprintf(__('Excluir o tema "%s"? Uma cópia fica guardada nos backups.'), $theme['name'])) ?>
                     <?php endif ?>
                 </div>

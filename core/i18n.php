@@ -125,6 +125,8 @@ function pb_set_site_locale(string $locale): void
         throw new InvalidArgumentException(sprintf(__('O site já tem páginas traduzidas para %s. Exclua essas traduções antes de tornar este o idioma principal.'), PB_LOCALES[$locale]));
     }
     pb_db()->prepare('UPDATE ' . pb_table('pages') . ' SET locale = ? WHERE translation_of IS NULL')->execute([$locale]);
+    // The site's language is not the panel's: whoever never picked a panel language keeps the one they had.
+    pb_db()->prepare('UPDATE ' . pb_table('users') . " SET locale = ? WHERE locale IS NULL OR locale = ''")->execute([pb_site_locale()]);
     pb_set_option('locale', $locale);
     pb_set_site_locales(array_diff(pb_site_locales(), [$locale]));
 }
