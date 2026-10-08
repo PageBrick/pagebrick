@@ -20,7 +20,7 @@ function pb_content_api(string $path): bool
     if ($rest === '/site') {
         pb_content_send(pb_content_site());
     } elseif ($rest === '/pages') {
-        pb_content_send(['pages' => array_values(array_map('pb_content_page_summary', array_filter(pb_page_list(), fn($row) => $row['status'] === 'published')))]);
+        pb_content_send(['pages' => array_values(array_map('pb_content_page_summary', array_filter(pb_page_list(), fn($row) => $row['status'] === 'published' && $row['locale'] === pb_site_locale())))]);
     } elseif (preg_match('~^/pages/([a-z0-9-]+)$~', $rest, $m)) {
         $page = pb_page_by_slug($m[1]);
         pb_content_send($page && $page['status'] === 'published' ? pb_content_page($page) : null);

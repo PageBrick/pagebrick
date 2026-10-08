@@ -1,5 +1,13 @@
 // PageBrick panel: repeatable lists, image picker, link fields and confirmations. No build step.
 (() => {
+    // Light or dark: follows the system until the switch is used, then remembers the choice in this browser.
+    document.querySelector('[data-theme-switch]')?.addEventListener('click', () => {
+        const root = document.documentElement;
+        const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        root.dataset.theme = dark ? 'light' : 'dark';
+        try { localStorage.setItem('pb-theme', root.dataset.theme); } catch (e) {}
+    });
+
     const dialog = document.getElementById('pb-media');
     let picking = null; // the image field waiting for a choice
 

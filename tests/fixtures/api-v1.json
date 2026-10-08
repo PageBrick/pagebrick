@@ -214,6 +214,33 @@
             ],
             "returns": "string"
         },
+        "pb_site_locales": {
+            "params": [],
+            "returns": "array"
+        },
+        "pb_content_locale": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_language_links": {
+            "params": [],
+            "returns": "array"
+        },
+        "pb_page_translation": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "?array"
+        },
         "pb_db": {
             "params": [],
             "returns": "PDO"

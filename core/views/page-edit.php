@@ -3,7 +3,15 @@
     <input type="hidden" name="id" value="<?= (int) $page['id'] ?>">
 
     <div class="editor-main">
-        <p class="muted"><a href="<?= e(pb_url('/admin/pages')) ?>">← <?= e(__('Páginas')) ?></a> · <?= e(sprintf(__('Modelo: %s'), $templateLabel)) ?></p>
+        <p class="muted"><a href="<?= e(pb_url('/admin/pages')) ?>">← <?= e(__('Páginas')) ?></a> · <?= e(sprintf(__('Modelo: %s'), $templateLabel)) ?>
+            <?php if ($original): ?>
+                · <?= e(sprintf(__('Tradução em %s de'), PB_LOCALES[$page['locale']] ?? $page['locale'])) ?>
+                <a href="<?= e(pb_url('/admin/pages/edit?id=' . $original['id'])) ?>"><?= e($original['title']) ?></a>
+            <?php endif ?>
+            <?php foreach ($translations as $translation): ?>
+                · <a href="<?= e(pb_url('/admin/pages/edit?id=' . $translation['id'])) ?>" lang="<?= e($translation['locale']) ?>"><?= e(PB_LOCALES[$translation['locale']] ?? $translation['locale']) ?></a>
+            <?php endforeach ?>
+        </p>
         <?php if ($error): ?>
             <p class="error" role="alert"><?= e($error) ?></p>
         <?php endif ?>
@@ -21,10 +29,10 @@
             <label for="seo_description"><?= e(__('Descrição no Google')) ?></label>
             <textarea id="seo_description" name="seo_description" maxlength="300" rows="3"><?= e($page['seo_description']) ?></textarea>
             <p class="help"><?= e(__('Uma ou duas frases sobre a página. Aparece embaixo do título nos resultados de busca.')) ?></p>
-            <?php if (!$isHome): ?>
+            <?php if (!$fixedAddress): ?>
                 <label for="slug"><?= e(__('Endereço da página')) ?></label>
                 <input id="slug" name="slug" maxlength="80" value="<?= e($page['slug']) ?>">
-                <p class="help"><?= e(sprintf(__('Fica assim: %s'), pb_absolute_url('/' . $page['slug']))) ?></p>
+                <p class="help"><?= e(sprintf(__('Fica assim: %s'), pb_absolute_url(pb_locale_path($page['locale'], '/' . $page['slug'])))) ?></p>
             <?php else: ?>
                 <input type="hidden" name="slug" value="<?= e($page['slug']) ?>">
             <?php endif ?>

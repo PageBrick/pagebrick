@@ -49,14 +49,15 @@ function pb_page_decode(?array $page): ?array
     if ($page) {
         $page['id'] = (int) $page['id'];
         $page['data'] = json_decode($page['data'], true) ?: [];
+        $page['translation_of'] = isset($page['translation_of']) ? (int) $page['translation_of'] : null;
     }
     return $page;
 }
 
-/** All pages, without their content. */
+/** All pages, without their content (translations included: see 'locale' and 'translation_of'). */
 function pb_page_list(): array
 {
-    return pb_db()->query('SELECT id, title, slug, template, status, updated_at FROM ' . pb_table('pages') . ' ORDER BY title')->fetchAll();
+    return pb_db()->query('SELECT id, title, slug, locale, translation_of, template, status, updated_at FROM ' . pb_table('pages') . ' ORDER BY title')->fetchAll();
 }
 
 function pb_home_page_id(): int
@@ -64,9 +65,53 @@ function pb_home_page_id(): int
     return (int) pb_option('home_page_id', '0');
 }
 
+/** True for the home page and its translations. */
+function pb_page_is_home(array $page): bool
+{
+    $home = pb_home_page_id();
+    return $home !== 0 && ((int) $page['id'] === $home || (int) ($page['translation_of'] ?? 0) === $home);
+}
+
+/** The page's address without the install folder: '/', '/about', '/en-us/about'. */
+function pb_page_path(array $page): string
+{
+    return pb_locale_path($page['locale'] ?? pb_site_locale(), pb_page_is_home($page) ? '/' : '/' . $page['slug']);
+}
+
 function pb_page_url(array $page): string
 {
-    return (int) $page['id'] === pb_home_page_id() ? pb_url('/') : pb_url('/' . $page['slug']);
+    return pb_url(pb_page_path($page));
+}
+
+/**
+ * The version of a page in $locale: the page itself, its main-language original or one of its translations.
+ * Null when there is none.
+ */
+function pb_page_translation(array $page, string $locale): ?array
+{
+    if (($page['locale'] ?? pb_site_locale()) === $locale) {
+        return $page;
+    }
+    $original = (int) ($page['translation_of'] ?? 0) ?: (int) $page['id'];
+    if ($locale === pb_site_locale()) {
+        return pb_page_find($original);
+    }
+    $st = pb_db()->prepare('SELECT * FROM ' . pb_table('pages') . ' WHERE translation_of = ? AND locale = ?');
+    $st->execute([$original, $locale]);
+    return pb_page_decode($st->fetch() ?: null);
+}
+
+/** Starts the translation of a main-language page into an extra language: a draft with the original's content. */
+function pb_page_translate(int $id, string $locale): int
+{
+    $page = pb_page_find($id) ?? throw new InvalidArgumentException(__('Página não encontrada.'));
+    if ($page['translation_of'] !== null || !in_array($locale, array_slice(pb_site_locales(), 1), true)) {
+        throw new InvalidArgumentException(__('Idioma inválido.'));
+    }
+    if ($existing = pb_page_translation($page, $locale)) {
+        return (int) $existing['id'];
+    }
+    return pb_page_create($page['title'], $page['template'], $page['data'], 'draft', $page['slug'], $locale, $page['id']);
 }
 
 /** Resolves a link field value ('page:12' or an address) to an address; '' if the page is gone. */
@@ -74,6 +119,11 @@ function pb_link_url(string $link): string
 {
     if (preg_match('/^page:(\d+)$/', $link, $m)) {
         $page = pb_page_find((int) $m[1]);
+        if ($page && pb_content_locale() !== $page['locale']) {
+            // On a translated page, links go to the translation when it is published.
+            $translation = pb_page_translation($page, pb_content_locale());
+            $page = $translation && $translation['status'] === 'published' ? $translation : $page;
+        }
         return $page ? pb_page_url($page) : '';
     }
     return $link;
@@ -95,8 +145,12 @@ function pb_validate_page_title(string $title): string
     return $title;
 }
 
-/** Creates a page; the slug comes from the title and gets -2, -3... if already used. */
-function pb_page_create(string $title, string $template, array $data = [], string $status = 'draft', string $slug = ''): int
+/**
+ * Creates a page; the slug comes from the title and gets -2, -3... if already used.
+ * A translation gives its $locale and the main-language page it translates ($translationOf).
+ */
+function pb_page_create(string $title, string $template, array $data = [], string $status = 'draft', string $slug = '',
+    string $locale = '', ?int $translationOf = null): int
 {
     $title = pb_validate_page_title($title);
     if (!isset(pb_theme()['templates'][$template])) {
@@ -104,12 +158,12 @@ function pb_page_create(string $title, string $template, array $data = [], strin
     }
     $base = pb_slugify($slug !== '' ? $slug : $title) ?: 'pagina';
     $slug = $base;
-    $locale = pb_site_locale();
+    $locale = $locale !== '' ? $locale : pb_site_locale();
     for ($n = 2; pb_slug_taken($slug, $locale); $n++) {
         $slug = "$base-$n";
     }
-    pb_db()->prepare('INSERT INTO ' . pb_table('pages') . ' (title, slug, locale, template, status, data) VALUES (?, ?, ?, ?, ?, ?)')
-        ->execute([$title, $slug, $locale, $template, in_array($status, PB_PAGE_STATUSES, true) ? $status : 'draft',
+    pb_db()->prepare('INSERT INTO ' . pb_table('pages') . ' (title, slug, locale, translation_of, template, status, data) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$title, $slug, $locale, $translationOf, $template, in_array($status, PB_PAGE_STATUSES, true) ? $status : 'draft',
             json_encode(pb_collect_fields(pb_template_fields($template), $data), JSON_UNESCAPED_UNICODE)]);
     return (int) pb_db()->lastInsertId();
 }
@@ -151,19 +205,24 @@ function pb_page_write(array $page): void
             $page['seo_title'], $page['seo_description'], $page['id']]);
 }
 
+/** Deletes a page; a main-language page takes its translations with it. */
 function pb_page_delete(int $id): void
 {
     if ($id === pb_home_page_id()) {
         throw new InvalidArgumentException(__('A página inicial não pode ser excluída. Escolha outra página inicial antes.'));
     }
-    pb_db()->prepare('DELETE FROM ' . pb_table('page_revisions') . ' WHERE page_id = ?')->execute([$id]);
-    pb_db()->prepare('DELETE FROM ' . pb_table('pages') . ' WHERE id = ?')->execute([$id]);
+    $st = pb_db()->prepare('SELECT id FROM ' . pb_table('pages') . ' WHERE id = ? OR translation_of = ?');
+    $st->execute([$id, $id]);
+    foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $pageId) {
+        pb_db()->prepare('DELETE FROM ' . pb_table('page_revisions') . ' WHERE page_id = ?')->execute([$pageId]);
+        pb_db()->prepare('DELETE FROM ' . pb_table('pages') . ' WHERE id = ?')->execute([$pageId]);
+    }
 }
 
 function pb_set_home_page(int $id): void
 {
     $page = pb_page_find($id);
-    if (!$page || $page['status'] !== 'published') {
+    if (!$page || $page['status'] !== 'published' || $page['translation_of'] !== null) {
         throw new InvalidArgumentException(__('Só uma página publicada pode ser a página inicial.'));
     }
     pb_set_option('home_page_id', (string) $id);
@@ -217,10 +276,57 @@ function pb_settings_fields(): array
     return pb_theme()['settings'] ?? [];
 }
 
-/** The site settings as safe values: <?= $site->phone ?> */
+/** The site settings as safe values: <?= $site->phone ?> In an extra language, its translated texts win. */
 function pb_settings(): PbGroup
 {
-    return new PbGroup(pb_settings_fields(), json_decode(pb_option('theme_settings', '{}'), true) ?: []);
+    $data = json_decode(pb_option('theme_settings', '{}'), true) ?: [];
+    if (pb_content_locale() !== pb_site_locale()) {
+        $data = array_replace_recursive($data, pb_without_blanks(pb_settings_translation(pb_content_locale())));
+    }
+    return new PbGroup(pb_settings_fields(), $data);
+}
+
+/** The texts of "Aparência e contato" translated into an extra language (only what was filled in). */
+function pb_settings_translation(string $locale): array
+{
+    return json_decode(pb_option("theme_settings@$locale", '{}'), true) ?: [];
+}
+
+function pb_save_settings_translation(string $locale, mixed $input): void
+{
+    if (!in_array($locale, array_slice(pb_site_locales(), 1), true)) {
+        throw new InvalidArgumentException(__('Idioma inválido.'));
+    }
+    pb_set_option("theme_settings@$locale", json_encode(pb_collect_fields(pb_text_fields(pb_settings_fields()), $input), JSON_UNESCAPED_UNICODE));
+}
+
+/** Only the fields that hold text (text, textarea, rich text), keeping the groups around them: what gets translated. */
+function pb_text_fields(array $fields): array
+{
+    $texts = [];
+    foreach ($fields as $name => $def) {
+        if ($def['type'] === 'group') {
+            if ($inner = pb_text_fields($def['fields'])) {
+                $texts[$name] = ['fields' => $inner] + array_diff_key($def, ['toggle' => true]);
+            }
+        } elseif (in_array($def['type'], ['text', 'textarea', 'richtext'], true)) {
+            $texts[$name] = $def;
+        }
+    }
+    return $texts;
+}
+
+/** Drops empty texts, so a translation left blank shows the main language's text. */
+function pb_without_blanks(array $data): array
+{
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            $data[$key] = pb_without_blanks($value);
+        } elseif ($value === '' || $value === null) {
+            unset($data[$key]);
+        }
+    }
+    return $data;
 }
 
 function pb_save_settings(mixed $input): void
@@ -271,6 +377,9 @@ function pb_menu(string $location): array
             if (!$page || $page['status'] !== 'published') {
                 continue;
             }
+            // In an extra language, the menu leads to the published translation (and shows its title).
+            $translation = pb_content_locale() !== $page['locale'] ? pb_page_translation($page, pb_content_locale()) : null;
+            $page = $translation && $translation['status'] === 'published' ? $translation : $page;
             $label = $label !== '' ? $label : $page['title'];
             $url = pb_page_url($page);
         }
@@ -307,6 +416,8 @@ function pb_seed_demo(): void
  * Fills the site with ready-made content: $content has 'media' (files in $mediaDir), 'pages', 'menus' and 'settings',
  * in the format of pb_standard_demo(). Inside it, 'page:{slug}' and 'media:{key}' point to its own pages and photos.
  * A page whose address already exists receives the new content; what it had before stays in its history.
+ * Translations: a page may carry 'translations' => [locale => [title, slug, data, seo_title, seo_description]], and
+ * 'settings_translations' => [locale => texts] translates "Aparência e contato". Their languages get switched on.
  */
 function pb_import_content(array $content, string $mediaDir, ?int $userId = null): void
 {
@@ -341,17 +452,36 @@ function pb_import_content(array $content, string $mediaDir, ?int $userId = null
         }
         return is_string($value) && preg_match('/^page:([a-z0-9-]+)$/', $value, $m) && isset($ids[$m[1]]) ? 'page:' . $ids[$m[1]] : $value;
     };
-    foreach ($pages as $p) {
-        $page = pb_page_find($ids[$p['slug']]);
+    // Languages the content is translated into (other than the site's main one) are switched on.
+    $languages = array_keys(($content['settings_translations'] ?? []) + array_merge(...array_map(fn($p) => $p['translations'] ?? [], $pages ?: [[]])));
+    pb_set_site_locales(array_merge(pb_site_locales(), array_filter($languages, fn($l) => isset(PB_LOCALES[$l]))));
+    $write = function (array $page, array $p) use ($resolve) {
         $page['title'] = pb_validate_page_title($p['title']);
-        $page['template'] = isset(pb_theme()['templates'][$p['template']]) ? $p['template'] : 'page';
         $page['status'] = 'published';
         $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $resolve($p['data'] ?? []));
         $page['seo_title'] = $p['seo_title'] ?? '';
         $page['seo_description'] = $p['seo_description'] ?? '';
         pb_page_write($page);
+    };
+    foreach ($pages as $p) {
+        $page = pb_page_find($ids[$p['slug']]);
+        $page['template'] = isset(pb_theme()['templates'][$p['template']]) ? $p['template'] : 'page';
+        $write($page, $p);
         if (!empty($p['home'])) {
             pb_set_home_page($page['id']);
+        }
+        foreach ($p['translations'] ?? [] as $locale => $t) {
+            if (!in_array($locale, array_slice(pb_site_locales(), 1), true)) {
+                continue; // the site's main language is the original itself
+            }
+            $translation = pb_page_translation($page, $locale);
+            if ($translation) {
+                pb_page_snapshot($translation, $userId);
+            } else {
+                $translation = pb_page_find(pb_page_create($t['title'], $page['template'], [], 'published', $t['slug'] ?? $t['title'], $locale, $page['id']));
+            }
+            $translation['template'] = $page['template'];
+            $write($translation, $t);
         }
     }
     foreach ($content['menus'] ?? [] as $location => $items) {
@@ -360,6 +490,11 @@ function pb_import_content(array $content, string $mediaDir, ?int $userId = null
     if (isset($content['settings'])) {
         // What the content doesn't set (the phone the owner already typed, say) stays as it is.
         pb_save_settings(array_replace_recursive(json_decode(pb_option('theme_settings', '{}'), true) ?: [], $resolve($content['settings'])));
+    }
+    foreach ($content['settings_translations'] ?? [] as $locale => $texts) {
+        if (in_array($locale, array_slice(pb_site_locales(), 1), true)) {
+            pb_save_settings_translation($locale, array_replace_recursive(pb_settings_translation($locale), $resolve($texts)));
+        }
     }
 }
 

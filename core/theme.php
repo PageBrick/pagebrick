@@ -373,7 +373,7 @@ function pb_render_page(array $page, bool $preview = false): string
         return [$theme['dir'] . "/templates/$template.php", [
             'page' => new PbGroup($theme['templates'][$template]['fields'] ?? [], $page['data']),
             'title' => new PbValue(['type' => 'text'], $page['title']),
-            'isHome' => $page['id'] === pb_home_page_id(),
+            'isHome' => pb_page_is_home($page),
         ]];
     });
 }
@@ -385,7 +385,7 @@ function pb_page_seo_title(array $page): string
     if ($page['seo_title'] !== '') {
         return $page['seo_title'];
     }
-    return (int) $page['id'] !== 0 && (int) $page['id'] === pb_home_page_id() ? $siteName : "{$page['title']} · $siteName";
+    return (int) $page['id'] !== 0 && pb_page_is_home($page) ? $siteName : "{$page['title']} · $siteName";
 }
 
 /**
@@ -400,9 +400,8 @@ function pb_head(array $options = []): string
         $title = $GLOBALS['pb_page_title'] ?? $siteName;
         return '<title>' . e($title) . '</title>' . "\n" . '<meta name="robots" content="noindex">' . "\n";
     }
-    $isHome = $page['id'] !== 0 && $page['id'] === pb_home_page_id();
     $title = pb_page_seo_title($page);
-    $url = pb_absolute_url($isHome ? '/' : '/' . $page['slug']);
+    $url = pb_absolute_url($page['id'] !== 0 ? pb_page_path($page) : '/' . $page['slug']);
 
     $tags = ['<title>' . e($title) . '</title>'];
     if ($page['seo_description'] !== '') {
@@ -410,6 +409,14 @@ function pb_head(array $options = []): string
         $tags[] = '<meta property="og:description" content="' . e($page['seo_description']) . '">';
     }
     $tags[] = '<link rel="canonical" href="' . e($url) . '">';
+    // The other languages of this page, so search engines show each visitor the right one.
+    $alternates = $page['id'] !== 0 && count(pb_site_locales()) > 1 ? pb_language_links() : [];
+    foreach ($alternates as $link) {
+        $tags[] = '<link rel="alternate" hreflang="' . e($link['locale']) . '" href="' . e(pb_absolute_url(substr($link['url'], strlen(pb_base_path())))) . '">';
+    }
+    if ($alternates) {
+        $tags[] = '<link rel="alternate" hreflang="x-default" href="' . e(pb_absolute_url(substr($alternates[0]['url'], strlen(pb_base_path())))) . '">';
+    }
     $tags[] = '<meta property="og:type" content="website">';
     $tags[] = '<meta property="og:title" content="' . e($title) . '">';
     $tags[] = '<meta property="og:url" content="' . e($url) . '">';
@@ -425,6 +432,31 @@ function pb_head(array $options = []): string
 }
 
 // ------------------------------------------------------------------ helpers for themes
+
+/**
+ * For a language switcher: the site's languages as ['locale', 'name', 'url', 'current'], each leading to this
+ * page's published translation or, when it has none, to that language's home page. Empty for a one-language site.
+ */
+function pb_language_links(): array
+{
+    $locales = pb_site_locales();
+    if (count($locales) < 2) {
+        return [];
+    }
+    $page = $GLOBALS['pb_current_page'] ?? null;
+    $home = pb_page_find(pb_home_page_id());
+    $links = [];
+    foreach ($locales as $locale) {
+        $target = $page && (int) $page['id'] !== 0 ? pb_page_translation($page, $locale) : null;
+        if (!$target || $target['status'] !== 'published') {
+            $target = $home ? pb_page_translation($home, $locale) : null;
+        }
+        if ($target && $target['status'] === 'published') {
+            $links[] = ['locale' => $locale, 'name' => PB_LOCALES[$locale], 'url' => pb_page_url($target), 'current' => $locale === pb_content_locale()];
+        }
+    }
+    return $links;
+}
 
 /** True when someone is logged in to the panel: themes use it to show hints only the owner sees. */
 function pb_is_logged_in(): bool
@@ -491,6 +523,16 @@ function pb_public(string $method, string $path): void
 {
     $GLOBALS['pb_public_request'] = true; // theme preview applies to the site only, never to the panel
     $isApi = str_starts_with($path, '/api/');
+    // An extra language: /en-us/about shows the English version of the site (pages, menus, fixed texts).
+    foreach ($isApi ? [] : array_slice(pb_site_locales(), 1) as $locale) {
+        $prefix = '/' . PB_LOCALE_PATHS[$locale];
+        if ($path === $prefix || str_starts_with($path, "$prefix/")) {
+            $GLOBALS['pb_content_locale'] = $locale;
+            pb_set_locale($locale);
+            $path = substr($path, strlen($prefix)) ?: '/';
+            break;
+        }
+    }
     if (pb_site_mode() !== 'live' && !pb_current_user()) {
         pb_render_closed($isApi); // under construction or in maintenance: only people logged in to the panel see the site
         return;
@@ -541,10 +583,11 @@ function pb_public(string $method, string $path): void
     }
 
     $homeId = pb_home_page_id();
-    $page = $path === '/' ? ($homeId ? pb_page_find($homeId) : null) : pb_page_by_slug(substr($path, 1));
+    $home = $homeId ? pb_page_find($homeId) : null;
+    $page = $path === '/' ? ($home ? pb_page_translation($home, pb_content_locale()) : null) : pb_page_by_slug(substr($path, 1), pb_content_locale());
     if ($page && $page['status'] === 'published') {
-        if ($path !== '/' && $page['id'] === $homeId) {
-            pb_redirect('/', 301); // one address per page
+        if ($path !== '/' && pb_page_is_home($page)) {
+            pb_redirect(pb_page_path($page), 301); // one address per page
         }
         echo pb_render_page($page);
         return;
@@ -573,9 +616,9 @@ function pb_render_not_found(): string
 
 function pb_sitemap_xml(): string
 {
-    $rows = pb_db()->query('SELECT id, slug, updated_at FROM ' . pb_table('pages') . " WHERE status = 'published' ORDER BY id")->fetchAll();
-    $home = pb_home_page_id();
-    $urls = array_map(fn($row) => [(int) $row['id'] === $home ? '/' : '/' . $row['slug'], $row['updated_at']], $rows);
+    $rows = pb_db()->query('SELECT id, slug, locale, translation_of, updated_at FROM ' . pb_table('pages') . " WHERE status = 'published' ORDER BY id")->fetchAll();
+    $rows = array_filter($rows, fn($row) => in_array($row['locale'], pb_site_locales(), true)); // languages switched off stay out
+    $urls = array_values(array_map(fn($row) => [pb_page_path($row), $row['updated_at']], $rows));
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
     // Plugins add their addresses as [path, last change], e.g. ['/noticias/x', '2026-10-07 10:00:00'].
     foreach (pb_apply_filters('sitemap_urls', $urls) as $url) {

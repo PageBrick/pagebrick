@@ -211,6 +211,24 @@ O administrador importa com **Importar o conteúdo do tema** em **Sistema → Te
 
 Enquanto o site está **Em construção** ou **Em manutenção** (Painel → Situação do site), os visitantes recebem uma resposta 503 e um aviso curto; quem está logado vê o site normalmente. Desenhe esse aviso em `templates/closed.php`: um documento HTML completo que recebe `$mode`, `$title`, `$message`, `$site` e `$siteName`. Se ele quebrar, aparece o aviso do próprio núcleo.
 
+## Sites em mais de um idioma
+
+Um site pode ser oferecido em idiomas extras (Aparência e contato → Outros idiomas do site). O idioma principal fica na raiz (`/sobre`); os outros, com prefixo: `/en-us/about`, `/es-es/nosotros`, `/pt-br/sobre`. Cada página ganha as suas traduções em **Páginas**, os menus levam às páginas traduzidas e os textos de Aparência e contato também podem ser traduzidos. Os seus templates não mudam: `$page`, `$site`, os menus e `__()` já falam o idioma de quem visita, e o `pb_head()` acrescenta as tags `hreflang` que os buscadores precisam.
+
+Para um seletor de idioma, use `pb_language_links()`. Ela devolve os idiomas do site com `locale`, `name`, `url` e `current`, cada um levando a esta página naquele idioma (ou à página inicial dele), e uma lista vazia num site de um idioma só:
+
+```php
+<?php if (count($languages = pb_language_links()) > 1): ?>
+    <select onchange="location.href = this.value" aria-label="<?= e(__('Idioma')) ?>">
+        <?php foreach ($languages as $language): ?>
+            <option value="<?= e($language['url']) ?>"<?= $language['current'] ? ' selected' : '' ?>><?= e($language['name']) ?></option>
+        <?php endforeach ?>
+    </select>
+<?php endif ?>
+```
+
+`pb_content_locale()` diz em que idioma a pessoa está lendo, e `pb_page_translation($page, $locale)` encontra uma página em outro idioma.
+
 ## Traduções
 
 Envolva os textos do seu tema em `__()` e adicione `lang/en.php` e `lang/es.php` retornando `['texto original em português' => 'tradução']`. O idioma do site é escolhido na instalação (português, inglês ou espanhol) e o visitante vê o site nesse idioma.

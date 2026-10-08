@@ -18,7 +18,7 @@ return [
         'pb_post', 'pb_query', 'pb_json', 'pb_limit', 'pb_include', 'pb_flash',
         'pb_csrf_token', 'pb_csrf_field', 'pb_csrf_valid', 'pb_sign', 'pb_signature_valid',
         // languages: pb_locale() for <html lang>, pb_date() writes dates the way the site language does
-        'pb_locale', 'pb_site_locale', 'pb_date',
+        'pb_locale', 'pb_site_locale', 'pb_date', 'pb_site_locales', 'pb_content_locale', 'pb_language_links', 'pb_page_translation',
         // data
         'pb_db', 'pb_table', 'pb_option', 'pb_set_option',
         // users
