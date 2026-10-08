@@ -14,6 +14,8 @@ A simple CMS for business websites. A non-technical owner installs it and publis
 - Plugin and theme store with signed packages, .zip upload, updates with backup, "roll back" and automatic undo if a new version breaks.
 - Circuit breakers: a broken plugin or theme is switched off on its own and the site stays up. Safe mode with a rescue link.
 - One-click updates of PageBrick itself that check the whole site afterwards and go back on their own if anything broke.
+- Sites in more than one language: the main one at the root, others under /pt-br, /es-es or /en-us, with translated pages, menus and texts.
+- Light and dark panel, following the system or a switch in the header.
 - Content API (JSON) for front ends built with Next.js, Astro or any other framework.
 - "Under construction" and "Maintenance" switches: visitors see a notice, people logged in see the site.
 - SEO basics (title and description per page, friendly addresses, sitemap.xml, robots.txt), images resized to WebP, no cookies for visitors.

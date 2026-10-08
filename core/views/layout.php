@@ -39,6 +39,7 @@ if ($user && pb_has_role($user, 'admin')) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e(isset($title) ? "$title · PageBrick" : 'PageBrick') ?></title>
 <link rel="icon" href="<?= e($asset('favicon.svg')) ?>" type="image/svg+xml">
+<script>try { const t = localStorage.getItem('pb-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <?php if (!empty($editor)): ?>
 <link rel="stylesheet" href="<?= e($asset('trix.css')) ?>">
 <script src="<?= e($asset('trix.js')) ?>"></script>
@@ -73,6 +74,9 @@ if ($user && pb_has_role($user, 'admin')) {
             </details>
         <?php endif ?>
     </nav>
+    <button type="button" class="theme-switch" data-theme-switch title="<?= e(__('Alternar entre claro e escuro')) ?>" aria-label="<?= e(__('Alternar entre claro e escuro')) ?>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
+    </button>
     <a href="<?= e(pb_url('/')) ?>" target="_blank"><?= e(__('Ver o site')) ?></a>
     <form method="post" action="<?= e(pb_url('/admin/logout')) ?>">
         <?= pb_csrf_field() ?>

@@ -20,6 +20,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/pages/preview' => ['editor', 'pb_admin_page_preview'],
         'POST /admin/pages/delete' => ['editor', 'pb_admin_page_delete'],
         'POST /admin/pages/home' => ['editor', 'pb_admin_page_home'],
+        'POST /admin/pages/translate' => ['editor', 'pb_admin_page_translate'],
         'POST /admin/pages/restore' => ['editor', 'pb_admin_page_restore'],
         'GET /admin/media' => ['editor', 'pb_admin_media'],
         'POST /admin/media' => ['editor', 'pb_admin_media_upload'],
@@ -141,9 +142,18 @@ function pb_admin_site_mode_save(): void
 
 function pb_admin_pages(): void
 {
+    $all = pb_page_list();
+    $translations = [];
+    foreach ($all as $row) {
+        if ($row['translation_of'] !== null) {
+            $translations[(int) $row['translation_of']][$row['locale']] = $row;
+        }
+    }
     pb_render('pages', [
         'title' => __('Páginas'),
-        'pages' => pb_page_list(),
+        'pages' => array_filter($all, fn($row) => $row['translation_of'] === null),
+        'translations' => $translations,
+        'locales' => array_slice(pb_site_locales(), 1),
         'templates' => array_map(fn($t) => $t['label'] ?? '', pb_theme()['templates']),
         'homeId' => pb_home_page_id(),
     ]);
@@ -175,6 +185,10 @@ function pb_admin_page_edit(?array $page = null, ?string $error = null): void
         'fields' => pb_template_fields($page['template']),
         'templateLabel' => pb_theme()['templates'][$page['template']]['label'] ?? $page['template'],
         'isHome' => $page['id'] === pb_home_page_id(),
+        'fixedAddress' => pb_page_is_home($page),
+        'original' => $page['translation_of'] !== null ? pb_page_find($page['translation_of']) : null,
+        'translations' => $page['translation_of'] === null
+            ? array_filter(array_map(fn($l) => pb_page_translation($page, $l), array_slice(pb_site_locales(), 1))) : [],
         'revisions' => pb_page_revisions($page['id']),
         'error' => $error,
     ]);
@@ -216,7 +230,21 @@ function pb_admin_page_preview(): void
     } catch (InvalidArgumentException) {
         $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? []);
     }
+    $GLOBALS['pb_public_request'] = true; // rendered exactly like the site (the theme's copies of plugin templates too)
     echo pb_render_page($page, true);
+}
+
+/** Starts (or opens) the translation of a page into an extra language. */
+function pb_admin_page_translate(): void
+{
+    try {
+        $id = pb_page_translate((int) pb_post('id'), pb_post('locale'));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+        pb_redirect('/admin/pages');
+    }
+    pb_flash('ok', __('Tradução criada como rascunho, com o conteúdo original. Traduza os textos e publique.'));
+    pb_redirect("/admin/pages/edit?id=$id");
 }
 
 function pb_admin_page_delete(): void
@@ -336,21 +364,39 @@ function pb_admin_settings(?string $error = null): void
         'fields' => pb_settings_fields(),
         'data' => $error ? pb_collect_fields(pb_settings_fields(), $_POST['f'] ?? []) : (json_decode(pb_option('theme_settings', '{}'), true) ?: []),
         'error' => $error,
+        'translating' => in_array(pb_query('idioma'), array_slice(pb_site_locales(), 1), true) ? pb_query('idioma') : null,
     ]);
 }
 
 function pb_admin_settings_save(): void
 {
+    if (pb_post('translation') !== '') {
+        // The texts of "Aparência e contato" in an extra language.
+        try {
+            pb_save_settings_translation(pb_post('translation'), $_POST['f'] ?? []);
+            pb_flash('ok', __('Tradução salva.'));
+        } catch (InvalidArgumentException $e) {
+            pb_flash('error', $e->getMessage());
+        }
+        pb_redirect('/admin/settings?idioma=' . rawurlencode(pb_post('translation')));
+    }
     $siteTitle = trim(pb_post('site_title'));
     if (!preg_match('/^.{1,100}$/su', $siteTitle)) {
         http_response_code(422);
         pb_admin_settings(__('Informe o nome do site (até 100 caracteres).'));
         return;
     }
-    pb_set_option('site_title', $siteTitle);
-    if (pb_post('locale') !== pb_site_locale() && isset(PB_LOCALES[pb_post('locale')])) {
-        pb_set_site_locale(pb_post('locale'));
+    try {
+        if (pb_post('locale') !== pb_site_locale() && isset(PB_LOCALES[pb_post('locale')])) {
+            pb_set_site_locale(pb_post('locale')); // first: when it can't change, nothing else is saved either
+        }
+    } catch (InvalidArgumentException $e) {
+        http_response_code(422);
+        pb_admin_settings($e->getMessage());
+        return;
     }
+    pb_set_option('site_title', $siteTitle);
+    pb_set_site_locales(is_array($_POST['locales'] ?? null) ? $_POST['locales'] : []);
     pb_save_settings($_POST['f'] ?? []);
     pb_flash('ok', __('Configurações salvas.'));
     pb_redirect('/admin/settings');

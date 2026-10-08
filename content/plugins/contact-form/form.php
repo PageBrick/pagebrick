@@ -9,7 +9,7 @@
  */
 $value = fn(string $key) => e($old[$key] ?? '');
 ?>
-<form class="pb-form" id="contato-form" method="post" action="<?= e(pb_url('/contato/enviar')) ?>">
+<form class="pb-form" id="contato-form" method="post" action="<?= e(pb_url(pb_locale_path(pb_content_locale(), '/contato/enviar'))) ?>"><?php /* in the page's language: /en-us/contato/enviar */ ?>
     <h2><?= e(__('Envie uma mensagem')) ?></h2>
     <?php if ($errors): ?>
         <div class="pb-form-errors" role="alert">

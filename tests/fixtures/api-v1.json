@@ -214,6 +214,48 @@
             ],
             "returns": "string"
         },
+        "pb_site_locales": {
+            "params": [],
+            "returns": "array"
+        },
+        "pb_content_locale": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_language_links": {
+            "params": [],
+            "returns": "array"
+        },
+        "pb_page_translation": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "?array"
+        },
+        "pb_locale_path": {
+            "params": [
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
         "pb_db": {
             "params": [],
             "returns": "PDO"
@@ -447,6 +489,16 @@
                 }
             ],
             "returns": "string"
+        },
+        "pb_slug_reserved": {
+            "params": [
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "bool"
         },
         "pb_media_find": {
             "params": [

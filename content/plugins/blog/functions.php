@@ -27,7 +27,7 @@ function pbb_title(): string
 function pbb_base(): string
 {
     $base = pb_slugify((string) pbb_settings()->path->raw());
-    return in_array($base, ['', 'admin', 'api'], true) ? 'blog' : $base; // never the panel's or the content API's address
+    return $base === '' || pb_slug_reserved($base) ? 'blog' : $base; // never the panel's, the API's or a language's address
 }
 
 function pbb_url(string $path = ''): string

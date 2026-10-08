@@ -92,6 +92,10 @@ function pb_migrations(): array
         3 => [
             'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN locale VARCHAR(10) NULL',
         ],
+        // Translations: a page in an extra language points to the page it translates (null: the main language).
+        4 => [
+            'ALTER TABLE ' . pb_table('pages') . ' ADD COLUMN translation_of INT UNSIGNED NULL',
+        ],
     ];
 }
 

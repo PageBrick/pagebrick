@@ -205,7 +205,7 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 
 A theme can bring its own content, so a new site looks finished the moment it is activated. Add `demo.php` returning pages, photos (files in `demo/`), menus and settings, in the same format as the core's example site ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Inside it, `page:{slug}` and `media:{key}` point to its own pages and photos.
 
-The administrator imports it with **Import the theme's content** in **System → Themes**. Pages with the same address get the new content (their previous version stays in their history), new pages are created, menus are replaced, and settings the content doesn't mention stay as they are.
+The administrator imports it with **Import the theme's content** in **System → Themes**. Pages with the same address get the new content (their previous version stays in their history), new pages are created, menus are replaced, and settings the content doesn't mention stay as they are. To turn a page into another one (the standard Services page into Features, say), give the new page `'replaces' => 'servicos'`: it takes over that page and its translations, at the new address.
 
 ## Under construction and maintenance
 
@@ -213,7 +213,25 @@ While the site is **Under construction** or in **Maintenance** (dashboard → Si
 
 ## Translations
 
-Wrap your theme's own texts in `__()` and add `lang/en.php` and `lang/es.php` returning `['Portuguese or source text' => 'translation']`. The site's language is chosen at installation (Portuguese, English or Spanish) and the visitor sees the site in that language.
+Wrap your theme's own texts in `__()` and add `lang/en.php` and `lang/es.php` returning `['Portuguese or source text' => 'translation']`. The site's main language is chosen at installation (Portuguese, English or Spanish).
+
+## Sites in more than one language
+
+A site can be offered in extra languages (Appearance & contact → Other languages of the site). The main language lives at the root (`/about`); the others under a prefix: `/pt-br/sobre`, `/es-es/nosotros`, `/en-us/about`. Each page gets its translations in **Pages**, menus lead to the translated pages, and the texts of Appearance & contact can be translated too. Your templates don't change: `$page`, `$site`, menus and `__()` already speak the visitor's language, and `pb_head()` adds the `hreflang` tags search engines need.
+
+Add a language switcher with `pb_language_links()`. It returns the site's languages as `locale`, `name`, `url` and `current`, each leading to this page in that language (or to that language's home page), and an empty list on a one-language site:
+
+```php
+<?php if (count($languages = pb_language_links()) > 1): ?>
+    <select onchange="location.href = this.value" aria-label="<?= e(__('Idioma')) ?>">
+        <?php foreach ($languages as $language): ?>
+            <option value="<?= e($language['url']) ?>"<?= $language['current'] ? ' selected' : '' ?>><?= e($language['name']) ?></option>
+        <?php endforeach ?>
+    </select>
+<?php endif ?>
+```
+
+`pb_content_locale()` tells which language the visitor is reading, and `pb_page_translation($page, $locale)` finds a page in another language.
 
 ## Testing and shipping
 

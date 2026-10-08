@@ -205,11 +205,29 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 
 Un tema puede traer su propio contenido, para que un sitio nuevo se vea terminado apenas se activa el tema. Crea un `demo.php` que devuelva páginas, fotos (archivos en `demo/`), menús y configuración, con el mismo formato del sitio de ejemplo del core ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Dentro de él, `page:{slug}` y `media:{clave}` apuntan a sus propias páginas y fotos.
 
-El administrador lo importa con **Importar el contenido del tema** en **Sistema → Temas**. Las páginas con la misma dirección reciben el contenido nuevo (la versión anterior queda en el historial), se crean las páginas nuevas, se reemplazan los menús y la configuración que el contenido no menciona queda como está.
+El administrador lo importa con **Importar el contenido del tema** en **Sistema → Temas**. Las páginas con la misma dirección reciben el contenido nuevo (la versión anterior queda en el historial), se crean las páginas nuevas, se reemplazan los menús y la configuración que el contenido no menciona queda como está. Para convertir una página en otra (la página estándar Servicios en Funciones, por ejemplo), dale a la página nueva `'replaces' => 'servicos'`: toma esa página y sus traducciones, en la dirección nueva.
 
 ## En construcción y en mantenimiento
 
 Mientras el sitio está **En construcción** o **En mantenimiento** (Panel → Estado del sitio), los visitantes reciben una respuesta 503 y un aviso corto; quien inició sesión ve el sitio normalmente. Dibuja ese aviso en `templates/closed.php`: un documento HTML completo que recibe `$mode`, `$title`, `$message`, `$site` y `$siteName`. Si falla, se muestra el aviso del propio core.
+
+## Sitios en más de un idioma
+
+Un sitio puede ofrecerse en idiomas extra (Apariencia y contacto → Otros idiomas del sitio). El idioma principal vive en la raíz (`/nosotros`); los demás, con prefijo: `/en-us/about`, `/pt-br/sobre`, `/es-es/nosotros`. Cada página recibe sus traducciones en **Páginas**, los menús llevan a las páginas traducidas y los textos de Apariencia y contacto también se pueden traducir. Tus plantillas no cambian: `$page`, `$site`, los menús y `__()` ya hablan el idioma del visitante, y `pb_head()` agrega las etiquetas `hreflang` que necesitan los buscadores.
+
+Para un selector de idioma, usa `pb_language_links()`. Devuelve los idiomas del sitio con `locale`, `name`, `url` y `current`, cada uno llevando a esta página en ese idioma (o a su página de inicio), y una lista vacía en un sitio de un solo idioma:
+
+```php
+<?php if (count($languages = pb_language_links()) > 1): ?>
+    <select onchange="location.href = this.value" aria-label="<?= e(__('Idioma')) ?>">
+        <?php foreach ($languages as $language): ?>
+            <option value="<?= e($language['url']) ?>"<?= $language['current'] ? ' selected' : '' ?>><?= e($language['name']) ?></option>
+        <?php endforeach ?>
+    </select>
+<?php endif ?>
+```
+
+`pb_content_locale()` indica en qué idioma lee el visitante, y `pb_page_translation($page, $locale)` encuentra una página en otro idioma.
 
 ## Traducciones
 

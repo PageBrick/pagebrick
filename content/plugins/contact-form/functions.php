@@ -45,7 +45,7 @@ function pbcf_privacy_url(): string
     if (!$setting->isEmpty()) {
         return $setting->url();
     }
-    $page = pb_page_by_slug(__('politica-de-privacidade'));
+    $page = pb_page_by_slug(__('politica-de-privacidade'), pb_content_locale());
     return $page && $page['status'] === 'published' ? pb_page_url($page) : '';
 }
 

@@ -177,6 +177,9 @@ final class ThemesTest extends TestCase
         $this->assertSame([['label' => '', 'link' => 'page:' . $news['id']]], pb_menu_items_raw('main'));
         $this->assertSame('#123456', pb_settings()->identity->color->raw());
         $this->assertNotSame('', pb_settings()->contact->whatsapp_message->raw(), 'settings the content does not mention stay');
+        $photos = count(pb_media_list());
+        pb_admin_import_theme_demo('second');
+        $this->assertSame($photos, count(pb_media_list()), 'importing again reuses the photos instead of copying them');
         $_SESSION = [];
         pb_admin_import_theme_demo('default');
     }

@@ -14,6 +14,8 @@ Um CMS simples para sites de empresas. Um dono de empresa sem conhecimento técn
 - Loja de plugins e temas com pacotes assinados, envio de .zip, atualizações com backup, "voltar versão" e desfazer automático se uma versão nova quebrar.
 - Disjuntores: um plugin ou tema quebrado é desligado sozinho e o site continua no ar. Modo de segurança com link de socorro.
 - Atualizações do próprio PageBrick em um clique, que conferem o site inteiro depois e voltam sozinhas se algo quebrou.
+- Sites em mais de um idioma: o principal na raiz e os outros em /pt-br, /es-es ou /en-us, com páginas, menus e textos traduzidos.
+- Painel claro e escuro, seguindo o sistema ou um botão no topo.
 - API de conteúdo (JSON) para front-ends feitos com Next.js, Astro ou qualquer outro framework.
 - Chaves de "Em construção" e "Em manutenção": visitantes veem um aviso, quem está logado vê o site.
 - SEO básico (título e descrição por página, endereços amigáveis, sitemap.xml, robots.txt), imagens redimensionadas para WebP, nenhum cookie para os visitantes.

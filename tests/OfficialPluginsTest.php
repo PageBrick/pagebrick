@@ -155,6 +155,17 @@ final class OfficialPluginsTest extends TestCase
             unset($GLOBALS['pb_public_request']);
             $this->assertSame($original, pb_template_file($original), 'the panel never uses theme copies');
 
+            // ...but its preview of a page shows exactly what the site will.
+            unset($GLOBALS['pbcf_used']);
+            $_POST = ['id' => (string) pb_page_by_slug('contato')['id'], 'title' => 'Contato', 'status' => 'published', 'slug' => 'contato', 'f' => []];
+            ob_start();
+            pb_admin_page_preview();
+            $preview = ob_get_clean();
+            $_POST = [];
+            $this->assertStringContainsString('<form id="MEU-FORM">', $preview);
+            $this->assertStringContainsString('noindex', $preview);
+            $this->assertNotNull(pb_match_route('HEAD', '/blog'), 'HEAD is answered like GET (monitors, crawlers)');
+
             // A broken copy is the theme's fault: the page falls back to the default theme and the plugin stays on.
             $GLOBALS['break_form'] = true;
             $contact = $this->visit('/contato');

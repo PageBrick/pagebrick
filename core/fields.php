@@ -369,6 +369,9 @@ function pb_link_input(string $id, string $name, string $value): string
     $options = '<option value="">' . e(__('Outro endereço…')) . '</option>';
     $listed = false;
     foreach (pb_page_list() as $page) {
+        if ($page['translation_of'] !== null) {
+            continue; // translations: a link to the original leads to them in their language
+        }
         $key = 'page:' . $page['id'];
         $listed = $listed || $value === $key;
         $options .= '<option value="' . e($key) . '"' . ($value === $key ? ' selected' : '') . '>' . e($page['title']) . '</option>';

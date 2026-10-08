@@ -38,9 +38,12 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 | 25 | Blog | Um plugin "Blog" com **nome e endereço configuráveis** (Blog em /blog, Notícias em /noticias…) e **categorias com subcategorias**. Substituiu o plugin "Notícias" |
 | 26 | Conteúdo entre temas | **Contrato de conteúdo padrão** no núcleo (`core/standard.php`): tipos de página Início, Página simples, Serviços e Contato, mais as configurações de identidade, contato, redes e rodapé. Todo tema exibe esse padrão e pode **acrescentar** campos e tipos de página; os extras ficam guardados se o site trocar de tema |
 | — | Atualização segura | Atualizar pelo painel **não pode quebrar sites já feitos** em cima do PageBrick (ver "Lançamento 1.0") |
-| 28 | Idiomas | Português, inglês e espanhol no CMS e na documentação. **Um idioma por site**, escolhido na instalação e trocável depois; cada usuário pode ver o painel em outro idioma. Documentação: README principal em inglês, com versões em português e espanhol |
+| 28 | Idiomas | Português, inglês e espanhol no CMS e na documentação. **Um idioma principal por site**, escolhido na instalação e trocável depois, **mais idiomas extras opcionais** (ver 32); cada usuário pode ver o painel em outro idioma. Documentação: README principal em inglês, com versões em português e espanhol |
 | 29 | Headless | **API de conteúdo em JSON no núcleo já na 1.0** (`/api/v1/site`, `/api/v1/pages`, `/api/v1/pages/{slug}`; o Blog acrescenta `/api/v1/blog`), para front-ends feitos com Next.js, Astro ou aplicativos. Só leitura, só conteúdo publicado, nunca senhas. O formato das respostas entra na promessa de compatibilidade |
-| 30 | Publicação | Tudo é testado no GitHub (Actions) antes da release. **Primeira versão: 1.0.0.** A branch `main` do GitHub é só do CMS publicado (cada versão lançada); o desenvolvimento acontece na `develop` |
+| 30 | Publicação | Tudo é testado no GitHub (Actions) antes da release. **Primeira versão: 1.0.0.** A branch `main` do GitHub é só do CMS publicado (cada versão lançada); o desenvolvimento acontece na `develop`. A release 1.0.0 de 07/10/2026 (baixada uma vez, só em teste) foi substituída em 08/10 por uma 1.0.0 que já inclui os idiomas, para a primeira publicação ser uma só |
+| 31 | Tema do pagebrick.org | Repositório **público** `PageBrick/pagebrick.org`: um exemplo real de tema para desenvolvedores |
+| 32 | Sites em vários idiomas | No núcleo (já na 1.0): o idioma principal na raiz e os extras com prefixo (`/pt-br`, `/es-es`, `/en-us`). Cada página tem suas traduções (`translation_of`), menus seguem as traduções, os textos de Aparência e contato podem ser traduzidos, `hreflang` para buscadores e `pb_language_links()` para o seletor do tema. O pagebrick.org é em inglês, com português e espanhol |
+| — | Painel claro/escuro | Segue o sistema; um botão no topo troca e lembra a escolha naquele navegador |
 | — | Em construção / manutenção | Chaves no painel (início, só administradores): visitantes veem um aviso (resposta 503), quem está logado vê o site. O tema pode desenhar o aviso (`templates/closed.php`) |
 | — | Instalação | **Fácil como a do WordPress:** subir o .zip, abrir o site e seguir 4 telas (idioma, conferência do servidor, banco de dados com erros explicados, site e administrador). Sem permissão de gravar, o instalador mostra o `config.php` para criar à mão |
 | — | Conteúdo pronto do tema | Um tema pode trazer páginas, fotos, menus e configurações (`demo.php`), importados com um botão em Sistema → Temas |
@@ -102,6 +105,8 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 4. **Conferência antes de atualizar.** O painel recusa a atualização se o PHP do servidor, um plugin ativo ou o tema não forem compatíveis, e diz qual.
 5. **Conferência depois de atualizar, com volta automática.** O primeiro acesso depois da atualização confere todas as páginas; se algo quebrou, a versão anterior volta sozinha, com plugins e tema como estavam. Se a versão nova nem conseguir iniciar, o `index.php` restaura o backup.
 
+**pagebrick.org:** seletor de idioma (lista suspensa) no topo, movimentos discretos (abertura em sequência, seções que surgem ao rolar, foto que inclina com o mouse, código que se digita) e um simulador de atualização. Tudo respeita a opção de reduzir movimento do sistema.
+
 **Front-end sem limites:**
 
 - O núcleo não coloca no site nada que o tema não peça: nada de CSS, JavaScript, cookies ou política de conteúdo (CSP). As tags de SEO saem só onde o tema chama `pb_head()`, e os scripts dos plugins onde chama `pb_footer()`.
@@ -121,7 +126,7 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 
 ## Fica para depois
 
-Agendamento de publicação, comentários, multi-site, editor de blocos, site-loja, conteúdo multi-idioma (plugin).
+Agendamento de publicação, comentários, multi-site, editor de blocos, site-loja.
 
 ## Ordem de construção
 
