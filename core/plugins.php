@@ -358,7 +358,7 @@ function pb_plugin_url(string $slug, string $path): string
 {
     $file = pb_template_file(pb_plugins_dir() . "/$slug/$path");
     if ($file !== pb_plugins_dir() . "/$slug/$path") {
-        return pb_url(substr(str_replace('\\', '/', $file), strlen(str_replace('\\', '/', PB_ROOT)) + 1)) . '?v=' . filemtime($file);
+        return pb_url(pb_site_path($file, 'content/themes/' . pb_theme()['slug'] . "/plugins/$slug/$path")) . '?v=' . filemtime($file);
     }
     return pb_url("content/plugins/$slug/$path") . (is_file($file) ? '?v=' . filemtime($file) : '');
 }

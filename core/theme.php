@@ -199,9 +199,17 @@ function pb_activate_theme(string $slug): void
 /** Address of a file inside the active theme, e.g. pb_theme_url('assets/style.css'). */
 function pb_theme_url(string $path): string
 {
-    $relative = substr(str_replace('\\', '/', pb_theme()['dir']), strlen(str_replace('\\', '/', PB_ROOT)) + 1);
-    $file = pb_theme()['dir'] . '/' . $path;
-    return pb_url("$relative/$path") . (is_file($file) ? '?v=' . filemtime($file) : '');
+    $theme = pb_theme();
+    $file = $theme['dir'] . '/' . $path;
+    return pb_url(pb_site_path($file, "content/themes/{$theme['slug']}/$path")) . (is_file($file) ? '?v=' . filemtime($file) : '');
+}
+
+/** A file's path inside the site's folder, as addresses use it ("content/themes/x/a.css"); $outside when it lives elsewhere. */
+function pb_site_path(string $file, string $outside): string
+{
+    $file = str_replace('\\', '/', $file);
+    $root = str_replace('\\', '/', PB_ROOT) . '/';
+    return str_starts_with($file, $root) ? substr($file, strlen($root)) : $outside;
 }
 
 /** Renders a theme template inside the theme layout. A template the theme doesn't have falls back to "page". */
