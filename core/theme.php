@@ -367,15 +367,35 @@ function pb_preview_bar(): string
 function pb_render_page(array $page, bool $preview = false): string
 {
     $GLOBALS['pb_current_page'] = $page + ['preview' => $preview];
-    return pb_render_with_breaker(function (array $theme) use ($page) {
-        // A page made with a template this theme doesn't have is shown as a simple page; its content stays saved.
-        $template = isset($theme['templates'][$page['template']]) ? $page['template'] : 'page';
-        return [$theme['dir'] . "/templates/$template.php", [
-            'page' => new PbGroup($theme['templates'][$template]['fields'] ?? [], $page['data']),
-            'title' => new PbValue(['type' => 'text'], $page['title']),
-            'isHome' => pb_page_is_home($page),
-        ]];
-    });
+    // A page always shows in its own language (menus, links, fixed texts), whoever renders it: a route without the
+    // language prefix (a form sent from /en-us/contact), the check after an update, a preview in the panel.
+    $locale = $page['locale'] ?? pb_site_locale();
+    $before = [$GLOBALS['pb_content_locale'] ?? null, pb_locale()];
+    $switched = $locale !== pb_content_locale();
+    if ($switched) {
+        $GLOBALS['pb_content_locale'] = $locale;
+        pb_set_locale($locale);
+    }
+    try {
+        return pb_render_with_breaker(function (array $theme) use ($page) {
+            // A page made with a template this theme doesn't have is shown as a simple page; its content stays saved.
+            $template = isset($theme['templates'][$page['template']]) ? $page['template'] : 'page';
+            return [$theme['dir'] . "/templates/$template.php", [
+                'page' => new PbGroup($theme['templates'][$template]['fields'] ?? [], $page['data']),
+                'title' => new PbValue(['type' => 'text'], $page['title']),
+                'isHome' => pb_page_is_home($page),
+            ]];
+        });
+    } finally {
+        if ($switched) {
+            if ($before[0] === null) {
+                unset($GLOBALS['pb_content_locale']);
+            } else {
+                $GLOBALS['pb_content_locale'] = $before[0];
+            }
+            pb_set_locale($before[1]);
+        }
+    }
 }
 
 /** The page's title for Google and social networks: the one typed in SEO, or "Page · Site" ("Site" on the home page). */
@@ -465,8 +485,8 @@ function pb_is_logged_in(): bool
 }
 
 /**
- * wa.me link for a number typed any way; '' when empty. Portuguese sites may leave out the country code
- * ("(19) 99999-9999" is taken as Brazil); in the other languages the number must start with it ("+1 555…").
+ * wa.me link for a number typed any way; '' when empty. Sites whose main language is Portuguese may leave out the
+ * country code ("(19) 99999-9999" is taken as Brazil), on every language version; others must start with it ("+1 555…").
  */
 function pb_whatsapp_url(string $number, string $message = ''): string
 {
@@ -474,7 +494,7 @@ function pb_whatsapp_url(string $number, string $message = ''): string
     if ($digits === '') {
         return '';
     }
-    if (strlen($digits) <= 11 && pb_locale() === 'pt-BR') { // the site's language on the site
+    if (strlen($digits) <= 11 && pb_site_locale() === 'pt-BR') {
         $digits = "55$digits"; // no country code: assume Brazil
     }
     return "https://wa.me/$digits" . ($message !== '' ? '?text=' . rawurlencode($message) : '');
@@ -537,7 +557,7 @@ function pb_public(string $method, string $path): void
         pb_render_closed($isApi); // under construction or in maintenance: only people logged in to the panel see the site
         return;
     }
-    if ($isApi && $method === 'GET' && str_starts_with($path, PB_CONTENT_API . '/') && pb_content_api($path)) {
+    if ($isApi && in_array($method, ['GET', 'HEAD'], true) && str_starts_with($path, PB_CONTENT_API . '/') && pb_content_api($path)) {
         return; // the core's endpoints come first; plugins add theirs under /api/v1/{plugin}
     }
     if ($route = pb_match_route($method, $path)) {

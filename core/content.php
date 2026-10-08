@@ -129,8 +129,21 @@ function pb_link_url(string $link): string
     return $link;
 }
 
+/**
+ * Addresses no page can have: the panel, the content API, PageBrick's own folders (.htaccess blocks some of them)
+ * and the language prefixes. Plugins check their own addresses against it too.
+ */
+function pb_slug_reserved(string $slug): bool
+{
+    return in_array($slug, ['admin', 'api', 'content', 'core', 'vendor', 'tools', 'tests', 'docs', ...array_values(PB_LOCALE_PATHS)], true);
+}
+
+/** True when the address is used by another page in that language, or reserved (see pb_slug_reserved). */
 function pb_slug_taken(string $slug, string $locale, int $exceptId = 0): bool
 {
+    if (pb_slug_reserved($slug)) {
+        return true;
+    }
     $st = pb_db()->prepare('SELECT COUNT(*) FROM ' . pb_table('pages') . ' WHERE slug = ? AND locale = ? AND id <> ?');
     $st->execute([$slug, $locale, $exceptId]);
     return (int) $st->fetchColumn() > 0;
@@ -188,7 +201,10 @@ function pb_page_save(int $id, array $in, ?int $userId): void
 {
     $old = pb_page_find($id) ?? throw new InvalidArgumentException(__('Página não encontrada.'));
     $page = pb_page_from_input($old, $in);
-    if (pb_slug_taken($page['slug'], $page['locale'], $id)) {
+    if (pb_slug_reserved($page['slug']) && $page['slug'] !== $old['slug']) {
+        throw new InvalidArgumentException(sprintf(__('O endereço "%s" é reservado pelo PageBrick. Escolha outro.'), $page['slug']));
+    }
+    if (pb_slug_taken($page['slug'], $page['locale'], $id) && !pb_slug_reserved($page['slug'])) {
         throw new InvalidArgumentException(sprintf(__('O endereço "%s" já é usado por outra página.'), $page['slug']));
     }
     if ($id === pb_home_page_id() && $page['status'] !== 'published') {
@@ -422,7 +438,13 @@ function pb_seed_demo(): void
 function pb_import_content(array $content, string $mediaDir, ?int $userId = null): void
 {
     $media = [];
+    $known = pb_db()->prepare('SELECT id FROM ' . pb_table('media') . ' WHERE original_name = ? AND alt = ? ORDER BY id DESC LIMIT 1');
     foreach ($content['media'] ?? [] as $key => $photo) {
+        $known->execute([$photo['file'], $photo['alt'] ?? '']);
+        if ($id = $known->fetchColumn()) {
+            $media[$key] = (int) $id; // imported before: the same photo, not a copy
+            continue;
+        }
         try {
             $media[$key] = pb_media_store("$mediaDir/{$photo['file']}", $photo['file']);
             pb_media_set_alt($media[$key], $photo['alt'] ?? '');

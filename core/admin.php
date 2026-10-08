@@ -230,10 +230,7 @@ function pb_admin_page_preview(): void
     } catch (InvalidArgumentException) {
         $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? []);
     }
-    if ($page['locale'] !== pb_site_locale()) {
-        $GLOBALS['pb_content_locale'] = $page['locale']; // a translation is previewed in its language
-        pb_set_locale($page['locale']);
-    }
+    $GLOBALS['pb_public_request'] = true; // rendered exactly like the site (the theme's copies of plugin templates too)
     echo pb_render_page($page, true);
 }
 
@@ -389,16 +386,16 @@ function pb_admin_settings_save(): void
         pb_admin_settings(__('Informe o nome do site (até 100 caracteres).'));
         return;
     }
-    pb_set_option('site_title', $siteTitle);
     try {
         if (pb_post('locale') !== pb_site_locale() && isset(PB_LOCALES[pb_post('locale')])) {
-            pb_set_site_locale(pb_post('locale'));
+            pb_set_site_locale(pb_post('locale')); // first: when it can't change, nothing else is saved either
         }
     } catch (InvalidArgumentException $e) {
         http_response_code(422);
         pb_admin_settings($e->getMessage());
         return;
     }
+    pb_set_option('site_title', $siteTitle);
     pb_set_site_locales(is_array($_POST['locales'] ?? null) ? $_POST['locales'] : []);
     pb_save_settings($_POST['f'] ?? []);
     pb_flash('ok', __('Configurações salvas.'));

@@ -30,8 +30,9 @@ final class MultilingualTest extends TestCase
     private function visit(string $path): array
     {
         pb_test_new_request();
-        unset($GLOBALS['pb_content_locale']);
+        unset($GLOBALS['pb_content_locale'], $GLOBALS['pbcf_used']);
         pb_set_locale(pb_site_locale());
+        pb_load_plugins();
         $_SERVER['REQUEST_URI'] = $path;
         http_response_code(200);
         ob_start();
@@ -142,6 +143,53 @@ final class MultilingualTest extends TestCase
         pb_admin('GET', '/admin/settings');
         $_GET = [];
         $this->assertStringContainsString('Textos em English', ob_get_clean());
+    }
+
+    public function test_a_translated_page_keeps_working_parts_of_the_main_language(): void
+    {
+        pb_save_settings(['contact' => ['whatsapp' => '(19) 99999-8888']]);
+        $this->translate('inicio', 'Home');
+        $this->assertStringContainsString('wa.me/5519999998888', $this->visit('/en-us')[1], 'the number typed on a Brazilian site keeps +55 in English');
+
+        $this->translate('politica-de-privacidade', 'Privacy policy', [], 'privacy-policy');
+        $contact = pb_page_find($this->translate('contato', 'Contact', [], 'contact')['id']);
+        pb_activate_plugin('contact-form');
+        $form = $this->visit('/en-us/contact')[1];
+        $this->assertStringContainsString('<a href="/en-us/privacy-policy">Privacy policy</a></p>', $form, 'the form\'s privacy link in the page\'s language');
+        $this->assertStringContainsString('action="/en-us/contato/enviar"', $form, 'the form is sent in the page\'s language');
+
+        // A form with errors comes back in English: messages, menus and fixed texts.
+        $send = function (string $path) use ($contact): string {
+            pb_test_new_request();
+            unset($GLOBALS['pb_content_locale']);
+            pb_set_locale('pt-BR');
+            pb_load_plugins();
+            $_POST = ['page' => (string) $contact['id'], 'name' => '', 'email' => 'x', 'message' => '', '_t' => '1', '_s' => 'x', 'website' => ''];
+            ob_start();
+            pb_public('POST', $path);
+            $_POST = [];
+            return ob_get_clean();
+        };
+        $html = $send('/en-us/contato/enviar');
+        $this->assertStringContainsString('<html lang="en">', $html);
+        $this->assertStringContainsString('Enter your name.', $html);
+        // A theme's older copy of the form may still send without the prefix: the page keeps its own language.
+        $this->assertStringContainsString('<html lang="en">', $send('/contato/enviar'));
+        $this->assertSame('pt-BR', pb_locale(), 'after rendering, the request is back in its own language');
+    }
+
+    public function test_link_pickers_and_reserved_addresses(): void
+    {
+        $this->translate('sobre', 'About us', [], 'about');
+        $picker = pb_link_input('f-x', 'f[x]', '');
+        $this->assertStringContainsString('>Sobre</option>', $picker);
+        $this->assertStringNotContainsString('>About us</option>', $picker, 'translations are reached through their original');
+
+        $id = pb_page_create('Admin', 'page');
+        $this->assertSame('admin-2', pb_page_find($id)['slug'], 'never the panel\'s address');
+        $this->assertSame('docs-2', pb_page_find(pb_page_create('Docs', 'page'))['slug'], '.htaccess blocks /docs');
+        $this->expectExceptionMessage('é reservado');
+        pb_page_save($id, ['title' => 'Admin', 'slug' => 'en-us', 'status' => 'published', 'seo_title' => '', 'seo_description' => '', 'f' => []], $this->admin);
     }
 
     public function test_ready_made_content_can_bring_translations(): void

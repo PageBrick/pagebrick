@@ -312,6 +312,7 @@ function pb_add_route(string $method, string $path, callable $handler): void
 /** Finds the plugin route for a request: [handler, owner, args] or null. */
 function pb_match_route(string $method, string $path): ?array
 {
+    $method = $method === 'HEAD' ? 'GET' : $method; // HEAD is GET without the body (monitors, crawlers)
     $routes = $GLOBALS['pb_routes'] ?? [];
     if (isset($routes["$method $path"])) {
         return [...$routes["$method $path"], []];

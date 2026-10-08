@@ -51,6 +51,9 @@ function pb_locale(): string
 /** The site's language (pages, theme, plugins, example content). */
 function pb_site_locale(): string
 {
+    if (($GLOBALS['pb_config'] ?? null) === null) {
+        return pb_locale(); // not installed yet: the installer's language
+    }
     $locale = pb_option('locale', 'pt-BR');
     return isset(PB_LOCALES[$locale]) ? $locale : 'pt-BR';
 }

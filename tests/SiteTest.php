@@ -191,4 +191,15 @@ final class SiteTest extends TestCase
         $this->expectExceptionMessage('Tipo de arquivo não aceito');
         pb_media_store($fake, 'foto.jpg');
     }
+
+    public function test_a_tiny_file_declaring_a_huge_image_is_refused_before_decoding(): void
+    {
+        // A few bytes that announce 30000 × 30000 pixels: decoding would ask PHP for gigabytes.
+        $header = pack('NNCCCCC', 30000, 30000, 8, 2, 0, 0, 0);
+        $bomb = tempnam(sys_get_temp_dir(), 'pb');
+        file_put_contents($bomb, "\x89PNG\r\n\x1a\n" . pack('N', 13) . 'IHDR' . $header . pack('N', crc32('IHDR' . $header))
+            . pack('N', 0) . 'IEND' . pack('N', crc32('IEND')));
+        $this->expectExceptionMessage('pixels demais');
+        pb_media_store($bomb, 'bomba.png');
+    }
 }

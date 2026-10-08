@@ -4,6 +4,8 @@
 const PB_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const PB_IMAGE_MAX_WIDTH = 1920;
 const PB_THUMB_WIDTH = 480;
+/** Larger images would need more memory than shared hosting gives PHP (about 4 bytes per pixel). */
+const PB_IMAGE_MAX_PIXELS = 50_000_000;
 const PB_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 function pb_uploads_dir(): string
@@ -84,6 +86,10 @@ function pb_media_process_image(string $source, string $mime, string $base): arr
 {
     // ponytail: GD keeps the whole bitmap in memory (~4 bytes/pixel); a 12 MP phone photo needs ~50 MB.
     @ini_set('memory_limit', '256M');
+    [$width, $height] = @getimagesize($source) ?: [0, 0];
+    if ($width * $height > PB_IMAGE_MAX_PIXELS) {
+        throw new InvalidArgumentException(__('A imagem tem pixels demais para a hospedagem processar. Reduza o tamanho (por exemplo, para 4000 pixels de largura) e envie de novo.'));
+    }
     $image = @imagecreatefromstring((string) file_get_contents($source));
     if (!$image) {
         throw new InvalidArgumentException(__('Não consegui ler esta imagem. Tente salvar como JPG ou PNG.'));
