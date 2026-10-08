@@ -5,8 +5,9 @@ services:
       context: .
       dockerfile_inline: |
         FROM php:8.2-apache
-        RUN apt-get update && apt-get install -y --no-install-recommends libzip-dev \
-            && docker-php-ext-install pdo_mysql zip && a2enmod rewrite && rm -rf /var/lib/apt/lists/*
+        RUN apt-get update && apt-get install -y --no-install-recommends libzip-dev libjpeg-dev libpng-dev libwebp-dev \
+            && docker-php-ext-configure gd --with-jpeg --with-webp \
+            && docker-php-ext-install pdo_mysql zip gd exif && a2enmod rewrite && rm -rf /var/lib/apt/lists/*
         COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
     ports:
       - "8080:80"
@@ -24,6 +25,12 @@ services:
       MARIADB_PASSWORD: pagebrick
     volumes:
       - db:/var/lib/mysql # named volume: database files stay out of OneDrive
+
+  # Catches every e-mail the site sends: open http://localhost:8025. In the panel, E-mail: server "mailpit", port 1025, security "Nenhuma".
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
 
 volumes:
   db:

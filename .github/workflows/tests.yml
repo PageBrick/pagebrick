@@ -1,0 +1,67 @@
+# Every push and pull request: all tests on the oldest and newest PHP and databases PageBrick supports,
+# then a release build. The compatibility tests (tests/CompatibilityTest.php) are what keep updates from breaking sites.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }} · ${{ matrix.db }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.2', db: 'mysql:5.7' }
+          - { php: '8.2', db: 'mariadb:10.4' }
+          - { php: '8.3', db: 'mariadb:10.11' }
+          - { php: '8.4', db: 'mysql:8.0' }
+          - { php: '8.4', db: 'mariadb:11.4' }
+    services:
+      db:
+        image: ${{ matrix.db }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+    env:
+      PB_TEST_DB_HOST: 127.0.0.1
+      PB_TEST_DB_USER: root
+      PB_TEST_DB_PASS: root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, gd, zip, exif, sodium
+          tools: composer
+          coverage: none
+      - run: composer install --no-interaction --no-progress
+      - name: Wait for the database
+        run: for i in $(seq 1 60); do php -r 'new PDO("mysql:host=127.0.0.1", "root", "root");' 2>/dev/null && exit 0; sleep 2; done; exit 1
+      - run: vendor/bin/phpunit
+
+  release:
+    name: Release build
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: zip, sodium
+          tools: composer
+          coverage: none
+      - run: composer install --no-interaction --no-progress
+      - run: mkdir dist && php tools/pagebrick.php release dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pagebrick-release
+          path: dist/*.zip

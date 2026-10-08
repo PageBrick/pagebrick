@@ -100,6 +100,37 @@ final class CoreTest extends TestCase
         pb_delete_user($this->adminId, $this->adminId);
     }
 
+    public function test_admin_can_reset_a_password_and_change_a_role(): void
+    {
+        $editorId = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste', 'editor');
+
+        pb_update_user($editorId, 'Bia Souza', 'bia@example.com', 'admin', 'nova-senha-123');
+        $this->assertSame('admin', pb_find_user($editorId)['role']);
+        $this->assertSame($editorId, (int) pb_login('bia@example.com', 'nova-senha-123', '10.0.0.9')['id']);
+
+        pb_update_user($editorId, 'Bia Souza', 'bia@example.com', 'admin'); // empty password keeps the current one
+        $this->assertSame($editorId, (int) pb_login('bia@example.com', 'nova-senha-123', '10.0.0.9')['id']);
+
+        $this->expectExceptionMessage('Já existe um usuário com este e-mail.');
+        pb_update_user($editorId, 'Bia', 'ana@example.com', 'editor');
+    }
+
+    public function test_own_account_changes_need_the_current_password(): void
+    {
+        $ana = pb_find_user($this->adminId);
+        try {
+            pb_update_own_account($ana, 'errada', 'Ana', 'ana@example.com', 'outra-senha-123');
+            $this->fail('Changed without the current password');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('A senha atual não confere.', $e->getMessage());
+        }
+
+        pb_update_own_account($ana, 'senha-de-teste-123', 'Ana Lima', 'ana@example.com', 'outra-senha-123');
+        $this->assertSame('Ana Lima', pb_find_user($this->adminId)['name']);
+        $this->assertSame('admin', pb_find_user($this->adminId)['role'], 'own role never changes here');
+        $this->assertSame($this->adminId, (int) pb_login('ana@example.com', 'outra-senha-123', '10.0.0.9')['id']);
+    }
+
     public function test_csrf_token_check(): void
     {
         $token = pb_csrf_token();

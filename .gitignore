@@ -1,3 +1,8 @@
 /config.php
 /vendor/
 /.phpunit.cache/
+/content/uploads/*
+!/content/uploads/.htaccess
+/content/backups/*
+!/content/backups/.htaccess
+/.dev/

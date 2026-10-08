@@ -1,0 +1,11 @@
+{
+    "name": "PageBrick Padrão",
+    "version": "1.0.0",
+    "description": "Tema institucional pronto para publicar: destaque com foto, quem somos, serviços, números, depoimentos e contato. Logo, cor e letras ajustáveis.",
+    "author": "PageBrick",
+    "api": 1,
+    "i18n": {
+        "en": {"name": "PageBrick Default", "description": "A business theme ready to publish: hero with photo, about us, services, numbers, testimonials and contact. Adjustable logo, color and fonts."},
+        "es": {"name": "PageBrick Estándar", "description": "Tema institucional listo para publicar: portada con foto, quiénes somos, servicios, números, testimonios y contacto. Logo, color y tipografía ajustables."}
+    }
+}

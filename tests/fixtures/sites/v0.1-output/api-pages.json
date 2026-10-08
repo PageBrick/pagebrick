@@ -1,0 +1,58 @@
+{
+    "pages": [
+        {
+            "id": 6,
+            "title": "Campanha",
+            "slug": "campanha",
+            "path": "/campanha",
+            "template": "landing",
+            "home": false,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        },
+        {
+            "id": 4,
+            "title": "Contato",
+            "slug": "contato",
+            "path": "/contato",
+            "template": "contact",
+            "home": false,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        },
+        {
+            "id": 1,
+            "title": "Início",
+            "slug": "inicio",
+            "path": "/",
+            "template": "home",
+            "home": true,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        },
+        {
+            "id": 5,
+            "title": "Política de privacidade",
+            "slug": "politica-de-privacidade",
+            "path": "/politica-de-privacidade",
+            "template": "page",
+            "home": false,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        },
+        {
+            "id": 3,
+            "title": "Serviços",
+            "slug": "servicos",
+            "path": "/servicos",
+            "template": "services",
+            "home": false,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        },
+        {
+            "id": 2,
+            "title": "Sobre",
+            "slug": "sobre",
+            "path": "/sobre",
+            "template": "page",
+            "home": false,
+            "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00"
+        }
+    ]
+}

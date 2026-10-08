@@ -1,0 +1,993 @@
+{
+    "api": 1,
+    "functions": {
+        "e": {
+            "params": [
+                {
+                    "name": "text",
+                    "type": "?string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "__": {
+            "params": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_url": {
+            "params": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_absolute_url": {
+            "params": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_base_path": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_request_path": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_is_https": {
+            "params": [],
+            "returns": "bool"
+        },
+        "pb_redirect": {
+            "params": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "status",
+                    "type": "int",
+                    "optional": true
+                }
+            ],
+            "returns": "never"
+        },
+        "pb_post": {
+            "params": [
+                {
+                    "name": "key",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_query": {
+            "params": [
+                {
+                    "name": "key",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_json": {
+            "params": [
+                {
+                    "name": "data",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "status",
+                    "type": "int",
+                    "optional": true
+                }
+            ],
+            "returns": "never"
+        },
+        "pb_limit": {
+            "params": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "max",
+                    "type": "int",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_include": {
+            "params": [
+                {
+                    "name": "file",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "vars",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_flash": {
+            "params": [
+                {
+                    "name": "type",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "message",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_csrf_token": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_csrf_field": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_csrf_valid": {
+            "params": [
+                {
+                    "name": "token",
+                    "type": "mixed",
+                    "optional": false
+                }
+            ],
+            "returns": "bool"
+        },
+        "pb_sign": {
+            "params": [
+                {
+                    "name": "value",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_signature_valid": {
+            "params": [
+                {
+                    "name": "value",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "signature",
+                    "type": "mixed",
+                    "optional": false
+                }
+            ],
+            "returns": "bool"
+        },
+        "pb_locale": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_site_locale": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_date": {
+            "params": [
+                {
+                    "name": "datetime",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "withTime",
+                    "type": "bool",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_db": {
+            "params": [],
+            "returns": "PDO"
+        },
+        "pb_table": {
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_option": {
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "default",
+                    "type": "?string",
+                    "optional": true
+                }
+            ],
+            "returns": "?string"
+        },
+        "pb_set_option": {
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "value",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_current_user": {
+            "params": [],
+            "returns": "?array"
+        },
+        "pb_has_role": {
+            "params": [
+                {
+                    "name": "user",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "role",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "bool"
+        },
+        "pb_is_logged_in": {
+            "params": [],
+            "returns": "bool"
+        },
+        "pb_collect_fields": {
+            "params": [
+                {
+                    "name": "defs",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "input",
+                    "type": "mixed",
+                    "optional": false
+                }
+            ],
+            "returns": "array"
+        },
+        "pb_field_inputs": {
+            "params": [
+                {
+                    "name": "defs",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "data",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "prefix",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_sanitize_html": {
+            "params": [
+                {
+                    "name": "html",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_clean_url": {
+            "params": [
+                {
+                    "name": "url",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_page_find": {
+            "params": [
+                {
+                    "name": "id",
+                    "type": "int",
+                    "optional": false
+                }
+            ],
+            "returns": "?array"
+        },
+        "pb_page_by_slug": {
+            "params": [
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "locale",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "?array"
+        },
+        "pb_page_list": {
+            "params": [],
+            "returns": "array"
+        },
+        "pb_page_url": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_home_page_id": {
+            "params": [],
+            "returns": "int"
+        },
+        "pb_link_url": {
+            "params": [
+                {
+                    "name": "link",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_template_fields": {
+            "params": [
+                {
+                    "name": "template",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "array"
+        },
+        "pb_settings": {
+            "params": [],
+            "returns": "PbGroup"
+        },
+        "pb_menu": {
+            "params": [
+                {
+                    "name": "location",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "array"
+        },
+        "pb_menu_html": {
+            "params": [
+                {
+                    "name": "location",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "class",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_slugify": {
+            "params": [
+                {
+                    "name": "text",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_validate_page_title": {
+            "params": [
+                {
+                    "name": "title",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_media_find": {
+            "params": [
+                {
+                    "name": "id",
+                    "type": "int",
+                    "optional": false
+                }
+            ],
+            "returns": "?array"
+        },
+        "pb_media_url": {
+            "params": [
+                {
+                    "name": "media",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "size",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_head": {
+            "params": [
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_footer": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_slot": {
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "context",
+                    "type": "array",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_theme_url": {
+            "params": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_render_in_theme": {
+            "params": [
+                {
+                    "name": "file",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "vars",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "seo",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_render_not_found": {
+            "params": [],
+            "returns": "string"
+        },
+        "pb_whatsapp_url": {
+            "params": [
+                {
+                    "name": "number",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "message",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_map_url": {
+            "params": [
+                {
+                    "name": "address",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_contrast": {
+            "params": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "b",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "float"
+        },
+        "pb_text_color_on": {
+            "params": [
+                {
+                    "name": "background",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_readable_color": {
+            "params": [
+                {
+                    "name": "color",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "background",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_add_action": {
+            "params": [
+                {
+                    "name": "hook",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "callback",
+                    "type": "callable",
+                    "optional": false
+                },
+                {
+                    "name": "priority",
+                    "type": "int",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_add_filter": {
+            "params": [
+                {
+                    "name": "hook",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "callback",
+                    "type": "callable",
+                    "optional": false
+                },
+                {
+                    "name": "priority",
+                    "type": "int",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_do_action": {
+            "params": [
+                {
+                    "name": "hook",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "args",
+                    "type": "mixed",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_apply_filters": {
+            "params": [
+                {
+                    "name": "hook",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "value",
+                    "type": "mixed",
+                    "optional": false
+                },
+                {
+                    "name": "args",
+                    "type": "mixed",
+                    "optional": true
+                }
+            ],
+            "returns": "mixed"
+        },
+        "pb_add_route": {
+            "params": [
+                {
+                    "name": "method",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "handler",
+                    "type": "callable",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_add_admin_page": {
+            "params": [
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "label",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "handler",
+                    "type": "callable",
+                    "optional": false
+                },
+                {
+                    "name": "role",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_content_json": {
+            "params": [
+                {
+                    "name": "fields",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "data",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "array"
+        },
+        "pb_content_send": {
+            "params": [
+                {
+                    "name": "data",
+                    "type": "?array",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_plugin_settings": {
+            "params": [
+                {
+                    "name": "fields",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_plugin_settings_values": {
+            "params": [
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "PbGroup"
+        },
+        "pb_plugin_migrations": {
+            "params": [
+                {
+                    "name": "migrations",
+                    "type": "array",
+                    "optional": false
+                }
+            ],
+            "returns": "void"
+        },
+        "pb_plugin_url": {
+            "params": [
+                {
+                    "name": "slug",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_mail": {
+            "params": [
+                {
+                    "name": "to",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "subject",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "text",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "replyTo",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        }
+    },
+    "classes": {
+        "PbGroup": {
+            "visible": {
+                "params": [],
+                "returns": "bool"
+            },
+            "__get": {
+                "params": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "optional": false
+                    }
+                ],
+                "returns": "PbValue|PbList|PbGroup"
+            },
+            "__isset": {
+                "params": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "optional": false
+                    }
+                ],
+                "returns": "bool"
+            }
+        },
+        "PbList": {
+            "getIterator": {
+                "params": [],
+                "returns": "ArrayIterator"
+            },
+            "count": {
+                "params": [],
+                "returns": "int"
+            },
+            "isEmpty": {
+                "params": [],
+                "returns": "bool"
+            }
+        },
+        "PbValue": {
+            "__toString": {
+                "params": [],
+                "returns": "string"
+            },
+            "raw": {
+                "params": [],
+                "returns": "mixed"
+            },
+            "isEmpty": {
+                "params": [],
+                "returns": "bool"
+            },
+            "url": {
+                "params": [
+                    {
+                        "name": "size",
+                        "type": "string",
+                        "optional": true
+                    }
+                ],
+                "returns": "string"
+            },
+            "img": {
+                "params": [
+                    {
+                        "name": "class",
+                        "type": "string",
+                        "optional": true
+                    },
+                    {
+                        "name": "size",
+                        "type": "string",
+                        "optional": true
+                    },
+                    {
+                        "name": "lazy",
+                        "type": "bool",
+                        "optional": true
+                    }
+                ],
+                "returns": "string"
+            }
+        }
+    },
+    "constants": [
+        "PB_VERSION",
+        "PB_API_VERSION"
+    ],
+    "hooks": [
+        "init",
+        "head_html",
+        "footer_html",
+        "sitemap_urls",
+        "link_targets"
+    ],
+    "standard": {
+        "menus.footer": "menu",
+        "menus.main": "menu",
+        "settings.contact": "group",
+        "settings.contact.address": "textarea",
+        "settings.contact.email": "email",
+        "settings.contact.hours": "textarea",
+        "settings.contact.phone": "tel",
+        "settings.contact.whatsapp": "tel",
+        "settings.contact.whatsapp_message": "text",
+        "settings.footer": "group",
+        "settings.footer.credit": "select",
+        "settings.footer.text": "textarea",
+        "settings.identity": "group",
+        "settings.identity.color": "color",
+        "settings.identity.fonts": "select",
+        "settings.identity.icon": "image",
+        "settings.identity.logo": "image",
+        "settings.identity.share_image": "image",
+        "settings.social": "group",
+        "settings.social.facebook": "url",
+        "settings.social.instagram": "url",
+        "settings.social.linkedin": "url",
+        "settings.social.tiktok": "url",
+        "settings.social.youtube": "url",
+        "templates.contact.body": "richtext",
+        "templates.contact.intro": "textarea",
+        "templates.home.about": "group",
+        "templates.home.about.image": "image",
+        "templates.home.about.text": "richtext",
+        "templates.home.about.title": "text",
+        "templates.home.cta": "group",
+        "templates.home.cta.button_label": "text",
+        "templates.home.cta.button_link": "link",
+        "templates.home.cta.text": "textarea",
+        "templates.home.cta.title": "text",
+        "templates.home.hero": "group",
+        "templates.home.hero.button_label": "text",
+        "templates.home.hero.button_link": "link",
+        "templates.home.hero.image": "image",
+        "templates.home.hero.text": "textarea",
+        "templates.home.hero.title": "text",
+        "templates.home.numbers": "group",
+        "templates.home.numbers.items": "list",
+        "templates.home.numbers.items.label": "text",
+        "templates.home.numbers.items.value": "text",
+        "templates.home.numbers.title": "text",
+        "templates.home.services": "group",
+        "templates.home.services.intro": "textarea",
+        "templates.home.services.items": "list",
+        "templates.home.services.items.image": "image",
+        "templates.home.services.items.text": "textarea",
+        "templates.home.services.items.title": "text",
+        "templates.home.services.link": "link",
+        "templates.home.services.link_label": "text",
+        "templates.home.services.title": "text",
+        "templates.home.testimonials": "group",
+        "templates.home.testimonials.items": "list",
+        "templates.home.testimonials.items.name": "text",
+        "templates.home.testimonials.items.quote": "textarea",
+        "templates.home.testimonials.items.role": "text",
+        "templates.home.testimonials.title": "text",
+        "templates.page.body": "richtext",
+        "templates.page.image": "image",
+        "templates.page.intro": "textarea",
+        "templates.services.cta": "group",
+        "templates.services.cta.button_label": "text",
+        "templates.services.cta.button_link": "link",
+        "templates.services.cta.text": "textarea",
+        "templates.services.cta.title": "text",
+        "templates.services.intro": "textarea",
+        "templates.services.items": "list",
+        "templates.services.items.image": "image",
+        "templates.services.items.text": "textarea",
+        "templates.services.items.title": "text"
+    }
+}

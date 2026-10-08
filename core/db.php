@@ -51,6 +51,47 @@ function pb_migrations(): array
                 KEY attempted_at (attempted_at)
             ) $table",
         ],
+        2 => [
+            'CREATE TABLE ' . pb_table('pages') . " (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                slug VARCHAR(190) NOT NULL,
+                locale VARCHAR(10) NOT NULL DEFAULT 'pt-BR',
+                template VARCHAR(60) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'draft',
+                data MEDIUMTEXT NOT NULL,
+                seo_title VARCHAR(200) NOT NULL DEFAULT '',
+                seo_description VARCHAR(300) NOT NULL DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY locale_slug (locale, slug)
+            ) $table",
+            'CREATE TABLE ' . pb_table('page_revisions') . " (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                page_id INT UNSIGNED NOT NULL,
+                snapshot MEDIUMTEXT NOT NULL,
+                user_id INT UNSIGNED NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY page_id (page_id)
+            ) $table",
+            'CREATE TABLE ' . pb_table('media') . " (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                path VARCHAR(255) NOT NULL,
+                thumb_path VARCHAR(255) NOT NULL DEFAULT '',
+                original_name VARCHAR(255) NOT NULL,
+                mime VARCHAR(100) NOT NULL,
+                width INT UNSIGNED NOT NULL DEFAULT 0,
+                height INT UNSIGNED NOT NULL DEFAULT 0,
+                size INT UNSIGNED NOT NULL DEFAULT 0,
+                alt VARCHAR(255) NOT NULL DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) $table",
+        ],
+        // Only ADD in migrations (tables, columns with defaults): an update that is undone leaves the database
+        // ahead of the code, and the previous version must keep working with it.
+        3 => [
+            'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN locale VARCHAR(10) NULL',
+        ],
     ];
 }
 
@@ -85,6 +126,11 @@ function pb_option(string $name, ?string $default = null): ?string
     $st->execute([$name]);
     $value = $st->fetchColumn();
     return $value === false ? $default : $value;
+}
+
+function pb_delete_option(string $name): void
+{
+    pb_db()->prepare('DELETE FROM ' . pb_table('options') . ' WHERE name = ?')->execute([$name]);
 }
 
 function pb_set_option(string $name, string $value): void

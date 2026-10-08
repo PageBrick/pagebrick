@@ -48,6 +48,39 @@ function pb_create_user(string $name, string $email, string $password, string $r
     return (int) pb_db()->lastInsertId();
 }
 
+/** Changes a user's data. An empty $newPassword keeps the current one. */
+function pb_update_user(int $id, string $name, string $email, string $role, string $newPassword = ''): void
+{
+    [$name, $email] = pb_validate_user($name, $email, $newPassword !== '' ? $newPassword : 'unchanged', $role);
+    $other = pb_find_user_by_email($email);
+    if ($other && (int) $other['id'] !== $id) {
+        throw new InvalidArgumentException(__('Já existe um usuário com este e-mail.'));
+    }
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET name = ?, email = ?, role = ? WHERE id = ?')->execute([$name, $email, $role, $id]);
+    if ($newPassword !== '') {
+        pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ? WHERE id = ?')
+            ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $id]);
+    }
+}
+
+/** "Minha conta": the user confirms with the current password before changing anything. */
+function pb_update_own_account(array $user, string $currentPassword, string $name, string $email, string $newPassword): void
+{
+    if (!password_verify($currentPassword, $user['password_hash'])) {
+        throw new InvalidArgumentException(__('A senha atual não confere.'));
+    }
+    pb_update_user((int) $user['id'], $name, $email, $user['role'], $newPassword);
+}
+
+/** The panel language for one user; '' follows the site's language. */
+function pb_set_user_locale(int $id, string $locale): void
+{
+    if ($locale !== '' && !isset(PB_LOCALES[$locale])) {
+        throw new InvalidArgumentException(__('Idioma inválido.'));
+    }
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET locale = ? WHERE id = ?')->execute([$locale === '' ? null : $locale, $id]);
+}
+
 function pb_delete_user(int $id, int $actingUserId): void
 {
     if ($id === $actingUserId) {

@@ -11,10 +11,12 @@
                 <td><?= e($u['name']) ?></td>
                 <td><?= e($u['email']) ?></td>
                 <td><?= e($roles[$u['role']] ?? $u['role']) ?></td>
-                <td>
-                    <?php if ((int) $u['id'] !== (int) $current['id']): ?>
-                        <form method="post" action="<?= e(pb_url('/admin/users/delete')) ?>"
-                              onsubmit="return confirm(<?= e(json_encode(sprintf(__('Excluir %s?'), $u['name']), JSON_UNESCAPED_UNICODE)) ?>)">
+                <td class="actions">
+                    <?php if ((int) $u['id'] === (int) $current['id']): ?>
+                        <a href="<?= e(pb_url('/admin/account')) ?>"><?= e(__('Minha conta')) ?></a>
+                    <?php else: ?>
+                        <a href="<?= e(pb_url('/admin/users/edit?id=' . (int) $u['id'])) ?>"><?= e(__('Editar')) ?></a>
+                        <form method="post" action="<?= e(pb_url('/admin/users/delete')) ?>" data-confirm="<?= e(sprintf(__('Excluir %s?'), $u['name'])) ?>">
                             <?= pb_csrf_field() ?>
                             <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
                             <button type="submit" class="link"><?= e(__('Excluir')) ?></button>

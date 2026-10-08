@@ -4,9 +4,12 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Internal files are never served directly.
-    RewriteRule ^(core|tests|docs|vendor)(/|$) - [F,L]
+    # Internal files are never served directly (core/assets/ holds the panel's CSS and JS).
+    RewriteRule ^core/(?!assets/) - [F,L]
+    RewriteRule ^(tests|docs|vendor|tools|content/backups)(/|$) - [F,L]
     RewriteRule ^(config\.php|composer\.(json|lock)|phpunit\.xml|docker-compose\.yml)$ - [F,L]
+    # PHP inside content/ (themes, plugins, uploads) only runs through PageBrick.
+    RewriteRule ^content/.*\.(php|phtml|phar)$ - [F,L]
     # Hidden files (.git, .env...), except .well-known used by SSL certificates.
     RewriteRule (^|/)\.(?!well-known/) - [F,L]
 

@@ -1,11 +1,18 @@
 <div class="card">
+    <nav class="tabs" aria-label="Idioma / Language / Idioma">
+        <?php foreach (PB_LOCALES as $code => $name): ?>
+            <a href="<?= e(pb_url('/?lang=' . $code)) ?>" lang="<?= e($code) ?>"<?= $code === $locale ? ' aria-current="page"' : '' ?>><?= e($name) ?></a>
+        <?php endforeach ?>
+    </nav>
     <h1><?= e(__('Instalar o PageBrick')) ?></h1>
     <p class="muted"><?= e(__('Crie um banco de dados MySQL na sua hospedagem (no cPanel: "Bancos de dados MySQL") e preencha os dados abaixo.')) ?></p>
+    <p class="help"><?= e(__('O site, o painel e o conteúdo de exemplo serão criados neste idioma. Dá para trocar depois.')) ?></p>
     <?php foreach ($errors as $error): ?>
         <p class="error" role="alert"><?= e($error) ?></p>
     <?php endforeach ?>
     <form method="post" action="<?= e(pb_url('/')) ?>">
         <?= pb_csrf_field() ?>
+        <input type="hidden" name="locale" value="<?= e($locale) ?>">
         <fieldset>
             <legend><?= e(__('Site')) ?></legend>
             <label for="site_title"><?= e(__('Nome do site')) ?></label>

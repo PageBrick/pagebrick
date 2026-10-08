@@ -50,6 +50,7 @@ final class InstallTest extends TestCase
         $this->assertSame('Padaria Exemplo', pb_option('site_title'));
         $this->assertSame(array_key_last(pb_migrations()), pb_installed_version());
         $this->assertSame('admin', pb_find_user($result['admin_id'])['role']);
+        $this->assertTrue(pb_plugin_states()['contact-form']['active'], 'the contact form comes switched on');
     }
 
     public function test_install_refuses_to_overwrite_an_existing_installation(): void

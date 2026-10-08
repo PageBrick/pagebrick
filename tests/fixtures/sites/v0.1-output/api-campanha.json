@@ -1,0 +1,27 @@
+{
+    "id": 6,
+    "title": "Campanha",
+    "slug": "campanha",
+    "path": "/campanha",
+    "template": "landing",
+    "home": false,
+    "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00",
+    "seo": {
+        "title": "Campanha · Agência Cliente",
+        "description": ""
+    },
+    "fields": {
+        "offer": "20% de desconto",
+        "deadline": "sexta",
+        "perks": [
+            {
+                "title": "Entrega grátis",
+                "icon": null
+            }
+        ],
+        "cta": {
+            "label": "Quero",
+            "link": "/"
+        }
+    }
+}

@@ -1,0 +1,13 @@
+/* Contact form. Uses the theme's colors when it defines them (PageBrick's default theme does). */
+.pb-form { padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--rule, #e2e3e8); border-radius: var(--radius, 4px); background: var(--paper, #fff); }
+.pb-form h2 { margin-top: 0; font-size: 1.5rem; }
+.pb-form label { display: block; margin: 1rem 0 .35rem; font-weight: 600; }
+.pb-form label span { font-weight: 400; color: var(--muted, #565a66); }
+.pb-form input, .pb-form textarea { width: 100%; padding: .7rem .8rem; border: 1px solid var(--muted, #8a8e99); border-radius: var(--radius, 4px); background: #fff; color: inherit; font: inherit; }
+.pb-form input:focus, .pb-form textarea:focus { outline: 3px solid var(--brand-text, #b94526); outline-offset: 1px; border-color: transparent; }
+.pb-form .button { margin-top: 1.5rem; border: 0; cursor: pointer; font: inherit; font-weight: 600; }
+.pb-form-note { margin: 1rem 0 0; font-size: .9rem; color: var(--muted, #565a66); }
+.pb-form-errors { padding: .75rem 1rem; border-left: 3px solid #b42318; background: #fdf0ef; color: #7a1a12; }
+.pb-form-errors p { margin: .25rem 0; }
+.pb-form-ok { margin: 0; font-size: 1.15rem; font-weight: 600; }
+.pb-form-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
