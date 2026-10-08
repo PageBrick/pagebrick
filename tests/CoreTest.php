@@ -57,6 +57,66 @@ final class CoreTest extends TestCase
         $this->assertSame($this->adminId, (int) pb_login('ana@example.com', 'senha-de-teste-123', '10.0.0.1')['id']);
     }
 
+    /** Asks for a reset link for $email and returns the token e-mailed, or null when nothing was sent. */
+    private function resetLink(string $email, string $ip = '10.0.0.1'): ?string
+    {
+        $GLOBALS['pb_config']['mail'] = 'memory';
+        $GLOBALS['pb_sent_mail'] = [];
+        pb_password_reset_request($email, $ip);
+        $mail = $GLOBALS['pb_sent_mail'][0] ?? null;
+        return $mail && preg_match('/token=([0-9a-f]{64})/', $mail['text'], $m) ? $m[1] : null;
+    }
+
+    public function test_forgot_password_link_works_once(): void
+    {
+        $token = $this->resetLink(' ANA@example.com');
+        $this->assertNotNull($token);
+        $this->assertSame('ana@example.com', $GLOBALS['pb_sent_mail'][0]['to']);
+        $stored = pb_db()->query('SELECT token_hash FROM ' . pb_table('password_resets'))->fetchColumn();
+        $this->assertSame(hash('sha256', $token), $stored, 'only a hash of the link is kept');
+
+        pb_password_reset($token, 'senha-nova-456', 'senha-nova-456');
+        $this->assertSame($this->adminId, (int) pb_login('ana@example.com', 'senha-nova-456', '10.0.0.1')['id']);
+        $this->expectExceptionMessage('não vale mais');
+        pb_password_reset($token, 'outra-senha-789', 'outra-senha-789');
+    }
+
+    public function test_forgot_password_says_nothing_about_unknown_emails(): void
+    {
+        $this->assertNull($this->resetLink('ninguem@example.com'));
+        $this->assertSame([], $GLOBALS['pb_sent_mail']);
+        $this->assertSame(0, (int) pb_db()->query('SELECT COUNT(*) FROM ' . pb_table('password_resets'))->fetchColumn());
+    }
+
+    public function test_reset_link_checks_the_password_and_expires(): void
+    {
+        $token = $this->resetLink('ana@example.com');
+        foreach ([['curta', 'curta', '8 caracteres'], ['senha-nova-456', 'senha-nova-457', 'não são iguais']] as [$password, $repeat, $message]) {
+            try {
+                pb_password_reset($token, $password, $repeat);
+                $this->fail("Expected: $message");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString($message, $e->getMessage());
+            }
+        }
+        $this->assertNotNull(pb_password_reset_user($token), 'a mistake does not spend the link');
+        $latest = $this->resetLink('ana@example.com');
+        $this->assertNull(pb_password_reset_user($token), 'a new link replaces the old one');
+        $this->assertNotNull(pb_password_reset_user($latest));
+        pb_db()->exec('UPDATE ' . pb_table('password_resets') . ' SET expires_at = NOW() - INTERVAL 1 MINUTE');
+        $this->assertNull(pb_password_reset_user($latest), 'it expires after an hour');
+    }
+
+    public function test_forgot_password_requests_are_limited_per_ip(): void
+    {
+        for ($i = 0; $i < PB_LOGIN_MAX_FAILURES; $i++) {
+            $this->resetLink('ninguem@example.com', '10.0.0.9');
+        }
+        $this->assertNotNull($this->resetLink('ana@example.com', '10.0.0.8'), 'another IP is not affected');
+        $this->expectExceptionMessage('Muitas tentativas');
+        $this->resetLink('ana@example.com', '10.0.0.9');
+    }
+
     public function test_roles(): void
     {
         $admin = ['role' => 'admin'];

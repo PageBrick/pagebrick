@@ -8,6 +8,7 @@ First public version.
 
 - Step-by-step installer (language, server check, database with readable errors, site), in Portuguese, English or Spanish, with a finished example site.
 - Pages with fields, hideable sections, history, drafts and preview; media library with WebP; menus; SEO basics.
+- "Forgot my password" on the sign-in screen: an e-mailed link that works once, for one hour (only its hash is stored), with the same answer whether the e-mail has an account or not.
 - Sites in more than one language: extra languages under /pt-br, /es-es or /en-us, page translations, translated menus and Appearance & contact texts, `hreflang` tags, and `pb_language_links()` for themes.
 - Light/dark switch in the panel header (remembered per browser; follows the system until used).
 - Default theme; themes as packages with preview, test before activation and circuit breaker.

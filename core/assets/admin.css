@@ -51,6 +51,18 @@ fieldset.categories legend { font-weight: 600; padding: 0 .3rem; }
 
 main { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
 main.wide { max-width: 1100px; }
+/* Login, "forgot my password" and new password: a small card in the middle. */
+main.narrow { max-width: 420px; margin-top: 1.75rem; }
+.auth { padding: 2rem; box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 16px 40px -28px rgb(0 0 0 / .35); }
+.auth h1 { margin-bottom: 1rem; font-size: 1.4rem; }
+.auth .error, .auth .flash { margin: 0 0 1rem; }
+.auth .help { margin-bottom: .25rem; }
+.auth button[type=submit] { width: 100%; padding: .7rem 1.1rem; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.label-row a { font-size: .875rem; text-decoration: none; }
+.label-row a:hover, .auth-back a:hover { text-decoration: underline; }
+.auth-back { margin: 1.25rem 0 0; font-size: .9rem; text-align: center; }
+.auth-back a { text-decoration: none; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; }
 details.card > summary { cursor: pointer; font-weight: 600; }
 
