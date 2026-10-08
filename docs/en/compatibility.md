@@ -36,7 +36,7 @@ Every release must pass these automated tests ([tests/CompatibilityTest.php](../
 4. **Swap:** each folder is swapped in one step, so visitors never see half an update.
 5. **Check:** the first request on the new version renders every published page, the 404 page and the sitemap behind the scenes. If anything fails, or a plugin got switched off, the previous version comes back with plugins and theme exactly as they were, and the panel explains what broke.
 6. **Safety net:** if the new version can't even start (a PHP fatal error in the core), `index.php` restores the backup on its own.
-7. **Later:** **Roll back to version x.y** stays available in **System → Updates**.
+7. **Later:** **Roll back to version x.y** stays available in **Settings → Updates**.
 
 ## If an API version 2 ever comes
 

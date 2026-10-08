@@ -50,7 +50,7 @@ Abre http://localhost:8080. En el instalador usa el servidor `db`, la base de da
 
 Cuentas de prueba para el desarrollo local: `admin@pagebrick.test` (administrador) y `editor@pagebrick.test` (editor), ambas con la contraseña `pagebrick-local`.
 
-Mailpit captura los correos que envía el sitio local en http://localhost:8025. Para usarlo, configura el servidor `mailpit`, el puerto `1025` y la seguridad "Ninguna" en **Sistema → Correo electrónico**.
+Mailpit captura los correos que envía el sitio local en http://localhost:8025. Para usarlo, configura el servidor `mailpit`, el puerto `1025` y la seguridad "Ninguna" en **Configuración → Correo electrónico**.
 
 Pruebas:
 

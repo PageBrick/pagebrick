@@ -66,7 +66,7 @@ php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.c
 4. Crea el release de GitHub `v{version}` con `pagebrick-{version}.zip` adjunto (la dirección de descarga debe coincidir con la firmada).
 5. Pon la entrada impresa en `"core"` en el repositorio del catálogo.
 
-Los sitios ven la versión nueva en un plazo de 12 horas, o de inmediato con **Comprobar ahora** en **Sistema → Actualizaciones**.
+Los sitios ven la versión nueva en un plazo de 12 horas, o de inmediato con **Comprobar ahora** en **Configuración → Actualizaciones**.
 
 ## Publicar un plugin o tema en el catálogo oficial
 

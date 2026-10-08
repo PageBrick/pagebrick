@@ -15,9 +15,10 @@ foreach ($GLOBALS['pb_admin_pages'] ?? [] as $slug => $page) {
     }
 }
 $brokenPlugins = [];
-$system = []; // technical screens, grouped so the menu stays on one line (administrators only)
+$system = []; // technical screens, rarely touched: the gear menu (administrators only)
 if ($user && pb_has_role($user, 'admin')) {
     $system = [
+        '/admin/general' => __('Endereço e idiomas'),
         '/admin/themes' => __('Temas'),
         '/admin/plugins' => __('Plugins'),
         '/admin/updates' => __('Atualizações'),
@@ -63,17 +64,20 @@ if ($user && pb_has_role($user, 'admin')) {
         <?php foreach ($nav as $path => $label): ?>
             <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
         <?php endforeach ?>
-        <?php if ($system): $inSystem = array_filter(array_keys($system), fn($path) => str_starts_with($current, $path)); ?>
-            <details class="nav-more">
-                <summary<?= $inSystem ? ' aria-current="page"' : '' ?>><?= e(__('Sistema')) ?></summary>
-                <div>
-                    <?php foreach ($system as $path => $label): ?>
-                        <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
-                    <?php endforeach ?>
-                </div>
-            </details>
-        <?php endif ?>
     </nav>
+    <?php if ($system): $inSystem = array_filter(array_keys($system), fn($path) => str_starts_with($current, $path)); ?>
+        <details class="nav-more settings-menu">
+            <summary title="<?= e(__('Configurações')) ?>" aria-label="<?= e(__('Configurações')) ?>"<?= $inSystem ? ' aria-current="page"' : '' ?>>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </summary>
+            <div>
+                <strong><?= e(__('Configurações')) ?></strong>
+                <?php foreach ($system as $path => $label): ?>
+                    <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
+                <?php endforeach ?>
+            </div>
+        </details>
+    <?php endif ?>
     <button type="button" class="theme-switch" data-theme-switch title="<?= e(__('Alternar entre claro e escuro')) ?>" aria-label="<?= e(__('Alternar entre claro e escuro')) ?>">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
     </button>

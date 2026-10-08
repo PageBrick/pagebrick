@@ -66,7 +66,7 @@ php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.c
 4. Create the GitHub release `v{version}` with `pagebrick-{version}.zip` attached (the download address must match the one signed).
 5. Put the printed entry under `"core"` in the catalog repository.
 
-Sites see the new version within 12 hours, or right away with **Check now** in **System → Updates**.
+Sites see the new version within 12 hours, or right away with **Check now** in **Settings → Updates**.
 
 ## Publishing a plugin or theme in the official catalog
 

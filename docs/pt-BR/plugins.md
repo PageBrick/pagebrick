@@ -113,8 +113,8 @@ Isso protege contra plugins quebrados, não contra plugins maliciosos: instale c
 
 ## Testando e entregando
 
-1. Coloque a pasta em `content/plugins/` e ative o plugin em **Sistema → Plugins**.
-2. Compacte a pasta (`my-plugin.zip` contendo `my-plugin/`) para enviar em outro site em **Sistema → Plugins → Enviar plugin (.zip)**.
+1. Coloque a pasta em `content/plugins/` e ative o plugin em **Configurações → Plugins**.
+2. Compacte a pasta (`my-plugin.zip` contendo `my-plugin/`) para enviar em outro site em **Configurações → Plugins → Enviar plugin (.zip)**.
 3. Para oferecer o plugin no catálogo oficial, veja [publicacao.md](publicacao.md).
 
 Os plugins oficiais em `content/plugins/` (formulário de contato e blog) são exemplos completos.

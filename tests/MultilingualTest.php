@@ -223,6 +223,52 @@ final class MultilingualTest extends TestCase
         $this->assertSame($services['id'], pb_page_by_slug('recursos')['id'], 'importing again finds it at its new address');
     }
 
+    public function test_switching_the_main_language_then_importing_keeps_the_pages(): void
+    {
+        $about = pb_page_by_slug('sobre');
+        $services = pb_page_by_slug('servicos');
+        pb_set_site_locale('en'); // a site installed in Portuguese that becomes English later
+        $count = (int) pb_db()->query('SELECT COUNT(*) FROM ' . pb_table('pages'))->fetchColumn();
+        pb_import_content(['pages' => [
+            ['title' => 'About', 'slug' => 'sobre', 'template' => 'page', 'translations' => ['pt-BR' => ['title' => 'Sobre', 'slug' => 'sobre']]],
+            ['title' => 'Features', 'slug' => 'features', 'replaces' => 'servicos', 'template' => 'page'],
+        ]], PB_ROOT . '/core/demo');
+
+        $this->assertSame($about['id'], pb_page_by_slug('about')['id'], 'the page made in Portuguese, now at its English address');
+        $this->assertSame($services['id'], pb_page_by_slug('features')['id']);
+        $this->assertNull(pb_page_by_slug('sobre'), 'no leftover Portuguese address in the main language');
+        $this->assertSame('sobre', pb_page_translation(pb_page_find($about['id']), 'pt-BR')['slug']);
+        $this->assertSame($count + 1, (int) pb_db()->query('SELECT COUNT(*) FROM ' . pb_table('pages'))->fetchColumn(), 'only the translation is new');
+    }
+
+    public function test_the_site_address_can_change_in_the_panel(): void
+    {
+        $this->assertSame('https://example.com', pb_validate_site_url(' https://example.com/ '));
+        $this->assertSame('https://example.com/site', pb_validate_site_url('https://example.com/site'));
+        foreach (['example.com', 'ftp://example.com', 'https://example.com/?a=1', 'javascript:alert(1)', 'https://user:pass@example.com'] as $wrong) {
+            try {
+                pb_validate_site_url($wrong);
+                $this->fail("accepted $wrong");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('https://', $e->getMessage());
+            }
+        }
+        pb_set_option('site_url', 'https://example.com');
+        $this->assertSame('https://example.com/about', pb_absolute_url('/about'));
+
+        // Settings (gear) → Address and languages: a wrong address saves nothing, not even the language sent with it.
+        $_SESSION['user_id'] = $this->admin;
+        $_POST = ['site_url' => 'pagebrick.org', 'locale' => 'en', 'locales' => ['es']];
+        ob_start();
+        pb_admin('POST', '/admin/general');
+        $html = ob_get_clean();
+        $_POST = [];
+        $this->assertSame(422, http_response_code());
+        $this->assertStringContainsString('https://', $html);
+        $this->assertSame(['pt-BR', 'en', 'es'], pb_site_locales());
+        $this->assertSame('https://example.com/about', pb_absolute_url('/about'));
+    }
+
     public function test_ready_made_content_follows_the_site_language_not_the_panel(): void
     {
         $about = pb_page_by_slug('sobre');

@@ -36,6 +36,21 @@ function pb_absolute_url(string $path = ''): string
     return rtrim($origin, '/') . '/' . ltrim($path, '/');
 }
 
+/**
+ * Checks the site's official address (Appearance & contact) and returns it without the final slash.
+ * Throws with a message the user can read. Only absolute links use it, so a typo never locks anyone out.
+ */
+function pb_validate_site_url(string $url): string
+{
+    $url = rtrim(trim($url), '/');
+    $parts = parse_url($url) ?: [];
+    if (!filter_var($url, FILTER_VALIDATE_URL) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+        || isset($parts['query']) || isset($parts['fragment']) || isset($parts['user'])) {
+        throw new InvalidArgumentException(__('Informe o endereço completo do site, começando com https:// ou http://.'));
+    }
+    return $url;
+}
+
 /** Current path without the install folder and query string, e.g. '/admin/users'. */
 function pb_request_path(): string
 {
