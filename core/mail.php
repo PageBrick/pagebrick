@@ -36,9 +36,9 @@ function pb_save_mail_settings(mixed $input): void
 function pb_mail(string $to, string $subject, string $text, string $replyTo = ''): void
 {
     $settings = pb_mail_settings();
-    $fromEmail = $settings['from_email'] ?: 'nao-responda@' . preg_replace('/^www\./', '', (string) parse_url(pb_absolute_url(), PHP_URL_HOST));
+    $fromEmail = $settings['from_email'] ?: 'no-reply@' . preg_replace('/^www\./', '', (string) parse_url(pb_absolute_url(), PHP_URL_HOST));
     if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
-        $fromEmail = 'nao-responda@pagebrick.invalid'; // e.g. "localhost" during development
+        $fromEmail = 'no-reply@pagebrick.invalid'; // e.g. "localhost" during development
     }
     $fromName = $settings['from_name'] ?: pb_option('site_title', 'PageBrick');
 

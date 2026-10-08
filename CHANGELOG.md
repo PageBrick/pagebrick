@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.5
+
+- E-mails now leave from `no-reply@yourdomain` unless a sender is set in Settings → E-mail.
+- For plugins (API, only additions): `pb_http()` makes a request to another service (https only, with headers, an optional POST body, a size limit, and a way for tests to answer instead of the network), and `pb_add_admin_page()` takes a fifth argument, `'settings'`, to put a plugin's technical screen under the gear icon instead of the top menu.
+
 ## 1.0.4
 
 - Sending a theme or plugin (.zip), updating one or installing one from the catalog shows each step as it happens, like PageBrick's own updates: sending or downloading, checking the signature or the package, keeping a copy, installing and, when it's the one in use, opening every page with it. If a page breaks, the previous version is put back right there and the screen says why.

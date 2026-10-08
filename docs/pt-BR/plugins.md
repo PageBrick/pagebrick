@@ -73,13 +73,14 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | alterar um valor; um filtro precisa retornar o mesmo tipo que recebeu |
 | `pb_add_route($method, $path, $handler)` | um endereço público; o handler imprime a resposta com `echo` |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | mostrar um template do plugin como uma página do site, dentro do layout do tema, com as tags de SEO |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | uma tela do painel; o handler imprime a tela com `echo`, em GET e POST |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $placement = 'menu')` | uma tela do painel; o handler imprime a tela com `echo`, em GET e POST. `'settings'` em $placement põe a tela na engrenagem, com as telas técnicas (chaves de API, conexões), só para administradores |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | a tela de configurações e os valores dela (lidos como os campos de tema: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | as tabelas do plugin; dê nome a elas com `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | endereço de um arquivo do plugin (ou da cópia dele no tema) |
 | `pb_db()`, `pb_table($name)`, `pb_option()`, `pb_set_option()` | o banco de dados (PDO; use sempre prepared statements) e pequenos valores salvos |
 | `pb_mail($to, $subject, $body, $replyTo = '')` | enviar um e-mail com as configurações do site |
 | `pb_json($data)`, `pb_post($name)`, `pb_query($name)` | responder em JSON; ler valores de formulário e da query string como strings |
+| `pb_http($url, $headers = [], $timeout = 8, $body = null)` | uma chamada a outro serviço (só https): devolve `['status' => 200, 'body' => '…']` seja qual for o status e lança erro se não conectar; com $body vira um POST. Os testes podem responder no lugar da rede com `$GLOBALS['pb_config']['http']` |
 | `pb_sign($data)`, `pb_signature_valid($data, $signature)` | proteger formulários públicos sem cookies (veja abaixo) |
 | `pb_csrf_field()` | campo oculto para os formulários das suas telas no painel (o núcleo confere em todo POST do painel) |
 

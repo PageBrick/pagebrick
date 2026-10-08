@@ -24,6 +24,31 @@ final class PluginsTest extends TestCase
         return ob_get_clean();
     }
 
+    public function test_a_plugin_screen_can_live_under_the_gear_icon(): void
+    {
+        $admin = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        $editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
+        pb_add_admin_page('vitrine', 'Vitrine', fn() => print('tela da vitrine'));                       // everyday: the top menu
+        pb_add_admin_page('chaves', 'Chaves da API', fn() => print('tela das chaves'), 'editor', 'settings'); // technical: the gear
+        $this->assertSame('admin', $GLOBALS['pb_admin_pages']['chaves']['role'], 'a gear screen is for administrators, whatever was asked');
+
+        $panel = function (int $user, string $path): string {
+            $_SESSION['user_id'] = $user;
+            ob_start();
+            pb_admin('GET', $path);
+            return ob_get_clean();
+        };
+        $home = $panel($admin, '/admin');
+        $this->assertMatchesRegularExpression('~<nav[^>]*>.*href="/admin/p/vitrine".*</nav>~s', $home);
+        $this->assertDoesNotMatchRegularExpression('~<nav[^>]*>.*href="/admin/p/chaves".*</nav>~s', $home, 'not in the top menu');
+        $this->assertMatchesRegularExpression('~settings-menu.*href="/admin/p/chaves"~s', $home, 'but in the gear menu');
+        $this->assertStringContainsString('tela das chaves', $panel($admin, '/admin/p/chaves'));
+
+        $this->assertStringNotContainsString('tela das chaves', $panel($editor, '/admin/p/chaves'), 'an editor never reaches it');
+        $this->assertStringNotContainsString('/admin/p/chaves', $panel($editor, '/admin'));
+        $_SESSION = [];
+    }
+
     public function test_plugins_with_problems_are_listed_but_cannot_be_activated(): void
     {
         $plugins = pb_plugins_available();

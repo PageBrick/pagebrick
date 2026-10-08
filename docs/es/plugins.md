@@ -73,13 +73,14 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | cambiar un valor; un filtro debe devolver el mismo tipo que recibió |
 | `pb_add_route($method, $path, $handler)` | una dirección pública; el handler imprime la respuesta con echo |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | mostrar una plantilla del plugin como una página del sitio, dentro del layout del tema, con etiquetas de SEO |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | una pantalla del panel; el handler la imprime con echo para GET y POST |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $placement = 'menu')` | una pantalla del panel; el handler la imprime con echo para GET y POST. `'settings'` en $placement la pone bajo el engranaje, con las pantallas técnicas (claves de API, conexiones), solo para administradores |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | pantalla de ajustes y sus valores (se leen como los campos de un tema: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | las tablas del plugin; nómbralas con `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | dirección de un archivo del plugin (o de la copia que tiene el tema) |
 | `pb_db()`, `pb_table($name)`, `pb_option()`, `pb_set_option()` | la base de datos (PDO; usa siempre consultas preparadas) y pequeños valores guardados |
 | `pb_mail($to, $subject, $body, $replyTo = '')` | enviar un correo con la configuración del sitio |
 | `pb_json($data)`, `pb_post($name)`, `pb_query($name)` | responder JSON; leer valores de formularios y de la query string como cadenas |
+| `pb_http($url, $headers = [], $timeout = 8, $body = null)` | una llamada a otro servicio (solo https): devuelve `['status' => 200, 'body' => '…']` sea cual sea el estado y lanza un error si no conecta; con $body es un POST. Las pruebas pueden responder en lugar de la red con `$GLOBALS['pb_config']['http']` |
 | `pb_sign($data)`, `pb_signature_valid($data, $signature)` | proteger formularios públicos sin cookies (ver más abajo) |
 | `pb_csrf_field()` | campo oculto para los formularios de tus pantallas del panel (el core lo verifica en cada POST del panel) |
 

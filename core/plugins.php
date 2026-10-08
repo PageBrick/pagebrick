@@ -326,10 +326,16 @@ function pb_match_route(string $method, string $path): ?array
     return null;
 }
 
-/** A screen in the panel at /admin/p/{slug}, listed in the menu. The handler echoes the screen (GET and POST). */
-function pb_add_admin_page(string $slug, string $label, callable $handler, string $role = 'editor'): void
+/**
+ * A screen in the panel at /admin/p/{slug}. The handler echoes the screen (GET and POST).
+ * $placement 'menu' lists it in the top menu; 'settings' puts it under the gear icon, with the technical screens
+ * (API keys, connections), and then only administrators see it.
+ */
+function pb_add_admin_page(string $slug, string $label, callable $handler, string $role = 'editor', string $placement = 'menu'): void
 {
-    $GLOBALS['pb_admin_pages'][$slug] = ['label' => $label, 'handler' => $handler, 'role' => $role, 'owner' => $GLOBALS['pb_running_plugin'] ?? null];
+    $placement = $placement === 'settings' ? 'settings' : 'menu';
+    $GLOBALS['pb_admin_pages'][$slug] = ['label' => $label, 'handler' => $handler, 'role' => $placement === 'settings' ? 'admin' : $role,
+        'placement' => $placement, 'owner' => $GLOBALS['pb_running_plugin'] ?? null];
 }
 
 /** Fields for the plugin's settings screen, same types as theme fields. Read the values with pb_plugin_settings_values(). */

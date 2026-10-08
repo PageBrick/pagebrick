@@ -9,9 +9,14 @@ $nav = [
     '/admin/menus' => __('Menus'),
     '/admin/settings' => __('Aparência e contato'),
 ];
+$pluginSettings = []; // screens plugins asked to have in the gear menu (pb_add_admin_page(..., 'settings'))
 foreach ($GLOBALS['pb_admin_pages'] ?? [] as $slug => $page) {
     if ($user && pb_has_role($user, $page['role'])) {
-        $nav["/admin/p/$slug"] = $page['label'];
+        if (($page['placement'] ?? 'menu') === 'settings') {
+            $pluginSettings["/admin/p/$slug"] = $page['label'];
+        } else {
+            $nav["/admin/p/$slug"] = $page['label'];
+        }
     }
 }
 $brokenPlugins = [];
@@ -24,7 +29,7 @@ if ($user && pb_has_role($user, 'admin')) {
         '/admin/updates' => __('Atualizações'),
         '/admin/email' => __('E-mail'),
         '/admin/users' => __('Usuários'),
-    ];
+    ] + $pluginSettings;
     $available = pb_plugins_available();
     foreach (pb_plugin_states() as $slug => $state) {
         if (!empty($state['error'])) {
