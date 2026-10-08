@@ -55,6 +55,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/updates' => ['admin', 'pb_admin_updates_action'],
         'POST /admin/updates/step' => ['admin', 'pb_admin_update_step'],
         'GET /admin/updates/result' => ['admin', 'pb_admin_update_result'],
+        'POST /admin/packages/step' => ['admin', 'pb_admin_package_step'],
         'GET /admin/email' => ['admin', 'pb_admin_email'],
         'POST /admin/email' => ['admin', 'pb_admin_email_save'],
         'POST /admin/email/test' => ['admin', 'pb_admin_email_test'],
@@ -529,7 +530,8 @@ function pb_admin_delete_plugin(string $slug): string
 }
 
 /** A .zip sent from the panel. Replacing an active plugin or theme gets the same one-hour automatic rollback as an update. */
-function pb_admin_upload_package(string $type): string
+/** The .zip sent in the "package" field. Throws with a message the user can read. */
+function pb_admin_uploaded_package(): string
 {
     $file = $_FILES['package'] ?? [];
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
@@ -540,7 +542,71 @@ function pb_admin_upload_package(string $type): string
     if ($file['size'] > PB_PACKAGE_MAX_BYTES) {
         throw new InvalidArgumentException(__('O arquivo é grande demais.'));
     }
-    $result = pb_install_package($file['tmp_name'], $type);
+    return $file['tmp_name'];
+}
+
+/**
+ * One step of installing a theme or plugin from the Themes or Plugins screen; admin.js shows each as it ends.
+ * From a .zip: receive → install → check. From the catalog: download → verify → install → check. Answers JSON.
+ */
+function pb_admin_package_step(): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    $type = pb_post('type') === 'plugin' ? 'plugin' : 'theme';
+    $slug = pb_post('slug');
+    try {
+        $answer = match (pb_post('step')) {
+            'receive' => [pb_package_wait($type, pb_admin_uploaded_package()), pb_package_waiting_info($type)][1],
+            'download' => (function () use ($type, $slug) {
+                $file = pb_download((string) (pb_catalog_package_entry($type, $slug)['url'] ?? ''), PB_PACKAGE_MAX_BYTES);
+                pb_package_wait($type, $file);
+                unlink($file);
+                return [];
+            })(),
+            'verify' => (function () use ($type, $slug) {
+                $entry = pb_catalog_package_entry($type, $slug);
+                try {
+                    pb_verify_package(pb_package_waiting_file($type), $entry, $type);
+                } catch (InvalidArgumentException $e) {
+                    @unlink(pb_package_waiting_file($type));
+                    throw $e;
+                }
+                return pb_package_waiting_info($type);
+            })(),
+            'install' => ['backup' => pb_package_install_waiting($type, $slug !== '' ? $slug : null,
+                $slug !== '' ? (string) pb_catalog_package_entry($type, $slug)['version'] : null)['backup'] !== null],
+            'check' => ['problem' => pb_package_check_installed()],
+        };
+        echo json_encode(['ok' => true] + $answer, JSON_UNESCAPED_UNICODE);
+    } catch (InvalidArgumentException|RuntimeException|UnhandledMatchError $e) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'message' => $e instanceof UnhandledMatchError ? __('Ação inválida.') : $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
+}
+
+/** The texts of the step log on the Themes and Plugins screens (admin.js). */
+function pb_package_step_texts(): array
+{
+    return [
+        'url' => pb_url('/admin/packages/step'),
+        'sending' => __('Enviando o arquivo'),
+        'package' => __('Conferindo o pacote'),
+        'downloading' => __('Baixando a versão %s'),
+        'signature' => __('Conferindo a assinatura'),
+        'backup' => __('Guardando uma cópia da versão atual'),
+        'installing' => __('Instalando %1$s %2$s'),
+        'check' => __('Abrindo todas as páginas do site'),
+        'ok' => __('Tudo certo: %1$s está na versão %2$s.'),
+        'installed' => __('%1$s %2$s instalado. Agora é só ativar.'),
+        'undone' => __('A versão nova deu erro (%s), então a anterior voltou. Os visitantes não viram nada.'),
+        'failed' => __('Parou no meio. Recarregue a página para ver como ficou.'),
+        'continue' => __('Continuar'),
+    ];
+}
+
+function pb_admin_upload_package(string $type): string
+{
+    $result = pb_install_package(pb_admin_uploaded_package(), $type);
     if ($result['backup'] !== null) {
         $type === 'plugin'
             ? pb_set_plugin_state($result['slug'], ['rollback_until' => time() + PB_ROLLBACK_WINDOW])

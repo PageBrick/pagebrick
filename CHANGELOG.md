@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.4
+
+- Sending a theme or plugin (.zip), updating one or installing one from the catalog shows each step as it happens, like PageBrick's own updates: sending or downloading, checking the signature or the package, keeping a copy, installing and, when it's the one in use, opening every page with it. If a page breaks, the previous version is put back right there and the screen says why.
+- Backups made in the same second are told apart by version, so "Roll back" always takes the newest.
+
 ## 1.0.3
 
 - The panel's language is independent of the site's: each account has its own (set when it is made, changed with the new globe in the top bar or in My account), and "the same as the site" is gone. Accounts that never chose one keep the language they saw. The sign-in screen follows the browser's language.

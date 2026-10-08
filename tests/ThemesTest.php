@@ -203,4 +203,42 @@ final class ThemesTest extends TestCase
         $this->assertStringContainsString('TEMA-SEGUNDO', $this->visit('/sobre'));
         unlink($zip);
     }
+
+    public function test_a_theme_sent_in_steps_is_checked_and_put_back_when_it_breaks(): void
+    {
+        pb_activate_theme('second');
+        $zip = sys_get_temp_dir() . '/second-steps.zip';
+        $version = function (string $number, ?string $layout = null) use ($zip): void {
+            $archive = new ZipArchive();
+            $archive->open($zip, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+            pb_zip_add_folder($archive, self::$themes . '/second', 'second');
+            $archive->addFromString('second/theme.json', json_encode(['name' => 'Tema second', 'version' => $number, 'api' => 1]));
+            if ($layout !== null) {
+                $archive->addFromString('second/layout.php', $layout);
+            }
+            $archive->close();
+        };
+
+        // A good new version: sent, installed, every page opened with it, kept.
+        $version('1.1.0');
+        pb_package_wait('theme', $zip);
+        $this->assertSame(['slug' => 'second', 'name' => 'Tema second', 'version' => '1.1.0', 'replaces' => true, 'in_use' => true],
+            pb_package_waiting_info('theme'));
+        pb_package_install_waiting('theme');
+        pb_test_new_request(); // the check is the next request, with the new code
+        $this->assertNull(pb_package_check_installed());
+        $this->assertSame('1.1.0', pb_package_version('theme', 'second'));
+
+        // A broken one: the check finds it and the previous version is back, still in use.
+        $version('1.2.0', '<?php throw new RuntimeException("versão 1.2 quebrada");');
+        pb_package_wait('theme', $zip);
+        pb_package_install_waiting('theme');
+        pb_test_new_request();
+        $this->assertStringContainsString('versão 1.2 quebrada', (string) pb_package_check_installed());
+        $this->assertSame('1.1.0', pb_package_version('theme', 'second'));
+        $this->assertSame('second', pb_option('theme'));
+        $this->assertStringContainsString('TEMA-SEGUNDO', $this->visit('/sobre'));
+        $this->assertNull(pb_package_check_installed(), 'nothing left to check');
+        unlink($zip);
+    }
 }

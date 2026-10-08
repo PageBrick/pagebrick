@@ -204,7 +204,8 @@ function pb_backups(string $prefix): array
             $list[] = ['file' => $file, 'version' => str_replace('-', '.', $m[1]), 'date' => DateTime::createFromFormat('YmdHis', $m[2])];
         }
     }
-    usort($list, fn($a, $b) => $b['date'] <=> $a['date']);
+    // Newest first; two made in the same second go by version.
+    usort($list, fn($a, $b) => ($b['date'] <=> $a['date']) ?: version_compare($b['version'], $a['version']));
     return $list;
 }
 
@@ -328,7 +329,8 @@ function pb_verify_package(string $file, array $entry, string $type): void
 }
 
 /** Downloads, checks and installs a plugin or theme from the catalog (also used for updates). */
-function pb_install_from_catalog(string $type, string $slug): array
+/** The catalog entry of a theme or plugin this site can install; throws with the reason otherwise. */
+function pb_catalog_package_entry(string $type, string $slug): array
 {
     $entry = pb_catalog_entry($type, $slug) ?? throw new InvalidArgumentException(__('Este pacote não está no catálogo.'));
     if ((int) ($entry['api'] ?? 0) !== PB_API_VERSION) {
@@ -337,6 +339,12 @@ function pb_install_from_catalog(string $type, string $slug): array
     if (!empty($entry['price'])) {
         throw new InvalidArgumentException(__('Este é um pacote pago: compre no site do autor e envie o .zip que ele entregar.'));
     }
+    return $entry;
+}
+
+function pb_install_from_catalog(string $type, string $slug): array
+{
+    $entry = pb_catalog_package_entry($type, $slug);
     $file = pb_download((string) ($entry['url'] ?? ''), PB_PACKAGE_MAX_BYTES);
     try {
         pb_verify_package($file, $entry, $type);
@@ -543,6 +551,82 @@ function pb_core_update_apply(array $entry): string
     // Read by index.php without the core: the safety net for a version that can't start at all.
     file_put_contents(pb_backups_dir() . '/update-pending.json', json_encode(['backup' => $backup, 'until' => time() + PB_ROLLBACK_WINDOW]));
     return $backup;
+}
+
+// ------------------------------------------------------------------ a theme or plugin in steps
+// The Themes and Plugins screens install in steps, one request each, so each one shows as it happens
+// (POST /admin/packages/step). The package waits in the backups folder, which the web can't reach.
+
+function pb_package_waiting_file(string $type): string
+{
+    return pb_backups_dir() . "/waiting-$type.zip";
+}
+
+/** Puts a package file where the next steps find it. */
+function pb_package_wait(string $type, string $file): void
+{
+    if (!is_dir(pb_backups_dir())) {
+        mkdir(pb_backups_dir(), 0755, true);
+    }
+    copy($file, pb_package_waiting_file($type));
+}
+
+/** The waiting package, checked like any upload: its name, version, and whether it replaces one that's there or in use. */
+function pb_package_waiting_info(string $type): array
+{
+    try {
+        $info = pb_inspect_package(pb_package_waiting_file($type), $type);
+    } catch (InvalidArgumentException $e) {
+        @unlink(pb_package_waiting_file($type));
+        throw $e;
+    }
+    $slug = $info['slug'];
+    $there = isset(($type === 'theme' ? pb_themes_available() : pb_plugins_available())[$slug]);
+    $inUse = $type === 'theme' ? $slug === pb_option('theme', PB_FALLBACK_THEME) : !empty(pb_plugin_states()[$slug]['active']);
+    return ['slug' => $slug, 'name' => (string) ($info['manifest']['name'] ?? $slug), 'version' => (string) ($info['manifest']['version'] ?? ''),
+        'replaces' => $there, 'in_use' => $there && $inUse];
+}
+
+/** Installs the waiting package (the current version is kept) and notes what the check step must look at. */
+function pb_package_install_waiting(string $type, ?string $slug = null, ?string $version = null): array
+{
+    $info = pb_package_waiting_info($type);
+    try {
+        $result = pb_install_package(pb_package_waiting_file($type), $type, $slug, $version);
+    } finally {
+        @unlink(pb_package_waiting_file($type));
+    }
+    if ($result['backup'] !== null) {
+        // As with any update: if it breaks within the next hour, the current version comes back by itself.
+        $state = ['rollback_until' => time() + PB_ROLLBACK_WINDOW, 'error' => null];
+        $type === 'plugin' ? pb_set_plugin_state($result['slug'], $state) : pb_set_theme_state($result['slug'], $state);
+    }
+    pb_set_option('package_check', json_encode(['type' => $type, 'slug' => $result['slug'], 'version' => $result['version'],
+        'in_use' => $info['in_use'], 'backup' => $result['backup']]));
+    return $result;
+}
+
+/**
+ * Runs in the request after the install, with the new code loaded: opens every page. If anything breaks, the
+ * previous version goes back in place (still in use). Returns the problem, or null.
+ */
+function pb_package_check_installed(): ?string
+{
+    $check = json_decode(pb_option('package_check', 'null'), true);
+    pb_delete_option('package_check');
+    if (!is_array($check) || empty($check['in_use'])) {
+        return null;
+    }
+    $problem = pb_check_site();
+    // The very copy this install made (unless the breaker already put a version back on its own).
+    if ($problem !== null && is_string($check['backup']) && is_file($check['backup'])
+        && pb_package_version($check['type'], $check['slug']) === $check['version']) {
+        pb_install_package($check['backup'], $check['type'], $check['slug']);
+        unlink($check['backup']);
+        $fixed = ['error' => null, 'error_at' => null, 'rollback_until' => null];
+        $check['type'] === 'plugin' ? pb_set_plugin_state($check['slug'], $fixed + ['active' => true]) : pb_set_theme_state($check['slug'], $fixed);
+    }
+    return $problem;
 }
 
 // ------------------------------------------------------------------ automatic updates

@@ -1,6 +1,8 @@
 <?php
-$form = function (string $slug, string $action, string $label, string $class = '', string $confirm = '') {
-    return '<form method="post" action="' . e(pb_url('/admin/plugins')) . '"' . ($confirm !== '' ? ' data-confirm="' . e($confirm) . '"' : '') . '>'
+$form = function (string $slug, string $action, string $label, string $class = '', string $confirm = '', string $version = '') {
+    // With a version: installed in steps, each shown as it happens (admin.js, POST /admin/packages/step).
+    $steps = $version !== '' ? ' data-package-steps data-type="plugin" data-slug="' . e($slug) . '" data-version="' . e($version) . '"' : '';
+    return '<form method="post" action="' . e(pb_url('/admin/plugins')) . '"' . ($confirm !== '' ? ' data-confirm="' . e($confirm) . '"' : '') . $steps . '>'
         . pb_csrf_field() . '<input type="hidden" name="plugin" value="' . e($slug) . '">'
         . '<button type="submit" name="action" value="' . e($action) . '" class="' . e($class) . '">' . e($label) . '</button></form>';
 };
@@ -40,7 +42,7 @@ $form = function (string $slug, string $action, string $label, string $class = '
                             <?= $form($slug, 'activate', __('Ativar')) ?>
                         <?php endif ?>
                         <?php if (isset($updates[$slug])): ?>
-                            <?= $form($slug, 'update', sprintf(__('Atualizar para %s'), $updates[$slug]['version']), 'secondary') ?>
+                            <?= $form($slug, 'update', sprintf(__('Atualizar para %s'), $updates[$slug]['version']), 'secondary', '', (string) $updates[$slug]['version']) ?>
                         <?php endif ?>
                         <?php if ($backup): ?>
                             <?= $form($slug, 'restore', sprintf(__('Voltar para %s'), $backup['version']), 'link', __('Voltar para a versão anterior deste plugin?')) ?>
@@ -81,7 +83,7 @@ $form = function (string $slug, string $action, string $label, string $class = '
                         <span class="badge"><?= e((string) $entry['price']) ?></span>
                         <?php if (!empty($entry['homepage'])): ?><a href="<?= e(pb_clean_url((string) $entry['homepage'])) ?>" target="_blank" rel="noopener"><?= e(__('Comprar no site do autor')) ?></a><?php endif ?>
                     <?php else: ?>
-                        <?= $form((string) $entry['slug'], 'install', __('Instalar')) ?>
+                        <?= $form((string) $entry['slug'], 'install', __('Instalar'), '', '', (string) ($entry['version'] ?? '')) ?>
                     <?php endif ?>
                 </div>
             </li>
@@ -90,7 +92,7 @@ $form = function (string $slug, string $action, string $label, string $class = '
     <?= $form('', 'refresh', __('Verificar a loja de novo'), 'link') ?>
 </div>
 
-<form class="card" method="post" action="<?= e(pb_url('/admin/plugins')) ?>" enctype="multipart/form-data">
+<form class="card" method="post" action="<?= e(pb_url('/admin/plugins')) ?>" enctype="multipart/form-data" data-package-steps data-type="plugin">
     <?= pb_csrf_field() ?>
     <h2><?= e(__('Enviar plugin (.zip)')) ?></h2>
     <p class="help"><?= e(__('Para plugins feitos pela sua agência ou comprados de um desenvolvedor. Envie só arquivos de quem você confia: plugins enviados por .zip não vêm do catálogo oficial e não têm assinatura conferida. Se o plugin já existir, a versão atual fica guardada.')) ?></p>
@@ -104,3 +106,5 @@ $form = function (string $slug, string $action, string $label, string $class = '
     <p><input readonly aria-label="<?= e(__('Link de socorro')) ?>" value="<?= e($recoveryUrl) ?>"></p>
     <p class="help"><?= e(__('Sem acesso ao painel? Coloque \'safe_mode\' => true no arquivo config.php pelo gerenciador de arquivos da hospedagem.')) ?></p>
 </details>
+
+<script type="application/json" id="pb-step-texts"><?= json_encode(pb_package_step_texts(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
