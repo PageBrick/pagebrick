@@ -91,6 +91,12 @@ if ($user && pb_has_role($user, 'admin')) {
             <?php if (empty($GLOBALS['pb_config']['safe_mode'])): ?><button type="submit" class="link"><?= e(__('Sair do modo de segurança')) ?></button><?php endif ?>
         </form>
     <?php endif ?>
+    <?php if ($user && ($mode = pb_site_mode()) !== 'live' && $current !== '/admin'): ?>
+        <p class="flash error">
+            <?= e($mode === 'maintenance' ? __('O site está em manutenção: visitantes veem só o aviso.') : __('O site está em construção: visitantes veem só o aviso.')) ?>
+            <a href="<?= e(pb_url('/admin')) ?>"><?= e(__('Mudar')) ?></a>
+        </p>
+    <?php endif ?>
     <?php if ($brokenPlugins && !str_starts_with($current, '/admin/plugins')): ?>
         <p class="flash error" role="alert">
             <?= e(sprintf(__('Plugin desligado automaticamente por erro: %s.'), implode(', ', $brokenPlugins))) ?>

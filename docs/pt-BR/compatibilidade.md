@@ -23,8 +23,8 @@ Toda versão precisa passar nestes testes automáticos ([tests/CompatibilityTest
 | Garantia | Teste |
 |---|---|
 | A API cumpre a promessa | `core/api.php` está congelado em `tests/fixtures/api-v1.json`; o teste falha se algo congelado sumir ou mudar |
-| Os sites feitos na 0.1 continuam funcionando | `tests/fixtures/sites/v0.1` é um site de agência feito na 0.1 (tema próprio com campos e tipos de página extras, plugin próprio com tabelas, rotas, ganchos e uma tela no painel, além de um plugin oficial). Ele nunca é editado, e toda versão precisa rodá-lo |
-| O HTML e as respostas da API deles não mudam | `tests/fixtures/sites/v0.1-output` guarda as páginas e as respostas da API de conteúdo exatas desse site; um caractere alterado faz o teste falhar |
+| Os sites feitos na 1.0 continuam funcionando | `tests/fixtures/sites/v1.0` é um site de agência feito na 1.0 (tema próprio com campos e tipos de página extras, plugin próprio com tabelas, rotas, ganchos e uma tela no painel, além de um plugin oficial). Ele nunca é editado, e toda versão precisa rodá-lo |
+| O HTML e as respostas da API deles não mudam | `tests/fixtures/sites/v1.0-output` guarda as páginas e as respostas da API de conteúdo exatas desse site; um caractere alterado faz o teste falhar |
 | Atualizações para as quais o site não está pronto são recusadas | veja abaixo |
 | Atualizações que quebram o site são desfeitas | um plugin quebrado, um tema quebrado, um erro fatal durante a conferência e uma versão que nem consegue iniciar são todos simulados |
 
@@ -45,6 +45,6 @@ Ela só existiria para uma mudança que não pode ser feita adicionando. Uma ver
 ## Para quem contribui com o núcleo
 
 - Para adicionar algo à API pública: adicione em `core/api.php` e depois rode `php tools/pagebrick.php api-snapshot`. O comando se recusa a congelar uma versão que quebre a promessa atual.
-- Nunca edite `tests/fixtures/sites/v0.1` nem `v0.1-output`. Se uma mudança faz esses testes falharem, é a mudança que precisa ser corrigida. Para cobrir recursos de uma versão posterior, adicione um novo site congelado (`sites/v0.2/`) ao lado.
+- Nunca edite `tests/fixtures/sites/v1.0` nem `v1.0-output`. Se uma mudança faz esses testes falharem, é a mudança que precisa ser corrigida. Para cobrir recursos de uma versão posterior, adicione um novo site congelado (`sites/v1.1/`) ao lado.
 - As migrações só adicionam. Nunca use `DROP` nem `RENAME` em algo que uma versão anterior usava.
-- Se uma mudança no HTML que o núcleo imprime for mesmo necessária (uma correção de segurança, por exemplo), ela é uma mudança visível para todos os sites: registre no [CHANGELOG.md](../../CHANGELOG.md) em "HTML changes" e depois gere o snapshot de novo, apagando o arquivo afetado em `v0.1-output` e rodando os testes.
+- Se uma mudança no HTML que o núcleo imprime for mesmo necessária (uma correção de segurança, por exemplo), ela é uma mudança visível para todos os sites: registre no [CHANGELOG.md](../../CHANGELOG.md) em "HTML changes" e depois gere o snapshot de novo, apagando o arquivo afetado em `v1.0-output` e rodando os testes.

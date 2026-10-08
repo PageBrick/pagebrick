@@ -137,3 +137,30 @@ dialog::backdrop { background: rgb(0 0 0 / .5); }
 .media-grid button { margin: 0; padding: 0; border: 2px solid transparent; background: var(--bg); border-radius: 6px; overflow: hidden; }
 .media-grid button:hover, .media-grid button:focus-visible { border-color: var(--accent); }
 .media-grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; }
+.modes .mode { display: flex; gap: .6rem; align-items: flex-start; margin: 0; padding: 1rem; border: 1px solid var(--line); border-radius: 8px; font-weight: 400; cursor: pointer; }
+.modes .mode:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.modes .mode input { margin-top: .3rem; }
+.modes .mode span span { display: block; color: var(--muted); font-size: .9rem; }
+.install .steps { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; margin: 0 0 1.5rem; padding: 0; list-style: none; color: var(--muted); font-size: .9rem; }
+.install .steps span { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; margin-right: .2rem; border: 1px solid var(--line); border-radius: 50%; }
+.install .steps [aria-current] { color: var(--text); font-weight: 600; }
+.install .steps [aria-current] span { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.install .steps .done span { border-color: var(--accent); color: var(--accent); }
+.install .languages { display: grid; gap: .5rem; margin: 1rem 0; padding: 0; border: 0; }
+.install .languages legend { margin-bottom: .5rem; font-weight: 600; }
+.install .languages label { margin: 0; padding: .9rem 1rem; border: 1px solid var(--line); border-radius: 8px; font-weight: 400; cursor: pointer; }
+.install .languages label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.install .checks { display: grid; gap: .4rem; margin: 1rem 0; padding: 0; list-style: none; }
+.install .checks li { padding: .55rem .8rem; border-radius: 6px; background: var(--bg); }
+.install .checks strong { display: inline-block; width: 1.2rem; }
+.install .checks .ok strong { color: var(--ok); }
+.install .checks .bad { background: var(--err-bg); }
+.install .checks .bad strong { color: var(--err); }
+.install .checks span { display: block; margin: .2rem 0 0 1.2rem; color: var(--muted); font-size: .9rem; }
+.install .password { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.install .password input { flex: 1 1 14rem; }
+.install .password button { margin: 0; }
+.install .actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-top: 1.5rem; }
+.install .actions button { margin: 0; }
+a.button { display: inline-block; padding: .55rem 1.1rem; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-weight: 600; text-decoration: none; }

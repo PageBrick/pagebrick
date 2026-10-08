@@ -1,5 +1,5 @@
 <?php
-// FROZEN: an agency plugin built on PageBrick 0.1 (see ../../README.md). Never edit.
+// FROZEN: an agency plugin built on PageBrick 1.0 (see ../../README.md). Never edit.
 
 pb_plugin_migrations([
     1 => ['CREATE TABLE ' . pb_table('agencia_leads') . ' (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, email VARCHAR(190) NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'],

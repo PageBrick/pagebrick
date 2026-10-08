@@ -1,5 +1,5 @@
 <?php
-// FROZEN: an agency theme built on PageBrick 0.1 (see ../../README.md). Never edit.
+// FROZEN: an agency theme built on PageBrick 1.0 (see ../../README.md). Never edit.
 return [
     'templates' => [
         'home' => ['fields' => [

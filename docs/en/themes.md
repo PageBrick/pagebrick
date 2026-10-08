@@ -11,7 +11,7 @@ A theme is the whole front end of a PageBrick site: every byte of HTML, CSS and 
 - **Plugins don't impose their markup.** Your theme can replace any template or stylesheet a plugin shows on the site (see [Replacing a plugin's templates](#replacing-a-plugins-templates)).
 - **Headers are yours too.** The core sends `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN` and `Referrer-Policy`; call `header()` in your layout to change them or add your own.
 - **Or skip PHP entirely.** Build the front end with Next.js, Astro or an app and read the content as JSON from the [content API](headless.md).
-- **Updates don't break your site.** Everything a theme may use is a frozen, versioned API ([compatibility.md](compatibility.md)). On every release, an automated test renders a site built on PageBrick 0.1 and fails if a single character of its HTML (or of its content API answers) changed. If an update breaks something on a real site anyway, it is undone automatically on the first visit.
+- **Updates don't break your site.** Everything a theme may use is a frozen, versioned API ([compatibility.md](compatibility.md)). On every release, an automated test renders a site built on PageBrick 1.0 and fails if a single character of its HTML (or of its content API answers) changed. If an update breaks something on a real site anyway, it is undone automatically on the first visit.
 - **A broken theme doesn't take the site down.** A theme is tested with every page before it is activated; if it fails later, that page is shown with the default theme and the panel tells the administrator what happened.
 
 ## Files
@@ -27,10 +27,12 @@ content/themes/my-theme/
 │   ├── services.php    required
 │   ├── contact.php     required
 │   ├── 404.php         optional
+│   ├── closed.php      optional: the whole page shown while the site is under construction or in maintenance
 │   └── landing.php     any page type you add
 ├── plugins/            optional: your copies of plugin templates and stylesheets
 ├── assets/             anything: CSS, JS, fonts, images, your build output
 ├── lang/en.php, es.php optional: translations of your theme's texts
+├── demo.php, demo/     optional: ready-made content (pages, photos, menus, settings)
 └── screenshot.webp     optional: picture shown on the Themes screen (800×500)
 ```
 
@@ -198,6 +200,16 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 - The panel never uses your copies: plugin screens stay as the plugin made them.
 - If your copy breaks, the theme is blamed, not the plugin: the page falls back to the default theme and the plugin keeps working.
 - When a plugin changes a template in a new version, your copy keeps working as it is. Compare with the new version when you update your theme.
+
+## Ready-made content
+
+A theme can bring its own content, so a new site looks finished the moment it is activated. Add `demo.php` returning pages, photos (files in `demo/`), menus and settings, in the same format as the core's example site ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Inside it, `page:{slug}` and `media:{key}` point to its own pages and photos.
+
+The administrator imports it with **Import the theme's content** in **System → Themes**. Pages with the same address get the new content (their previous version stays in their history), new pages are created, menus are replaced, and settings the content doesn't mention stay as they are.
+
+## Under construction and maintenance
+
+While the site is **Under construction** or in **Maintenance** (dashboard → Site status), visitors get a 503 answer and a short notice; people logged in see the site normally. Draw that notice yourself in `templates/closed.php`: a complete HTML document that receives `$mode`, `$title`, `$message`, `$site` and `$siteName`. If it breaks, the core's own notice is shown.
 
 ## Translations
 

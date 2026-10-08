@@ -6,7 +6,7 @@ A simple CMS for business websites. A non-technical owner installs it and publis
 
 ## What it does
 
-- Web installer that creates a finished example site: Home, About, Services, Contact and Privacy policy, with photos. In Portuguese, English or Spanish.
+- Step-by-step installer like WordPress's (language, server check, database, site), which creates a finished example site: Home, About, Services, Contact and Privacy policy, with photos. In Portuguese, English or Spanish.
 - Pages with fields, sections the client can hide, history with "restore", drafts and preview.
 - Logo, color, font style, WhatsApp, contact details and social links under **Appearance & contact**.
 - Themes you can switch without losing content, with a private preview before activating.
@@ -15,6 +15,7 @@ A simple CMS for business websites. A non-technical owner installs it and publis
 - Circuit breakers: a broken plugin or theme is switched off on its own and the site stays up. Safe mode with a rescue link.
 - One-click updates of PageBrick itself that check the whole site afterwards and go back on their own if anything broke.
 - Content API (JSON) for front ends built with Next.js, Astro or any other framework.
+- "Under construction" and "Maintenance" switches: visitors see a notice, people logged in see the site.
 - SEO basics (title and description per page, friendly addresses, sitemap.xml, robots.txt), images resized to WebP, no cookies for visitors.
 - Two roles: Administrator (the agency) and Editor (the client).
 

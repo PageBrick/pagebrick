@@ -2,6 +2,14 @@
 // PageBrick front controller: every request comes through here (see .htaccess).
 define('PB_ROOT', __DIR__);
 
+// An old PHP gets an explanation instead of a blank error page (this file must stay readable by PHP 7).
+if (PHP_VERSION_ID < 80200) {
+    http_response_code(500);
+    exit('<p>PageBrick needs PHP 8.2 or newer; this server runs PHP ' . PHP_VERSION . '. In cPanel, change it under "Select PHP Version" or "MultiPHP Manager".</p>'
+        . '<p>O PageBrick precisa do PHP 8.2 ou mais novo; este servidor usa o PHP ' . PHP_VERSION . '. No cPanel, troque em "Selecionar versão do PHP" ou "MultiPHP Manager".</p>'
+        . '<p>PageBrick necesita PHP 8.2 o superior; este servidor usa PHP ' . PHP_VERSION . '. En cPanel, cámbialo en "Seleccionar versión de PHP" o "MultiPHP Manager".</p>');
+}
+
 // Safety net for updates. If a PageBrick version installed in the last hour can't even start (a fatal error
 // in core/ or vendor/), put the previous version back from the backup the update made, and ask for a reload.
 // Written without any core function on purpose: the core is what failed.

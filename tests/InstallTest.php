@@ -79,10 +79,59 @@ final class InstallTest extends TestCase
         $this->assertNull($GLOBALS['pb_config']);
     }
 
-    public function test_wrong_database_password_gives_a_readable_error(): void
+    public function test_database_errors_say_what_to_do(): void
     {
-        $this->expectExceptionMessage('Não consegui conectar ao banco de dados');
-        pb_install($this->input(['db_pass' => 'errada']), $this->root);
+        $error = function (array $override): string {
+            try {
+                pb_install_db($this->input($override));
+                return '';
+            } catch (InvalidArgumentException $e) {
+                return $e->getMessage();
+            }
+        };
+        $this->assertSame('O usuário ou a senha do banco não conferem.', $error(['db_pass' => 'errada']));
+        $this->assertStringContainsString('O banco "nao_existe" não existe', $error(['db_name' => 'nao_existe']));
+        $this->assertStringContainsString('Não encontrei o servidor de banco "nao-existe.invalid"', $error(['db_host' => 'nao-existe.invalid']));
+        $this->assertSame('', $error([]));
+    }
+
+    /** Renders the installer like a request would: [status, html]. */
+    private function installer(string $method, int $step = 0, array $post = [], string $path = '/'): array
+    {
+        $GLOBALS['pb_config'] = null;
+        $_GET = $step ? ['step' => (string) $step] : [];
+        $_POST = $post;
+        $_SERVER['REQUEST_URI'] = $path;
+        http_response_code(200);
+        ob_start();
+        pb_install_page($method);
+        $html = ob_get_clean();
+        $_POST = [];
+        return [http_response_code(), $html];
+    }
+
+    public function test_the_installer_walks_through_four_steps_like_wordpress(): void
+    {
+        $_SESSION = [];
+        $this->assertStringContainsString('English', $this->installer('GET')[1]);
+        $check = $this->installer('GET', 2)[1];
+        $this->assertStringContainsString('Conferência do servidor', $check);
+        $this->assertStringContainsString('Vamos lá', $check, 'nothing required is missing in the test server');
+        $this->assertSame('{"rewrite": true}', $this->installer('GET', 0, [], '/install-check')[1]);
+
+        $this->assertStringContainsString('Testar a conexão', $this->installer('GET', 4)[1], 'step 4 needs a working database first');
+        $db = pb_test_db();
+        [$status, $html] = $this->installer('POST', 3, ['db_host' => $db['host'], 'db_name' => $db['name'], 'db_user' => $db['user'], 'db_pass' => 'errada']);
+        $this->assertSame(422, $status);
+        $this->assertStringContainsString('não conferem', $html);
+        $this->assertStringContainsString('value="' . $db['name'] . '"', $html, 'what was typed stays, except the password');
+
+        $html = $this->installer('POST', 3, ['db_host' => $db['host'], 'db_name' => $db['name'], 'db_user' => $db['user'], 'db_pass' => $db['pass']])[1];
+        $this->assertStringContainsString('Tudo certo com o banco de dados', $html);
+        $this->assertStringContainsString('Gerar senha forte', $html);
+        $this->assertSame($db['name'], $_SESSION['pb_install_db']['name']);
+        $_SESSION = [];
+        http_response_code(200);
     }
 
     public function test_unwritable_folder_returns_config_for_manual_creation(): void

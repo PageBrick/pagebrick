@@ -11,7 +11,7 @@ Um tema é todo o front-end de um site PageBrick: cada byte de HTML, CSS e JavaS
 - **Os plugins não impõem o markup deles.** O seu tema pode substituir qualquer template ou folha de estilo que um plugin mostra no site (veja [Substituindo os templates de um plugin](#substituindo-os-templates-de-um-plugin)).
 - **Os cabeçalhos também são seus.** O núcleo envia `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN` e `Referrer-Policy`; chame `header()` no seu layout para mudar esses cabeçalhos ou adicionar os seus.
 - **Ou dispense o PHP.** Faça o front-end com Next.js, Astro ou um aplicativo e leia o conteúdo em JSON pela [API de conteúdo](headless.md).
-- **As atualizações não quebram o seu site.** Tudo o que um tema pode usar é uma API congelada e versionada ([compatibilidade.md](compatibilidade.md)). A cada versão, um teste automático renderiza um site feito no PageBrick 0.1 e falha se um único caractere do HTML dele (ou das respostas da API de conteúdo) mudar. Se mesmo assim uma atualização quebrar algo em um site real, ela é desfeita automaticamente na primeira visita.
+- **As atualizações não quebram o seu site.** Tudo o que um tema pode usar é uma API congelada e versionada ([compatibilidade.md](compatibilidade.md)). A cada versão, um teste automático renderiza um site feito no PageBrick 1.0 e falha se um único caractere do HTML dele (ou das respostas da API de conteúdo) mudar. Se mesmo assim uma atualização quebrar algo em um site real, ela é desfeita automaticamente na primeira visita.
 - **Um tema quebrado não derruba o site.** O tema é testado com todas as páginas antes de ser ativado; se falhar depois, aquela página é mostrada com o tema padrão e o painel avisa o administrador do que aconteceu.
 
 ## Arquivos
@@ -27,10 +27,12 @@ content/themes/my-theme/
 │   ├── services.php    obrigatório
 │   ├── contact.php     obrigatório
 │   ├── 404.php         opcional
+│   ├── closed.php      opcional: a página inteira mostrada enquanto o site está em construção ou em manutenção
 │   └── landing.php     qualquer tipo de página que você adicionar
 ├── plugins/            opcional: suas cópias de templates e folhas de estilo de plugins
 ├── assets/             qualquer coisa: CSS, JS, fontes, imagens, o resultado do seu build
 ├── lang/en.php, es.php opcional: traduções dos textos do seu tema
+├── demo.php, demo/     opcional: conteúdo pronto (páginas, fotos, menus, configurações)
 └── screenshot.webp     opcional: imagem mostrada na tela de Temas (800×500)
 ```
 
@@ -198,6 +200,16 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 - O painel nunca usa as suas cópias: as telas do plugin ficam como o plugin fez.
 - Se a sua cópia quebrar, a culpa é do tema, não do plugin: a página volta para o tema padrão e o plugin continua funcionando.
 - Quando um plugin muda um template em uma versão nova, a sua cópia continua funcionando como está. Compare com a versão nova quando atualizar o seu tema.
+
+## Conteúdo pronto
+
+Um tema pode trazer o próprio conteúdo, para um site novo parecer pronto assim que o tema é ativado. Crie um `demo.php` que devolve páginas, fotos (arquivos em `demo/`), menus e configurações, no mesmo formato do site de exemplo do núcleo ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Dentro dele, `page:{slug}` e `media:{chave}` apontam para as páginas e fotos do próprio conteúdo.
+
+O administrador importa com **Importar o conteúdo do tema** em **Sistema → Temas**. Páginas com o mesmo endereço recebem o conteúdo novo (a versão anterior fica no histórico), páginas novas são criadas, os menus são trocados e as configurações que o conteúdo não menciona continuam como estão.
+
+## Em construção e em manutenção
+
+Enquanto o site está **Em construção** ou **Em manutenção** (Painel → Situação do site), os visitantes recebem uma resposta 503 e um aviso curto; quem está logado vê o site normalmente. Desenhe esse aviso em `templates/closed.php`: um documento HTML completo que recebe `$mode`, `$title`, `$message`, `$site` e `$siteName`. Se ele quebrar, aparece o aviso do próprio núcleo.
 
 ## Traduções
 

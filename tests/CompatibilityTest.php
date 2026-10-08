@@ -7,16 +7,16 @@ require_once PB_ROOT . '/tools/api.php';
 /**
  * The guarantee that updating PageBrick doesn't break sites already built on it:
  * 1. the public API keeps its promise (tests/fixtures/api-v1.json);
- * 2. a site built on 0.1 (tests/fixtures/sites/v0.1) keeps working;
+ * 2. a site built on 1.0 (tests/fixtures/sites/v1.0) keeps working;
  * 3. the panel refuses an update the site isn't ready for;
  * 4. after an update, the first request checks the site and goes back if anything broke;
  * 5. index.php restores the backup if the new version can't even start.
  */
 final class CompatibilityTest extends TestCase
 {
-    private const FROZEN_SITE = __DIR__ . '/fixtures/sites/v0.1';
-    /** Fingerprint of the frozen 0.1 site. If this fails, someone edited it: undo that and fix PageBrick instead. */
-    private const FROZEN_SITE_SHA256 = '001a2848e438ca1e3f575708bf74805bc2a611147a3f5875b636af6f050ef975';
+    private const FROZEN_SITE = __DIR__ . '/fixtures/sites/v1.0';
+    /** Fingerprint of the frozen 1.0 site. If this fails, someone edited it: undo that and fix PageBrick instead. */
+    private const FROZEN_SITE_SHA256 = 'ae2f1e633281050614a429704d578dbe3038861097f331772ed2308c417ae8ec';
 
     private string $dir;
 
@@ -93,7 +93,7 @@ final class CompatibilityTest extends TestCase
         }
     }
 
-    // ---------------------------------------------------------------- 2. a site built on 0.1
+    // ---------------------------------------------------------------- 2. a site built on 1.0
 
     public function test_the_frozen_site_was_not_edited(): void
     {
@@ -103,10 +103,10 @@ final class CompatibilityTest extends TestCase
             $hashes[str_replace('\\', '/', substr($file->getPathname(), strlen(self::FROZEN_SITE)))] = hash_file('sha256', $file->getPathname());
         }
         ksort($hashes);
-        $this->assertSame(self::FROZEN_SITE_SHA256, hash('sha256', json_encode($hashes)), 'tests/fixtures/sites/v0.1 must never change (see its README)');
+        $this->assertSame(self::FROZEN_SITE_SHA256, hash('sha256', json_encode($hashes)), 'tests/fixtures/sites/v1.0 must never change (see its README)');
     }
 
-    /** The 0.1 site as its developer left it: their theme, their plugin, an official plugin and their own pages. */
+    /** The 1.0 site as its developer left it: their theme, their plugin, an official plugin and their own pages. */
     private function buildAgencySite(): ?int
     {
         pb_activate_theme('agencia');
@@ -124,7 +124,7 @@ final class CompatibilityTest extends TestCase
         return $landing;
     }
 
-    public function test_a_site_built_on_0_1_still_works(): void
+    public function test_a_site_built_on_1_0_still_works(): void
     {
         $landing = $this->buildAgencySite();
         $home = $this->visit('/');
@@ -156,10 +156,10 @@ final class CompatibilityTest extends TestCase
 
     /**
      * Front-end developers must be able to trust that an update never changes what their site delivers: the HTML
-     * of its pages and the JSON of the content API. tests/fixtures/sites/v0.1-output holds the exact output of the
+     * of its pages and the JSON of the content API. tests/fixtures/sites/v1.0-output holds the exact output of the
      * frozen site; any difference fails here.
      */
-    public function test_updates_never_change_what_a_0_1_site_delivers(): void
+    public function test_updates_never_change_what_a_1_0_site_delivers(): void
     {
         $this->buildAgencySite();
         $outputs = ['campanha.html' => '/campanha', 'oferta.html' => '/agencia/oferta', 'nao-encontrada.html' => '/nao-existe', 'sitemap.html' => null,
@@ -170,7 +170,7 @@ final class CompatibilityTest extends TestCase
             // What changes on every run: file times, today's date and time, upload names, the test's temporary folder, form tokens.
             $output = preg_replace(['/\?v=\d+/', '/\d{4}-\d{2}-\d{2}/', '/\d{2}:\d{2}:\d{2}/', '#uploads/\d{4}/\d{2}/[0-9a-f]+#', '#"/[^"]*/themes/#', '/\b\d{10}\b/', '/\b[0-9a-f]{64}\b/'],
                 ['?v=N', 'AAAA-MM-DD', 'HH:MM:SS', 'uploads/AAAA/MM/ARQUIVO', '"/content/themes/', 'HORA', 'ASSINATURA'], $output);
-            $file = __DIR__ . "/fixtures/sites/v0.1-output/$name";
+            $file = __DIR__ . "/fixtures/sites/v1.0-output/$name";
             if (!is_file($file)) {
                 file_put_contents($file, $output); // first run only: these files are then frozen like the site
             }
@@ -186,7 +186,7 @@ final class CompatibilityTest extends TestCase
         pb_activate_theme('agencia');
         pb_activate_plugin('agencia-extras');
 
-        $this->assertSame([], pb_core_update_blockers(['version' => '0.2.0', 'api' => [1], 'requires_php' => '8.2']));
+        $this->assertSame([], pb_core_update_blockers(['version' => '1.1.0', 'api' => [1], 'requires_php' => '8.2']));
         $blockers = implode("\n", pb_core_update_blockers(['version' => '2.0.0', 'api' => [2], 'requires_php' => '99.0']));
         $this->assertStringContainsString('PHP 99.0', $blockers);
         $this->assertStringContainsString('Extras da Agência', $blockers);
@@ -196,17 +196,17 @@ final class CompatibilityTest extends TestCase
 
     // ---------------------------------------------------------------- 4. checking the site after an update
 
-    /** A fake PageBrick folder with a backup of "0.1.0", then "0.2.0" in place, waiting for its first request. */
+    /** A fake PageBrick folder with a backup of "1.0.0", then "1.1.0" in place, waiting for its first request. */
     private function pretendUpdated(): void
     {
         $root = "$this->dir/site";
         mkdir("$root/core", 0777, true);
         file_put_contents("$root/core/bootstrap.php", '<?php');
-        file_put_contents("$root/core/versao.txt", '0.1.0');
-        file_put_contents("$root/index.php", '<?php // 0.1.0');
-        $backup = pb_backup_core($root, '0.1.0');
-        file_put_contents("$root/core/versao.txt", '0.2.0');
-        pb_set_option('core_update', json_encode(['from' => '0.1.0', 'to' => '0.2.0', 'backup' => $backup, 'at' => time()]));
+        file_put_contents("$root/core/versao.txt", '1.0.0');
+        file_put_contents("$root/index.php", '<?php // 1.0.0');
+        $backup = pb_backup_core($root, '1.0.0');
+        file_put_contents("$root/core/versao.txt", '1.1.0');
+        pb_set_option('core_update', json_encode(['from' => '1.0.0', 'to' => '1.1.0', 'backup' => $backup, 'at' => time()]));
     }
 
     private function firstRequestAfterUpdate(): ?string
@@ -224,7 +224,7 @@ final class CompatibilityTest extends TestCase
         $this->pretendUpdated();
 
         $this->assertNull($this->firstRequestAfterUpdate());
-        $this->assertSame('0.2.0', file_get_contents("$this->dir/site/core/versao.txt"));
+        $this->assertSame('1.1.0', file_get_contents("$this->dir/site/core/versao.txt"));
         $this->assertNull(pb_pending_core_update());
         $this->assertTrue(json_decode(pb_option('core_update_result'), true)['ok']);
     }
@@ -237,13 +237,13 @@ final class CompatibilityTest extends TestCase
 
         $problem = $this->firstRequestAfterUpdate();
         $this->assertStringContainsString('incompatível com a versão nova', $problem);
-        $this->assertSame('0.1.0', file_get_contents("$this->dir/site/core/versao.txt"), 'the previous version is back');
+        $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"), 'the previous version is back');
         $state = pb_plugin_states()['breaks-pages'];
         $this->assertTrue($state['active'], 'the plugin was not switched off: the update was undone instead');
         $this->assertNull($state['error']);
         $result = json_decode(pb_option('core_update_result'), true);
         $this->assertFalse($result['ok']);
-        $this->assertSame('0.1.0', $result['from']);
+        $this->assertSame('1.0.0', $result['from']);
     }
 
     public function test_an_update_that_breaks_the_theme_is_undone(): void
@@ -253,7 +253,7 @@ final class CompatibilityTest extends TestCase
         file_put_contents("$this->dir/themes/agencia/templates/page.php", '<?php echo pb_funcao_que_a_versao_nova_removeu();');
 
         $this->assertStringContainsString('pb_funcao_que_a_versao_nova_removeu', $this->firstRequestAfterUpdate());
-        $this->assertSame('0.1.0', file_get_contents("$this->dir/site/core/versao.txt"));
+        $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"));
         $this->assertSame('agencia', pb_option('theme'), 'the site keeps its theme');
     }
 
@@ -264,7 +264,7 @@ final class CompatibilityTest extends TestCase
         pb_set_option('core_update', json_encode($pending + ['verifying' => true])); // the previous request died mid-check
 
         $this->assertStringContainsString('interrompida', $this->firstRequestAfterUpdate());
-        $this->assertSame('0.1.0', file_get_contents("$this->dir/site/core/versao.txt"));
+        $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"));
     }
 
     // ---------------------------------------------------------------- 5. the safety net in index.php

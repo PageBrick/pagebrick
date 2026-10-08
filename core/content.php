@@ -146,8 +146,8 @@ function pb_page_save(int $id, array $in, ?int $userId): void
 
 function pb_page_write(array $page): void
 {
-    pb_db()->prepare('UPDATE ' . pb_table('pages') . ' SET title = ?, slug = ?, status = ?, data = ?, seo_title = ?, seo_description = ? WHERE id = ?')
-        ->execute([$page['title'], $page['slug'], $page['status'], json_encode($page['data'], JSON_UNESCAPED_UNICODE),
+    pb_db()->prepare('UPDATE ' . pb_table('pages') . ' SET title = ?, slug = ?, template = ?, status = ?, data = ?, seo_title = ?, seo_description = ? WHERE id = ?')
+        ->execute([$page['title'], $page['slug'], $page['template'], $page['status'], json_encode($page['data'], JSON_UNESCAPED_UNICODE),
             $page['seo_title'], $page['seo_description'], $page['id']]);
 }
 
@@ -300,21 +300,36 @@ function pb_menu_html(string $location, string $class = 'menu'): string
  */
 function pb_seed_demo(): void
 {
-    $demo = pb_standard_demo();
+    pb_import_content(pb_standard_demo(), PB_ROOT . '/core/demo');
+}
+
+/**
+ * Fills the site with ready-made content: $content has 'media' (files in $mediaDir), 'pages', 'menus' and 'settings',
+ * in the format of pb_standard_demo(). Inside it, 'page:{slug}' and 'media:{key}' point to its own pages and photos.
+ * A page whose address already exists receives the new content; what it had before stays in its history.
+ */
+function pb_import_content(array $content, string $mediaDir, ?int $userId = null): void
+{
     $media = [];
-    foreach ($demo['media'] ?? [] as $key => $photo) {
+    foreach ($content['media'] ?? [] as $key => $photo) {
         try {
-            $media[$key] = pb_media_store(PB_ROOT . '/core/demo/' . $photo['file'], $photo['file']);
+            $media[$key] = pb_media_store("$mediaDir/{$photo['file']}", $photo['file']);
             pb_media_set_alt($media[$key], $photo['alt'] ?? '');
         } catch (Throwable $e) {
-            error_log("PageBrick: demo photo {$photo['file']} skipped: {$e->getMessage()}"); // e.g. uploads folder not writable
+            error_log("PageBrick: photo {$photo['file']} skipped: {$e->getMessage()}"); // e.g. uploads folder not writable
         }
     }
     $ids = [];
-    $pages = $demo['pages'] ?? [];
+    $pages = $content['pages'] ?? [];
     foreach ($pages as $p) {
-        // The address in the site's language (sobre → about); the Portuguese one stays the key for "page:" links.
-        $ids[$p['slug']] = pb_page_create($p['title'], $p['template'], [], 'published', __($p['slug']));
+        // The address in the site's language (sobre → about); the original one stays the key for "page:" links.
+        $existing = pb_page_by_slug(pb_slugify(__($p['slug'])));
+        if ($existing) {
+            pb_page_snapshot($existing, $userId);
+            $ids[$p['slug']] = $existing['id'];
+        } else {
+            $ids[$p['slug']] = pb_page_create($p['title'], $p['template'], [], 'published', __($p['slug']));
+        }
     }
     // Content is saved after every page exists, so links between pages resolve.
     $resolve = function (mixed $value) use (&$resolve, $ids, $media): mixed {
@@ -328,15 +343,30 @@ function pb_seed_demo(): void
     };
     foreach ($pages as $p) {
         $page = pb_page_find($ids[$p['slug']]);
-        $page['data'] = pb_collect_fields(pb_template_fields($p['template']), $resolve($p['data'] ?? []));
+        $page['title'] = pb_validate_page_title($p['title']);
+        $page['template'] = isset(pb_theme()['templates'][$p['template']]) ? $p['template'] : 'page';
+        $page['status'] = 'published';
+        $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $resolve($p['data'] ?? []));
+        $page['seo_title'] = $p['seo_title'] ?? '';
         $page['seo_description'] = $p['seo_description'] ?? '';
         pb_page_write($page);
         if (!empty($p['home'])) {
             pb_set_home_page($page['id']);
         }
     }
-    foreach ($demo['menus'] ?? [] as $location => $items) {
+    foreach ($content['menus'] ?? [] as $location => $items) {
         pb_save_menu($location, $resolve($items));
     }
-    pb_save_settings($resolve($demo['settings'] ?? []));
+    if (isset($content['settings'])) {
+        // What the content doesn't set (the phone the owner already typed, say) stays as it is.
+        pb_save_settings(array_replace_recursive(json_decode(pb_option('theme_settings', '{}'), true) ?: [], $resolve($content['settings'])));
+    }
+}
+
+/** The active theme's ready-made content (demo.php, photos in demo/), or null when it has none. */
+function pb_theme_demo(): ?array
+{
+    $file = pb_theme()['dir'] . '/demo.php';
+    $demo = is_file($file) ? require $file : null;
+    return is_array($demo) ? $demo : null;
 }

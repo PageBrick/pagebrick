@@ -17,8 +17,8 @@ Cómo los plugins, los temas y el propio PageBrick llegan a los sitios a través
 {
     "format": 1,
     "core": {
-        "version": "0.1.1", "api": [1], "requires_php": "8.2",
-        "url": "https://github.com/pagebrick/pagebrick/releases/download/v0.1.1/pagebrick-0.1.1.zip",
+        "version": "1.0.1", "api": [1], "requires_php": "8.2",
+        "url": "https://github.com/pagebrick/pagebrick/releases/download/v1.0.1/pagebrick-1.0.1.zip",
         "sha256": "…", "signature": "…"
     },
     "plugins": [
@@ -55,7 +55,7 @@ php tools/pagebrick.php package plugin content/plugins/blog ~/.pagebrick/catalog
 
 # Una versión de PageBrick: genera pagebrick-{version}.zip (lo que la gente sube a su alojamiento) y,
 # con una clave y una dirección de descarga, imprime la entrada "core" firmada.
-php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.com/pagebrick/pagebrick/releases/download/v0.1.1/pagebrick-0.1.1.zip
+php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.com/pagebrick/pagebrick/releases/download/v1.0.1/pagebrick-1.0.1.zip
 ```
 
 ## Publicar una nueva versión de PageBrick

@@ -37,9 +37,14 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 | — | Temas modulares | Temas são pacotes (como plugins): ativar, pré-visualizar, enviar .zip, atualizar e voltar versão. **Ao trocar de tema, o conteúdo vai junto** |
 | 25 | Blog | Um plugin "Blog" com **nome e endereço configuráveis** (Blog em /blog, Notícias em /noticias…) e **categorias com subcategorias**. Substituiu o plugin "Notícias" |
 | 26 | Conteúdo entre temas | **Contrato de conteúdo padrão** no núcleo (`core/standard.php`): tipos de página Início, Página simples, Serviços e Contato, mais as configurações de identidade, contato, redes e rodapé. Todo tema exibe esse padrão e pode **acrescentar** campos e tipos de página; os extras ficam guardados se o site trocar de tema |
-| — | Atualização segura | Atualizar pelo painel **não pode quebrar sites já feitos** em cima do PageBrick (ver "Lançamento 0.1") |
+| — | Atualização segura | Atualizar pelo painel **não pode quebrar sites já feitos** em cima do PageBrick (ver "Lançamento 1.0") |
 | 28 | Idiomas | Português, inglês e espanhol no CMS e na documentação. **Um idioma por site**, escolhido na instalação e trocável depois; cada usuário pode ver o painel em outro idioma. Documentação: README principal em inglês, com versões em português e espanhol |
-| 29 | Headless | **API de conteúdo em JSON no núcleo já na 0.1** (`/api/v1/site`, `/api/v1/pages`, `/api/v1/pages/{slug}`; o Blog acrescenta `/api/v1/blog`), para front-ends feitos com Next.js, Astro ou aplicativos. Só leitura, só conteúdo publicado, nunca senhas. O formato das respostas entra na promessa de compatibilidade |
+| 29 | Headless | **API de conteúdo em JSON no núcleo já na 1.0** (`/api/v1/site`, `/api/v1/pages`, `/api/v1/pages/{slug}`; o Blog acrescenta `/api/v1/blog`), para front-ends feitos com Next.js, Astro ou aplicativos. Só leitura, só conteúdo publicado, nunca senhas. O formato das respostas entra na promessa de compatibilidade |
+| 30 | Publicação | Tudo é testado no GitHub (Actions) antes da release. **Primeira versão: 1.0.0.** A branch `main` do GitHub é só do CMS publicado (cada versão lançada); o desenvolvimento acontece na `develop` |
+| — | Em construção / manutenção | Chaves no painel (início, só administradores): visitantes veem um aviso (resposta 503), quem está logado vê o site. O tema pode desenhar o aviso (`templates/closed.php`) |
+| — | Instalação | **Fácil como a do WordPress:** subir o .zip, abrir o site e seguir 4 telas (idioma, conferência do servidor, banco de dados com erros explicados, site e administrador). Sem permissão de gravar, o instalador mostra o `config.php` para criar à mão |
+| — | Conteúdo pronto do tema | Um tema pode trazer páginas, fotos, menus e configurações (`demo.php`), importados com um botão em Sistema → Temas |
+| — | pagebrick.org | O primeiro site feito no PageBrick é o do próprio projeto, na HostGator, em inglês, no estilo do impeccable.style, com o botão do GitHub (estrelas buscadas pelo servidor a cada 6 horas, sem o navegador do visitante falar com o GitHub). O tema fica fora do repositório do CMS, na pasta `sistemas\pagebrick.org` |
 | — | Front-end sem limites | O desenvolvedor tem **liberdade total no front-end** e precisa confiar que o site não vai quebrar: o núcleo não coloca nada no site além do que o tema pede, o tema pode substituir qualquer template ou CSS de plugin, e uma atualização **não muda nem um caractere** do HTML que o site entrega |
 
 ## Decisões técnicas menores
@@ -87,13 +92,13 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 - **Pré-visualização de tema** só para o administrador logado, com barra "Ativar este tema / Sair da pré-visualização".
 - Os textos do painel não prometem revisão de plugins: o projeto não tem equipe para isso. O que se garante é a assinatura.
 
-## Lançamento 0.1 (etapa 5)
+## Lançamento 1.0 (etapa 5)
 
 **Garantia de que atualizar não quebra o site** — cinco travas, todas com testes automáticos (`tests/CompatibilityTest.php`):
 
 1. **API pública congelada.** Tudo o que temas e plugins podem usar está listado em `core/api.php` e fotografado em `tests/fixtures/api-v1.json`. Uma versão nova pode acrescentar, nunca tirar ou mudar. As migrações do banco só acrescentam.
-2. **Site congelado da 0.1.** `tests/fixtures/sites/v0.1` é um site de agência feito na 0.1 (tema próprio, plugin próprio, plugin oficial). Ele nunca é editado; toda versão nova precisa rodá-lo.
-3. **HTML congelado.** `tests/fixtures/sites/v0.1-output` guarda as páginas exatas desse site. Se uma versão nova mudar um caractere do HTML, o teste falha.
+2. **Site congelado da 1.0.** `tests/fixtures/sites/v1.0` é um site de agência feito na 1.0 (tema próprio, plugin próprio, plugin oficial). Ele nunca é editado; toda versão nova precisa rodá-lo.
+3. **HTML congelado.** `tests/fixtures/sites/v1.0-output` guarda as páginas exatas desse site. Se uma versão nova mudar um caractere do HTML, o teste falha.
 4. **Conferência antes de atualizar.** O painel recusa a atualização se o PHP do servidor, um plugin ativo ou o tema não forem compatíveis, e diz qual.
 5. **Conferência depois de atualizar, com volta automática.** O primeiro acesso depois da atualização confere todas as páginas; se algo quebrou, a versão anterior volta sozinha, com plugins e tema como estavam. Se a versão nova nem conseguir iniciar, o `index.php` restaura o backup.
 
@@ -124,6 +129,6 @@ Agendamento de publicação, comentários, multi-site, editor de blocos, site-lo
 2. **Conteúdo:** temas, páginas com campos, mídia, menus, SEO, tema inicial.
 3. **Plugins:** disjuntores, modo de segurança, plugins oficiais (formulário de contato, blog).
 4. **Loja e atualizações:** catálogo, envio de .zip, atualização assinada com backup e "voltar".
-5. **Lançamento 0.1** no GitHub com documentação para devs.
+5. **Lançamento 1.0** no GitHub com documentação para devs.
 
 Cada etapa termina com testes passando e uma demonstração.

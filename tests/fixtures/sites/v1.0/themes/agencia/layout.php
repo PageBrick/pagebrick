@@ -1,5 +1,5 @@
 <?php
-// FROZEN: an agency theme built on PageBrick 0.1 (see ../../README.md). Never edit.
+// FROZEN: an agency theme built on PageBrick 1.0 (see ../../README.md). Never edit.
 /** @var PbGroup $site @var PbValue $siteName @var string $content */
 $color = $site->identity->color->raw() ?: '#d24e2b';
 $whatsapp = pb_whatsapp_url($site->contact->whatsapp->raw(), $site->contact->whatsapp_message->raw());

@@ -23,8 +23,8 @@ Every release must pass these automated tests ([tests/CompatibilityTest.php](../
 | Guarantee | Test |
 |---|---|
 | The API keeps its promise | `core/api.php` is frozen in `tests/fixtures/api-v1.json`; the test fails if anything frozen is missing or changed |
-| Sites built on 0.1 keep working | `tests/fixtures/sites/v0.1` is an agency site built on 0.1 (its own theme with extra fields and page types, its own plugin with tables, routes, hooks and a panel screen, plus an official plugin). It is never edited, and every version must run it |
-| Their HTML and API answers don't change | `tests/fixtures/sites/v0.1-output` holds the exact pages and content API answers of that site; one changed character fails the test |
+| Sites built on 1.0 keep working | `tests/fixtures/sites/v1.0` is an agency site built on 1.0 (its own theme with extra fields and page types, its own plugin with tables, routes, hooks and a panel screen, plus an official plugin). It is never edited, and every version must run it |
+| Their HTML and API answers don't change | `tests/fixtures/sites/v1.0-output` holds the exact pages and content API answers of that site; one changed character fails the test |
 | Updates the site isn't ready for are refused | see below |
 | Updates that break the site are undone | a broken plugin, a broken theme, a fatal error during the check and a version that can't even start are all simulated |
 
@@ -45,6 +45,6 @@ It would exist only for a change that can't be made by adding. A release that su
 ## For core contributors
 
 - Adding to the public API: add it to `core/api.php`, then run `php tools/pagebrick.php api-snapshot`. The command refuses to freeze a version that breaks the current promise.
-- Never edit `tests/fixtures/sites/v0.1` or `v0.1-output`. If a change makes them fail, the change is what must be fixed. To cover features of a later version, add a new frozen site (`sites/v0.2/`) next to it.
+- Never edit `tests/fixtures/sites/v1.0` or `v1.0-output`. If a change makes them fail, the change is what must be fixed. To cover features of a later version, add a new frozen site (`sites/v1.1/`) next to it.
 - Migrations only add. Never `DROP` or `RENAME` something an earlier version used.
-- If a change to the HTML the core prints is truly needed (a security fix, say), it is a visible change for every site: note it in [CHANGELOG.md](../../CHANGELOG.md) under "HTML changes", then regenerate the snapshot by deleting the affected file in `v0.1-output` and running the tests.
+- If a change to the HTML the core prints is truly needed (a security fix, say), it is a visible change for every site: note it in [CHANGELOG.md](../../CHANGELOG.md) under "HTML changes", then regenerate the snapshot by deleting the affected file in `v1.0-output` and running the tests.

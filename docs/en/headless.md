@@ -67,7 +67,7 @@ Password fields are never included.
 
 ## What you can count on
 
-The shape of these answers is part of the [compatibility promise](compatibility.md): within `/api/v1/`, nothing is removed or renamed. An automated test freezes the API answers of a site built on PageBrick 0.1 and fails if any of them changes. New fields may appear; your code should ignore keys it doesn't know.
+The shape of these answers is part of the [compatibility promise](compatibility.md): within `/api/v1/`, nothing is removed or renamed. An automated test freezes the API answers of a site built on PageBrick 1.0 and fails if any of them changes. New fields may appear; your code should ignore keys it doesn't know.
 
 ## Endpoints for plugins
 

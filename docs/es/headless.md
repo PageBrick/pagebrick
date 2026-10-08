@@ -67,7 +67,7 @@ Los campos de contraseña nunca se incluyen.
 
 ## Con qué puedes contar
 
-La forma de estas respuestas es parte de la [promesa de compatibilidad](compatibilidad.md): dentro de `/api/v1/`, no se quita ni se renombra nada. Una prueba automática congela las respuestas de la API de un sitio hecho con PageBrick 0.1 y falla si alguna cambia. Pueden aparecer campos nuevos; tu código debe ignorar las claves que no conozca.
+La forma de estas respuestas es parte de la [promesa de compatibilidad](compatibilidad.md): dentro de `/api/v1/`, no se quita ni se renombra nada. Una prueba automática congela las respuestas de la API de un sitio hecho con PageBrick 1.0 y falla si alguna cambia. Pueden aparecer campos nuevos; tu código debe ignorar las claves que no conozca.
 
 ## Endpoints para plugins
 

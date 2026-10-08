@@ -12,6 +12,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/login' => [null, 'pb_admin_login'],
         'POST /admin/logout' => ['editor', 'pb_admin_logout'],
         'GET /admin' => ['editor', 'pb_admin_dashboard'],
+        'POST /admin/site-mode' => ['admin', 'pb_admin_site_mode_save'],
         'GET /admin/pages' => ['editor', 'pb_admin_pages'],
         'POST /admin/pages' => ['editor', 'pb_admin_pages_create'],
         'GET /admin/pages/edit' => ['editor', 'pb_admin_page_edit'],
@@ -115,7 +116,25 @@ function pb_admin_dashboard(): void
         'title' => __('Painel'),
         'user' => pb_current_user(),
         'siteTitle' => pb_option('site_title', 'PageBrick'),
+        'siteMode' => pb_site_mode(),
+        'siteModeMessage' => pb_option('site_mode_message', ''),
     ]);
+}
+
+/** On the air, under construction or in maintenance (dashboard). */
+function pb_admin_site_mode_save(): void
+{
+    try {
+        pb_set_site_mode(pb_post('mode'), pb_post('message'));
+        pb_flash('ok', [
+            'live' => __('O site está no ar para todo mundo.'),
+            'construction' => __('Site em construção: visitantes veem só o aviso.'),
+            'maintenance' => __('Site em manutenção: visitantes veem só o aviso.'),
+        ][pb_site_mode()]);
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    pb_redirect('/admin');
 }
 
 // ------------------------------------------------------------------ pages
@@ -437,6 +456,7 @@ function pb_admin_themes_action(): void
             'delete' => pb_admin_delete_theme($slug),
             'upload' => pb_admin_upload_package('theme'),
             'dismiss' => [pb_set_theme_state($slug, ['error' => null, 'error_at' => null]), __('Aviso dispensado.')][1],
+            'import-demo' => pb_admin_import_theme_demo($slug),
         };
         pb_flash('ok', $message);
     } catch (InvalidArgumentException $e) {
@@ -455,6 +475,17 @@ function pb_admin_preview_theme(string $slug): never
     }
     $_SESSION['pb_preview_theme'] = $slug;
     pb_redirect('/');
+}
+
+/** Imports the active theme's ready-made content (demo.php): pages, photos, menus and settings. */
+function pb_admin_import_theme_demo(string $slug): string
+{
+    $demo = $slug === pb_option('theme', PB_FALLBACK_THEME) ? pb_theme_demo() : null;
+    if ($demo === null) {
+        throw new InvalidArgumentException(__('Este tema não tem conteúdo para importar.'));
+    }
+    pb_import_content($demo, pb_theme()['dir'] . '/demo', pb_current_user_id());
+    return __('Conteúdo do tema importado. As páginas que já existiam guardaram a versão anterior no histórico.');
 }
 
 function pb_admin_delete_theme(string $slug): string

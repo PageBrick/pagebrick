@@ -17,8 +17,8 @@ How plugins, themes and PageBrick itself reach sites through the official catalo
 {
     "format": 1,
     "core": {
-        "version": "0.1.1", "api": [1], "requires_php": "8.2",
-        "url": "https://github.com/pagebrick/pagebrick/releases/download/v0.1.1/pagebrick-0.1.1.zip",
+        "version": "1.0.1", "api": [1], "requires_php": "8.2",
+        "url": "https://github.com/pagebrick/pagebrick/releases/download/v1.0.1/pagebrick-1.0.1.zip",
         "sha256": "…", "signature": "…"
     },
     "plugins": [
@@ -55,7 +55,7 @@ php tools/pagebrick.php package plugin content/plugins/blog ~/.pagebrick/catalog
 
 # A PageBrick release: builds pagebrick-{version}.zip (what people upload to their hosting) and,
 # with a key and a download address, prints the signed "core" entry.
-php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.com/pagebrick/pagebrick/releases/download/v0.1.1/pagebrick-0.1.1.zip
+php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.com/pagebrick/pagebrick/releases/download/v1.0.1/pagebrick-1.0.1.zip
 ```
 
 ## Releasing a new version of PageBrick

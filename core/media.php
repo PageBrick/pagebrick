@@ -47,6 +47,9 @@ function pb_media_upload(array $file): int
 /** Stores a file already on disk in the library. The type is detected from the content, never from the name. */
 function pb_media_store(string $source, string $originalName): int
 {
+    if (!is_file($source)) {
+        throw new InvalidArgumentException(sprintf(__('O arquivo "%s" não foi encontrado.'), $originalName));
+    }
     if (filesize($source) > PB_UPLOAD_MAX_BYTES) {
         throw new InvalidArgumentException(__('O arquivo passa de 10 MB.'));
     }

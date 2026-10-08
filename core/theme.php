@@ -11,7 +11,7 @@
 //                    (plugins/blog/templates/list.php, plugins/contact-form/style.css…): see pb_template_file()
 //
 // The front end is the theme's: the core adds nothing to the site's HTML except where the theme calls
-// pb_head(), pb_footer() and pb_slot(). tests/fixtures/sites/v0.1-output makes sure updates keep it that way.
+// pb_head(), pb_footer() and pb_slot(). tests/fixtures/sites/v1.0-output makes sure updates keep it that way.
 //
 // Circuit breaker: if the active theme fails while showing a page, the visitor gets that page in the
 // default theme instead of an error, and the panel shows what happened.
@@ -270,7 +270,74 @@ function pb_slot(string $name, array $context = []): string
 /** Call it right before </body> in the theme layout: plugins add their scripts here. */
 function pb_footer(): string
 {
-    return pb_preview_bar() . pb_apply_filters('footer_html', '');
+    return pb_preview_bar() . pb_site_mode_bar() . pb_apply_filters('footer_html', '');
+}
+
+// ------------------------------------------------------------------ site under construction / in maintenance
+
+const PB_SITE_MODES = ['live', 'construction', 'maintenance'];
+
+/** 'live', 'construction' (not launched yet) or 'maintenance' (a short pause): then only logged-in users see the site. */
+function pb_site_mode(): string
+{
+    $mode = pb_option('site_mode', 'live');
+    return in_array($mode, PB_SITE_MODES, true) ? $mode : 'live';
+}
+
+function pb_set_site_mode(string $mode, string $message): void
+{
+    if (!in_array($mode, PB_SITE_MODES, true)) {
+        throw new InvalidArgumentException(__('Escolha uma das opções.'));
+    }
+    pb_set_option('site_mode', $mode);
+    pb_set_option('site_mode_message', pb_limit(trim($message), 500));
+}
+
+/**
+ * What visitors get while the site is closed: a 503 answer (search engines come back later instead of
+ * indexing the notice) with a short page. A theme can draw that page itself in templates/closed.php,
+ * a complete HTML document; if it breaks, the core's own page is shown.
+ */
+function pb_render_closed(bool $api): void
+{
+    $mode = pb_site_mode();
+    http_response_code(503);
+    header('Retry-After: ' . ($mode === 'maintenance' ? 3600 : 86400));
+    if ($api) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => $mode === 'maintenance' ? 'maintenance' : 'under_construction']);
+        return;
+    }
+    $vars = [
+        'mode' => $mode,
+        'title' => $mode === 'maintenance' ? __('Site em manutenção') : __('Site em construção'),
+        'message' => pb_option('site_mode_message', '') ?: ($mode === 'maintenance'
+            ? __('Estamos fazendo uma manutenção rápida. Volte daqui a pouco.') : __('Estamos preparando um site novo. Volte em breve.')),
+        'site' => pb_settings(),
+        'siteName' => pb_option('site_title', ''),
+    ];
+    $theme = pb_theme();
+    if (is_file($theme['dir'] . '/templates/closed.php')) {
+        try {
+            echo pb_include($theme['dir'] . '/templates/closed.php', $vars);
+            return;
+        } catch (Throwable $e) {
+            pb_theme_failed($theme['slug'], $e);
+        }
+    }
+    echo pb_include(PB_ROOT . '/core/views/closed.php', $vars);
+}
+
+/** The bar a logged-in user sees on the site while visitors only get the notice. */
+function pb_site_mode_bar(): string
+{
+    $mode = pb_site_mode();
+    if ($mode === 'live' || !pb_current_user()) {
+        return '';
+    }
+    return '<div role="status" style="position:fixed;inset:auto 0 0 0;z-index:9998;padding:.75rem 1rem;background:#171923;color:#fff;font:15px/1.4 system-ui,sans-serif;text-align:center">'
+        . e($mode === 'maintenance' ? __('O site está em manutenção: só quem está logado no painel vê o conteúdo.') : __('O site está em construção: só quem está logado no painel vê o conteúdo.'))
+        . ' <a href="' . e(pb_url('/admin')) . '" style="color:#fff">' . e(__('Mudar no painel')) . '</a></div>';
 }
 
 /** The bar an administrator sees on the site while previewing a theme that isn't active yet. */
@@ -416,6 +483,10 @@ function pb_public(string $method, string $path): void
 {
     $GLOBALS['pb_public_request'] = true; // theme preview applies to the site only, never to the panel
     $isApi = str_starts_with($path, '/api/');
+    if (pb_site_mode() !== 'live' && !pb_current_user()) {
+        pb_render_closed($isApi); // under construction or in maintenance: only people logged in to the panel see the site
+        return;
+    }
     if ($isApi && $method === 'GET' && str_starts_with($path, PB_CONTENT_API . '/') && pb_content_api($path)) {
         return; // the core's endpoints come first; plugins add theirs under /api/v1/{plugin}
     }

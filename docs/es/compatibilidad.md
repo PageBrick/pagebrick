@@ -23,8 +23,8 @@ Cada versión debe pasar estas pruebas automáticas ([tests/CompatibilityTest.ph
 | Garantía | Prueba |
 |---|---|
 | La API cumple su promesa | `core/api.php` está congelado en `tests/fixtures/api-v1.json`; la prueba falla si algo congelado falta o cambió |
-| Los sitios hechos con 0.1 siguen funcionando | `tests/fixtures/sites/v0.1` es un sitio de agencia hecho con 0.1 (su propio tema con campos y tipos de página extra, su propio plugin con tablas, rutas, hooks y una pantalla en el panel, más un plugin oficial). Nunca se edita, y toda versión debe ejecutarlo |
-| Su HTML y las respuestas de la API no cambian | `tests/fixtures/sites/v0.1-output` guarda las páginas y las respuestas de la API de contenido exactas de ese sitio; un solo carácter distinto hace fallar la prueba |
+| Los sitios hechos con 1.0 siguen funcionando | `tests/fixtures/sites/v1.0` es un sitio de agencia hecho con 1.0 (su propio tema con campos y tipos de página extra, su propio plugin con tablas, rutas, hooks y una pantalla en el panel, más un plugin oficial). Nunca se edita, y toda versión debe ejecutarlo |
+| Su HTML y las respuestas de la API no cambian | `tests/fixtures/sites/v1.0-output` guarda las páginas y las respuestas de la API de contenido exactas de ese sitio; un solo carácter distinto hace fallar la prueba |
 | Se rechazan las actualizaciones para las que el sitio no está listo | ver más abajo |
 | Se deshacen las actualizaciones que rompen el sitio | se simulan un plugin roto, un tema roto, un error fatal durante la revisión y una versión que ni siquiera arranca |
 
@@ -45,6 +45,6 @@ Solo existiría para un cambio que no se pueda hacer agregando. Una versión que
 ## Para quienes contribuyen al core
 
 - Para agregar algo a la API pública: agrégalo a `core/api.php` y luego ejecuta `php tools/pagebrick.php api-snapshot`. El comando se niega a congelar una versión que rompa la promesa actual.
-- Nunca edites `tests/fixtures/sites/v0.1` ni `v0.1-output`. Si un cambio los hace fallar, lo que hay que corregir es el cambio. Para cubrir funciones de una versión posterior, agrega un nuevo sitio congelado (`sites/v0.2/`) al lado.
+- Nunca edites `tests/fixtures/sites/v1.0` ni `v1.0-output`. Si un cambio los hace fallar, lo que hay que corregir es el cambio. Para cubrir funciones de una versión posterior, agrega un nuevo sitio congelado (`sites/v1.1/`) al lado.
 - Las migraciones solo agregan. Nunca hagas `DROP` ni `RENAME` de algo que usaba una versión anterior.
-- Si de verdad hace falta cambiar el HTML que imprime el core (una corrección de seguridad, por ejemplo), es un cambio visible para todos los sitios: anótalo en [CHANGELOG.md](../../CHANGELOG.md) en la sección "HTML changes" (cambios en el HTML) y luego regenera la instantánea borrando el archivo afectado en `v0.1-output` y ejecutando las pruebas.
+- Si de verdad hace falta cambiar el HTML que imprime el core (una corrección de seguridad, por ejemplo), es un cambio visible para todos los sitios: anótalo en [CHANGELOG.md](../../CHANGELOG.md) en la sección "HTML changes" (cambios en el HTML) y luego regenera la instantánea borrando el archivo afectado en `v1.0-output` y ejecutando las pruebas.

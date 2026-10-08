@@ -149,6 +149,38 @@ final class ThemesTest extends TestCase
         $this->assertSame('default', pb_active_theme_slug(), 'the panel keeps the active theme');
     }
 
+    public function test_a_theme_can_bring_ready_made_content(): void
+    {
+        $this->expectExceptionMessage('não tem conteúdo para importar');
+        try {
+            pb_admin_import_theme_demo('second'); // only the active theme's content can be imported
+        } catch (InvalidArgumentException) {
+        }
+        pb_activate_theme('second');
+        @mkdir(self::$themes . '/second/demo');
+        imagepng(imagecreatetruecolor(8, 8), self::$themes . '/second/demo/foto.png');
+        $before = pb_page_by_slug('inicio');
+
+        pb_test_new_request();
+        $_SESSION = ['user_id' => $this->adminId];
+        pb_admin_import_theme_demo('second');
+
+        $home = pb_page_by_slug('inicio');
+        $this->assertSame($before['id'], $home['id'], 'an existing address gets the new content');
+        $this->assertSame('Início do tema', $home['title']);
+        $this->assertSame('TEMA-SEGUNDO-HERO', $home['data']['hero']['title']);
+        $this->assertNotSame('', $home['data']['hero']['image'], 'the photo came along');
+        $this->assertCount(1, pb_page_revisions($home['id']), 'what it had before is in the history');
+        $news = pb_page_by_slug('novidades');
+        $this->assertSame('published', $news['status']);
+        $this->assertSame('page:' . $news['id'], $home['data']['hero']['button_link']);
+        $this->assertSame([['label' => '', 'link' => 'page:' . $news['id']]], pb_menu_items_raw('main'));
+        $this->assertSame('#123456', pb_settings()->identity->color->raw());
+        $this->assertNotSame('', pb_settings()->contact->whatsapp_message->raw(), 'settings the content does not mention stay');
+        $_SESSION = [];
+        pb_admin_import_theme_demo('default');
+    }
+
     public function test_a_broken_theme_update_is_rolled_back_by_itself(): void
     {
         pb_activate_theme('second');

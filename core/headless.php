@@ -8,7 +8,7 @@
 //
 // Field values: text as typed; rich text as clean HTML; images as {url, thumb, alt, width, height} or null;
 // links to pages of the site as paths ("/about"), other links as typed; a section the client hid is null.
-// The shape of these answers is part of the compatibility promise (tests/fixtures/sites/v0.1-output).
+// The shape of these answers is part of the compatibility promise (tests/fixtures/sites/v1.0-output).
 // Plugins add their own endpoints under /api/v1/{plugin} with pb_add_route(), pb_content_json() and pb_content_send().
 
 const PB_CONTENT_API = '/api/v1';

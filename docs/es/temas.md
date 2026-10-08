@@ -11,7 +11,7 @@ Un tema es todo el front-end de un sitio PageBrick: cada byte de HTML, CSS y Jav
 - **Los plugins no imponen su HTML.** Tu tema puede reemplazar cualquier plantilla u hoja de estilos que un plugin muestre en el sitio (consulta [Reemplazar las plantillas de un plugin](#reemplazar-las-plantillas-de-un-plugin)).
 - **Los encabezados también son tuyos.** El core envía `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN` y `Referrer-Policy`; llama a `header()` en tu layout para cambiarlos o agregar los tuyos.
 - **O prescinde de PHP.** Haz el front-end con Next.js, Astro o una app y lee el contenido en JSON desde la [API de contenido](headless.md).
-- **Las actualizaciones no rompen tu sitio.** Todo lo que un tema puede usar es una API congelada y versionada ([compatibilidad.md](compatibilidad.md)). En cada versión, una prueba automática genera un sitio hecho con PageBrick 0.1 y falla si cambió un solo carácter de su HTML (o de las respuestas de la API de contenido). Si aun así una actualización rompe algo en un sitio real, se deshace automáticamente en la primera visita.
+- **Las actualizaciones no rompen tu sitio.** Todo lo que un tema puede usar es una API congelada y versionada ([compatibilidad.md](compatibilidad.md)). En cada versión, una prueba automática genera un sitio hecho con PageBrick 1.0 y falla si cambió un solo carácter de su HTML (o de las respuestas de la API de contenido). Si aun así una actualización rompe algo en un sitio real, se deshace automáticamente en la primera visita.
 - **Un tema roto no tumba el sitio.** Antes de activar un tema, se prueba con todas las páginas; si falla más adelante, esa página se muestra con el tema predeterminado y el panel le explica al administrador qué pasó.
 
 ## Archivos
@@ -27,10 +27,12 @@ content/themes/my-theme/
 │   ├── services.php    obligatorio
 │   ├── contact.php     obligatorio
 │   ├── 404.php         opcional
+│   ├── closed.php      opcional: la página completa que se muestra mientras el sitio está en construcción o en mantenimiento
 │   └── landing.php     cualquier tipo de página que agregues
 ├── plugins/            opcional: tus copias de plantillas y hojas de estilos de plugins
 ├── assets/             lo que quieras: CSS, JS, fuentes, imágenes, el resultado de tu build
 ├── lang/en.php, es.php opcional: traducciones de los textos de tu tema
+├── demo.php, demo/     opcional: contenido listo (páginas, fotos, menús, configuración)
 └── screenshot.webp     opcional: imagen que aparece en la pantalla de Temas (800×500)
 ```
 
@@ -198,6 +200,16 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 - El panel nunca usa tus copias: las pantallas del plugin quedan como el plugin las hizo.
 - Si tu copia se rompe, la culpa es del tema, no del plugin: la página vuelve al tema predeterminado y el plugin sigue funcionando.
 - Cuando un plugin cambia una plantilla en una versión nueva, tu copia sigue funcionando tal como está. Compárala con la versión nueva cuando actualices tu tema.
+
+## Contenido listo
+
+Un tema puede traer su propio contenido, para que un sitio nuevo se vea terminado apenas se activa el tema. Crea un `demo.php` que devuelva páginas, fotos (archivos en `demo/`), menús y configuración, con el mismo formato del sitio de ejemplo del core ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Dentro de él, `page:{slug}` y `media:{clave}` apuntan a sus propias páginas y fotos.
+
+El administrador lo importa con **Importar el contenido del tema** en **Sistema → Temas**. Las páginas con la misma dirección reciben el contenido nuevo (la versión anterior queda en el historial), se crean las páginas nuevas, se reemplazan los menús y la configuración que el contenido no menciona queda como está.
+
+## En construcción y en mantenimiento
+
+Mientras el sitio está **En construcción** o **En mantenimiento** (Panel → Estado del sitio), los visitantes reciben una respuesta 503 y un aviso corto; quien inició sesión ve el sitio normalmente. Dibuja ese aviso en `templates/closed.php`: un documento HTML completo que recibe `$mode`, `$title`, `$message`, `$site` y `$siteName`. Si falla, se muestra el aviso del propio core.
 
 ## Traducciones
 

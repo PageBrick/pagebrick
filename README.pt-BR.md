@@ -6,7 +6,7 @@ Um CMS simples para sites de empresas. Um dono de empresa sem conhecimento técn
 
 ## O que ele faz
 
-- Instalador web que cria um site de exemplo pronto: Início, Sobre, Serviços, Contato e Política de privacidade, com fotos. Em português, inglês ou espanhol.
+- Instalador em etapas como o do WordPress (idioma, conferência do servidor, banco de dados, site), que cria um site de exemplo pronto: Início, Sobre, Serviços, Contato e Política de privacidade, com fotos. Em português, inglês ou espanhol.
 - Páginas com campos, seções que o cliente pode esconder, histórico com "restaurar", rascunhos e pré-visualização.
 - Logo, cor, estilo de letra, WhatsApp, dados de contato e redes sociais em **Aparência e contato**.
 - Temas que você troca sem perder conteúdo, com pré-visualização privada antes de ativar.
@@ -15,6 +15,7 @@ Um CMS simples para sites de empresas. Um dono de empresa sem conhecimento técn
 - Disjuntores: um plugin ou tema quebrado é desligado sozinho e o site continua no ar. Modo de segurança com link de socorro.
 - Atualizações do próprio PageBrick em um clique, que conferem o site inteiro depois e voltam sozinhas se algo quebrou.
 - API de conteúdo (JSON) para front-ends feitos com Next.js, Astro ou qualquer outro framework.
+- Chaves de "Em construção" e "Em manutenção": visitantes veem um aviso, quem está logado vê o site.
 - SEO básico (título e descrição por página, endereços amigáveis, sitemap.xml, robots.txt), imagens redimensionadas para WebP, nenhum cookie para os visitantes.
 - Dois papéis: Administrador (a agência) e Editor (o cliente).
 

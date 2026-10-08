@@ -27,6 +27,9 @@ $form = function (string $slug, string $action, string $label, string $class = '
                 <div class="plugin-actions">
                     <?php if ($slug === $active): ?>
                         <span class="badge"><?= e(__('Ativo')) ?></span>
+                        <?php if (is_file(pb_themes_dir() . "/$slug/demo.php")): ?>
+                            <?= $form($slug, 'import-demo', __('Importar o conteúdo do tema'), 'secondary', __('Isso cria as páginas que vêm com o tema e troca os menus. Páginas com o mesmo endereço recebem o conteúdo do tema (a versão anterior fica no histórico). Continuar?')) ?>
+                        <?php endif ?>
                     <?php elseif (!isset($theme['problem'])): ?>
                         <?= $form($slug, 'activate', __('Ativar')) ?>
                         <?= $form($slug, 'preview', __('Pré-visualizar'), 'secondary') ?>
