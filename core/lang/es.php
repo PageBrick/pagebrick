@@ -7,6 +7,9 @@ return [
     'Página não encontrada' => 'Página no encontrada',
     'Este endereço não existe no painel.' => 'Esta dirección no existe en el panel.',
     'Entrar' => 'Entrar',
+    'Esqueci minha senha' => 'Olvidé mi contraseña',
+    'Criar uma senha nova' => 'Crear una contraseña nueva',
+    'Senha nova salva. Entre com ela.' => 'Contraseña nueva guardada. Entra con ella.',
     'Painel' => 'Panel',
     'O site está no ar para todo mundo.' => 'El sitio está en línea para todos.',
     'Site em construção: visitantes veem só o aviso.' => 'En construcción: los visitantes solo ven el aviso.',
@@ -88,6 +91,23 @@ return [
     'Você não pode excluir a sua própria conta.' => 'No puedes eliminar tu propia cuenta.',
     'Muitas tentativas erradas. Aguarde 15 minutos e tente de novo.' => 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.',
     'E-mail ou senha incorretos.' => 'Correo electrónico o contraseña incorrectos.',
+    'Muitas tentativas. Aguarde 15 minutos e tente de novo.' => 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.',
+    'Criar uma senha nova no painel de %s' => 'Crear una contraseña nueva en el panel de %s',
+    'Olá, %1$s.
+
+Alguém pediu para criar uma senha nova para a sua conta no painel de %2$s. Para criar, abra este link em até 1 hora:
+
+%3$s
+
+Se não foi você, ignore este e-mail: a sua senha continua a mesma.' => 'Hola, %1$s.
+
+Alguien pidió crear una contraseña nueva para tu cuenta en el panel de %2$s. Para crearla, abre este enlace antes de 1 hora:
+
+%3$s
+
+Si no fuiste tú, ignora este correo: tu contraseña sigue siendo la misma.',
+    'Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.' => 'Este enlace ya no sirve: dura 1 hora y solo se puede usar una vez. Pide uno nuevo.',
+    'As duas senhas não são iguais.' => 'Las dos contraseñas no son iguales.',
     'Página não encontrada.' => 'Página no encontrada.',
     'Informe um título com até 200 caracteres.' => 'Escribe un título de hasta 200 caracteres.',
     'Modelo de página inválido.' => 'Plantilla de página no válida.',
@@ -391,6 +411,11 @@ return [
     'Testar' => 'Probar',
     'Envia um e-mail de teste para %s.' => 'Envía un correo de prueba a %s.',
     'Enviar e-mail de teste' => 'Enviar correo de prueba',
+    'Se esse e-mail tiver uma conta, enviamos para ele um link para criar uma senha nova. O link vale por 1 hora.' => 'Si ese correo tiene una cuenta, le enviamos un enlace para crear una contraseña nueva. El enlace sirve por 1 hora.',
+    'Não chegou em alguns minutos? Olhe a caixa de spam. Se mesmo assim não chegar, o envio de e-mails do site pode não estar configurado: peça a outro administrador para trocar a sua senha em Usuários.' => '¿No llegó en unos minutos? Mira la carpeta de spam. Si aun así no llega, puede que el envío de correos del sitio no esté configurado: pide a otro administrador que cambie tu contraseña en Usuarios.',
+    'Informe o e-mail da sua conta. Vamos enviar um link para você criar uma senha nova.' => 'Escribe el correo de tu cuenta. Te enviaremos un enlace para crear una contraseña nueva.',
+    'Enviar o link' => 'Enviar el enlace',
+    'Voltar para o login' => 'Volver al inicio de sesión',
     'O banco foi preparado e o administrador foi criado, mas a hospedagem não deixou gravar o arquivo de configuração.' => 'La base de datos se preparó y se creó el administrador, pero el alojamiento no permitió guardar el archivo de configuración.',
     'Crie um arquivo chamado config.php na pasta do PageBrick, cole o conteúdo abaixo e depois entre no painel.' => 'Crea un archivo llamado config.php en la carpeta de PageBrick, pega el contenido de abajo y luego entra en el panel.',
     'Já criei o arquivo, entrar no painel' => 'Ya creé el archivo, entrar en el panel',
@@ -533,6 +558,10 @@ return [
     'Link de socorro' => 'Enlace de rescate',
     'Se o painel parar de abrir por causa de um plugin, este link entra com todos os plugins desligados. Guarde em um lugar seguro: quem tiver o link consegue usar o modo de segurança.' => 'Si el panel deja de abrirse por culpa de un plugin, este enlace entra con todos los plugins desactivados. Guárdalo en un lugar seguro: quien tenga el enlace puede usar el modo seguro.',
     'Sem acesso ao painel? Coloque \'safe_mode\' => true no arquivo config.php pelo gerenciador de arquivos da hospedagem.' => '¿Sin acceso al panel? Pon \'safe_mode\' => true en el archivo config.php desde el administrador de archivos del alojamiento.',
+    'Pedir um link novo' => 'Pedir un enlace nuevo',
+    'Pelo menos 8 caracteres.' => 'Al menos 8 caracteres.',
+    'Repita a nova senha' => 'Repite la nueva contraseña',
+    'Salvar a senha nova' => 'Guardar la contraseña nueva',
     'Idiomas' => 'Idiomas',
     'principal' => 'principal',
     'Textos em %s' => 'Textos en %s',

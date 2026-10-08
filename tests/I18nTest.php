@@ -127,7 +127,7 @@ final class I18nTest extends TestCase
             $panel .= $this->panel(...$screen);
         }
         $_SESSION = [];
-        $panel .= $this->panel('/admin/login');
+        $panel .= $this->panel('/admin/login') . $this->panel('/admin/forgot') . $this->panel('/admin/reset', ['token' => 'old']);
         $this->assertStringContainsString('<html lang="en">', $panel);
 
         // English has no accents: a word with á, ã, ç… is Portuguese that escaped translation.

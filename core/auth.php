@@ -156,3 +156,69 @@ function pb_login_failures(string $email, string $ip): int
     $st->execute([$ip, $email]);
     return (int) $st->fetchColumn();
 }
+
+// ------------------------------------------------------------------ forgot my password
+
+/**
+ * When $email has an account, e-mails it a link to choose a new password: it works once, for an hour, and only
+ * its hash is stored. The answer is the same whether the e-mail exists or not, so nobody can find out who has an
+ * account. Throws only when this IP asked too often (requests count like wrong passwords).
+ */
+function pb_password_reset_request(string $email, string $ip): void
+{
+    $email = substr(strtolower(trim($email)), 0, 190);
+    $ip = substr($ip, 0, 45);
+    $attempts = pb_table('login_attempts');
+    if (pb_login_failures('#reset', $ip) >= PB_LOGIN_MAX_FAILURES) { // '#reset': a key no e-mail can be
+        throw new InvalidArgumentException(__('Muitas tentativas. Aguarde 15 minutos e tente de novo.'));
+    }
+    pb_db()->prepare("INSERT INTO $attempts (ip, email) VALUES (?, '#reset')")->execute([$ip]);
+    pb_db()->exec("DELETE FROM $attempts WHERE attempted_at < NOW() - INTERVAL 1 DAY");
+
+    $user = pb_find_user_by_email($email);
+    if (!$user) {
+        return;
+    }
+    // ponytail: sending takes longer than not sending, so timing could hint at an account; queue the e-mail if that matters.
+    $token = bin2hex(random_bytes(32));
+    pb_db()->prepare('REPLACE INTO ' . pb_table('password_resets') . ' (user_id, token_hash, expires_at) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)')
+        ->execute([$user['id'], hash('sha256', $token)]);
+    $site = pb_option('site_title', 'PageBrick');
+    try {
+        pb_mail($user['email'], sprintf(__('Criar uma senha nova no painel de %s'), $site), sprintf(
+            __("Olá, %1\$s.\n\nAlguém pediu para criar uma senha nova para a sua conta no painel de %2\$s. Para criar, abra este link em até 1 hora:\n\n%3\$s\n\nSe não foi você, ignore este e-mail: a sua senha continua a mesma."),
+            $user['name'], $site, pb_absolute_url('/admin/reset?token=' . $token)
+        ));
+    } catch (RuntimeException $e) {
+        error_log("PageBrick: password reset e-mail not sent: {$e->getMessage()}"); // the answer stays the same
+    }
+}
+
+/** The user a password reset link belongs to, while the link still works; null otherwise. */
+function pb_password_reset_user(string $token): ?array
+{
+    if (!preg_match('/^[0-9a-f]{64}$/', $token)) {
+        return null;
+    }
+    $st = pb_db()->prepare('SELECT user_id FROM ' . pb_table('password_resets') . ' WHERE token_hash = ? AND expires_at > NOW()');
+    $st->execute([hash('sha256', $token)]);
+    $id = $st->fetchColumn();
+    return $id ? pb_find_user((int) $id) : null;
+}
+
+/** Saves the new password of a reset link and spends the link. Throws with a message the user can read. */
+function pb_password_reset(string $token, string $password, string $repeat): array
+{
+    $user = pb_password_reset_user($token)
+        ?? throw new InvalidArgumentException(__('Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.'));
+    if (strlen($password) < 8) {
+        throw new InvalidArgumentException(__('A senha precisa ter pelo menos 8 caracteres.'));
+    }
+    if ($password !== $repeat) {
+        throw new InvalidArgumentException(__('As duas senhas não são iguais.'));
+    }
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
+    pb_db()->prepare('DELETE FROM ' . pb_table('password_resets') . ' WHERE user_id = ?')->execute([$user['id']]);
+    pb_db()->prepare('DELETE FROM ' . pb_table('login_attempts') . ' WHERE email = ?')->execute([$user['email']]); // wrong guesses before don't count
+    return $user;
+}

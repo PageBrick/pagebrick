@@ -10,6 +10,10 @@ function pb_admin(string $method, string $path): void
     $routes = [
         'GET /admin/login' => [null, 'pb_admin_login_form'],
         'POST /admin/login' => [null, 'pb_admin_login'],
+        'GET /admin/forgot' => [null, 'pb_admin_forgot_form'],
+        'POST /admin/forgot' => [null, 'pb_admin_forgot'],
+        'GET /admin/reset' => [null, 'pb_admin_reset_form'],
+        'POST /admin/reset' => [null, 'pb_admin_reset'],
         'POST /admin/logout' => ['editor', 'pb_admin_logout'],
         'GET /admin' => ['editor', 'pb_admin_dashboard'],
         'POST /admin/site-mode' => ['admin', 'pb_admin_site_mode_save'],
@@ -87,7 +91,7 @@ function pb_admin_login_form(): void
     if (pb_current_user()) {
         pb_redirect('/admin');
     }
-    pb_render('login', ['title' => __('Entrar')]);
+    pb_render('login', ['title' => __('Entrar'), 'narrow' => true]);
 }
 
 function pb_admin_login(): void
@@ -96,12 +100,52 @@ function pb_admin_login(): void
         $user = pb_login(pb_post('email'), pb_post('password'), $_SERVER['REMOTE_ADDR'] ?? '');
     } catch (InvalidArgumentException $e) {
         http_response_code(422);
-        pb_render('login', ['title' => __('Entrar'), 'error' => $e->getMessage(), 'email' => pb_post('email')]);
+        pb_render('login', ['title' => __('Entrar'), 'narrow' => true, 'error' => $e->getMessage(), 'email' => pb_post('email')]);
         return;
     }
     session_regenerate_id(true); // new session id after login: blocks session fixation
     $_SESSION['user_id'] = (int) $user['id'];
     pb_redirect('/admin');
+}
+
+function pb_admin_forgot_form(): void
+{
+    pb_render('forgot', ['title' => __('Esqueci minha senha'), 'narrow' => true]);
+}
+
+function pb_admin_forgot(): void
+{
+    try {
+        pb_password_reset_request(pb_post('email'), $_SERVER['REMOTE_ADDR'] ?? '');
+    } catch (InvalidArgumentException $e) {
+        http_response_code(429);
+        pb_render('forgot', ['title' => __('Esqueci minha senha'), 'narrow' => true, 'error' => $e->getMessage(), 'email' => pb_post('email')]);
+        return;
+    }
+    pb_render('forgot', ['title' => __('Esqueci minha senha'), 'narrow' => true, 'sent' => true]);
+}
+
+function pb_admin_reset_form(): void
+{
+    header('Referrer-Policy: no-referrer'); // the link's token stays on this page
+    $token = pb_query('token');
+    pb_render('reset', ['title' => __('Criar uma senha nova'), 'narrow' => true, 'token' => $token, 'valid' => pb_password_reset_user($token) !== null]);
+}
+
+function pb_admin_reset(): void
+{
+    header('Referrer-Policy: no-referrer');
+    $token = pb_post('token');
+    try {
+        pb_password_reset($token, pb_post('password'), pb_post('password_repeat'));
+    } catch (InvalidArgumentException $e) {
+        http_response_code(422);
+        pb_render('reset', ['title' => __('Criar uma senha nova'), 'narrow' => true, 'token' => $token,
+            'valid' => pb_password_reset_user($token) !== null, 'error' => $e->getMessage()]);
+        return;
+    }
+    pb_flash('ok', __('Senha nova salva. Entre com ela.'));
+    pb_redirect('/admin/login');
 }
 
 function pb_admin_logout(): void

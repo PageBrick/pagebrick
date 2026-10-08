@@ -7,6 +7,9 @@ return [
     'Página não encontrada' => 'Page not found',
     'Este endereço não existe no painel.' => 'This address doesn\'t exist in the dashboard.',
     'Entrar' => 'Log in',
+    'Esqueci minha senha' => 'Forgot my password',
+    'Criar uma senha nova' => 'Choose a new password',
+    'Senha nova salva. Entre com ela.' => 'New password saved. Sign in with it.',
     'Painel' => 'Dashboard',
     'O site está no ar para todo mundo.' => 'The site is live for everyone.',
     'Site em construção: visitantes veem só o aviso.' => 'Under construction: visitors see only the notice.',
@@ -88,6 +91,23 @@ return [
     'Você não pode excluir a sua própria conta.' => 'You can\'t delete your own account.',
     'Muitas tentativas erradas. Aguarde 15 minutos e tente de novo.' => 'Too many failed attempts. Wait 15 minutes and try again.',
     'E-mail ou senha incorretos.' => 'Incorrect email or password.',
+    'Muitas tentativas. Aguarde 15 minutos e tente de novo.' => 'Too many attempts. Wait 15 minutes and try again.',
+    'Criar uma senha nova no painel de %s' => 'Choose a new password for the %s dashboard',
+    'Olá, %1$s.
+
+Alguém pediu para criar uma senha nova para a sua conta no painel de %2$s. Para criar, abra este link em até 1 hora:
+
+%3$s
+
+Se não foi você, ignore este e-mail: a sua senha continua a mesma.' => 'Hello, %1$s.
+
+Someone asked to choose a new password for your account on the %2$s dashboard. To choose it, open this link within 1 hour:
+
+%3$s
+
+If it wasn\'t you, ignore this e-mail: your password stays the same.',
+    'Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.' => 'This link no longer works: it lasts 1 hour and can only be used once. Ask for a new one.',
+    'As duas senhas não são iguais.' => 'The two passwords are not the same.',
     'Página não encontrada.' => 'Page not found.',
     'Informe um título com até 200 caracteres.' => 'Enter a title with up to 200 characters.',
     'Modelo de página inválido.' => 'Invalid page template.',
@@ -391,6 +411,11 @@ return [
     'Testar' => 'Test',
     'Envia um e-mail de teste para %s.' => 'Sends a test email to %s.',
     'Enviar e-mail de teste' => 'Send test email',
+    'Se esse e-mail tiver uma conta, enviamos para ele um link para criar uma senha nova. O link vale por 1 hora.' => 'If that e-mail has an account, we sent it a link to choose a new password. The link works for 1 hour.',
+    'Não chegou em alguns minutos? Olhe a caixa de spam. Se mesmo assim não chegar, o envio de e-mails do site pode não estar configurado: peça a outro administrador para trocar a sua senha em Usuários.' => 'Nothing after a few minutes? Check the spam folder. If it still doesn\'t arrive, the site\'s e-mail may not be set up: ask another administrator to change your password in Users.',
+    'Informe o e-mail da sua conta. Vamos enviar um link para você criar uma senha nova.' => 'Enter your account\'s e-mail. We\'ll send you a link to choose a new password.',
+    'Enviar o link' => 'Send the link',
+    'Voltar para o login' => 'Back to sign in',
     'O banco foi preparado e o administrador foi criado, mas a hospedagem não deixou gravar o arquivo de configuração.' => 'The database was set up and the administrator was created, but the hosting didn\'t allow the configuration file to be saved.',
     'Crie um arquivo chamado config.php na pasta do PageBrick, cole o conteúdo abaixo e depois entre no painel.' => 'Create a file named config.php in the PageBrick folder, paste the content below and then log in to the dashboard.',
     'Já criei o arquivo, entrar no painel' => 'I\'ve created the file, log in to the dashboard',
@@ -533,6 +558,10 @@ return [
     'Link de socorro' => 'Rescue link',
     'Se o painel parar de abrir por causa de um plugin, este link entra com todos os plugins desligados. Guarde em um lugar seguro: quem tiver o link consegue usar o modo de segurança.' => 'If the dashboard stops opening because of a plugin, this link logs in with all plugins turned off. Keep it somewhere safe: anyone with the link can use safe mode.',
     'Sem acesso ao painel? Coloque \'safe_mode\' => true no arquivo config.php pelo gerenciador de arquivos da hospedagem.' => 'No access to the dashboard? Put \'safe_mode\' => true in the config.php file using your hosting\'s file manager.',
+    'Pedir um link novo' => 'Ask for a new link',
+    'Pelo menos 8 caracteres.' => 'At least 8 characters.',
+    'Repita a nova senha' => 'Repeat the new password',
+    'Salvar a senha nova' => 'Save the new password',
     'Idiomas' => 'Languages',
     'principal' => 'main',
     'Textos em %s' => 'Texts in %s',

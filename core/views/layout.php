@@ -87,7 +87,7 @@ if ($user && pb_has_role($user, 'admin')) {
 <?php else: ?>
 <header class="guest"><span class="brand" role="img" aria-label="PageBrick"></span></header>
 <?php endif ?>
-<main<?= !empty($editor) ? ' class="wide"' : '' ?>>
+<main<?= !empty($editor) ? ' class="wide"' : (!empty($narrow) ? ' class="narrow"' : '') ?>>
     <?php if ($user && pb_safe_mode()): ?>
         <form class="flash error" method="post" action="<?= e(pb_url('/admin/safe-mode/exit')) ?>">
             <?= pb_csrf_field() ?>

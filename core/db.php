@@ -96,6 +96,15 @@ function pb_migrations(): array
         4 => [
             'ALTER TABLE ' . pb_table('pages') . ' ADD COLUMN translation_of INT UNSIGNED NULL',
         ],
+        // "Forgot my password": one live link per user, kept only as a hash.
+        5 => [
+            'CREATE TABLE ' . pb_table('password_resets') . " (
+                user_id INT UNSIGNED PRIMARY KEY,
+                token_hash CHAR(64) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                KEY token_hash (token_hash)
+            ) $table",
+        ],
     ];
 }
 
