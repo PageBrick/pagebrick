@@ -438,9 +438,17 @@ function pb_seed_demo(): void
  * moving it to the new address: a theme can turn the standard Services page into a Features page.
  * Pages are also found at their address in another language (a site installed in Portuguese, switched to English,
  * still has /sobre): they move to the address in the site's current language.
+ * 'locale' => 'en' says which language the main content is written in: it is refused on a site in another language.
  */
 function pb_import_content(array $content, string $mediaDir, ?int $userId = null): void
 {
+    // Content written in one language ('locale' => 'en') goes only to a site whose main language it is: otherwise
+    // English texts would sit where the Portuguese ones belong, and the language menu would say the wrong thing.
+    $locale = $content['locale'] ?? pb_site_locale();
+    if ($locale !== pb_site_locale()) {
+        throw new InvalidArgumentException(sprintf(__('Este conteúdo é em %1$s, e o idioma principal do site é %2$s. Troque o idioma do site em Configurações → Endereço e idiomas e importe de novo.'),
+            PB_LOCALES[$locale] ?? $locale, PB_LOCALES[pb_site_locale()]));
+    }
     // Addresses follow the site's language (sobre → about on an English site), whatever language the panel speaks.
     $panel = pb_locale();
     pb_set_locale(pb_site_locale());

@@ -79,7 +79,7 @@ $url = fn(int $step) => pb_url('/?step=' . $step);
             <label for="db_user"><?= e(__('Usuário do banco')) ?></label>
             <input id="db_user" name="db_user" required autocomplete="off" value="<?= e($old['db_user'] ?? '') ?>">
             <label for="db_pass"><?= e(__('Senha do banco')) ?></label>
-            <div class="password"><input id="db_pass" name="db_pass" type="password" autocomplete="off"><button type="button" class="secondary" data-show="db_pass"><?= e(__('Mostrar')) ?></button></div>
+            <input id="db_pass" name="db_pass" type="password" autocomplete="off">
             <label for="db_host"><?= e(__('Servidor')) ?></label>
             <input id="db_host" name="db_host" placeholder="localhost" value="<?= e($old['db_host'] ?? '') ?>">
             <p class="help"><?= e(__('Deixe em branco para usar localhost, o padrão da maioria das hospedagens.')) ?></p>
@@ -104,7 +104,6 @@ $url = fn(int $step) => pb_url('/?step=' . $step);
             <label for="admin_password"><?= e(__('Senha (mínimo 8 caracteres)')) ?></label>
             <div class="password">
                 <input id="admin_password" name="admin_password" type="password" required minlength="8" autocomplete="new-password">
-                <button type="button" class="secondary" data-show="admin_password"><?= e(__('Mostrar')) ?></button>
                 <button type="button" class="secondary" data-generate="admin_password"><?= e(__('Gerar senha forte')) ?></button>
             </div>
             <p class="help"><?= e(__('Guarde a senha num lugar seguro, como um gerenciador de senhas.')) ?></p>
@@ -113,14 +112,12 @@ $url = fn(int $step) => pb_url('/?step=' . $step);
     <?php endif ?>
 </div>
 <script>
-    document.querySelectorAll('[data-show]').forEach(button => button.addEventListener('click', () => {
-        const input = document.getElementById(button.dataset.show);
-        input.type = input.type === 'password' ? 'text' : 'password';
-    }));
     document.querySelectorAll('[data-generate]').forEach(button => button.addEventListener('click', () => {
         const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
         const input = document.getElementById(button.dataset.generate);
         input.value = Array.from(crypto.getRandomValues(new Uint32Array(18)), n => chars[n % chars.length]).join('');
-        input.type = 'text';
+        if (input.type === 'password') {
+            input.parentElement.querySelector('.reveal')?.click(); // shown, so it can be copied (the eye hides it again)
+        }
     }));
 </script>

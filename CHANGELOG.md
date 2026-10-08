@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.2
+
+- Password fields have an eye: open to show the password, closed to hide it again (sign-in, account, users, e-mail, installer).
+- Changing the site's main language no longer changes the panel's: whoever never picked a panel language keeps the one they had.
+- Ready-made content can say which language it is written in (`'locale' => 'en'`); importing it on a site with another main language is refused with a clear message, instead of putting English texts where the Portuguese ones belong.
+- Themes that can't be deleted say why: the active one (activate another first) and the default one (the safety net).
+
 ## 1.0.1
 
 - The dashboard announces new versions, and the gear icon gets a dot. Settings → Updates chooses how PageBrick updates: manual, automatic for fixes only (1.0.x, the default) or automatic for everything. An automatic update has the same backup, page check and undo as the button, never retries a version that was undone, and e-mails the administrators. It runs after a request, at most once an hour.

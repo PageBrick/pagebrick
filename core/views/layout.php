@@ -56,7 +56,7 @@ if ($user && pb_has_role($user, 'admin')) {
 <link rel="stylesheet" href="<?= e($asset('admin.css')) ?>">
 <script src="<?= e($asset('admin.js')) ?>" defer></script>
 </head>
-<body>
+<body data-show-password="<?= e(__('Mostrar senha')) ?>" data-hide-password="<?= e(__('Esconder senha')) ?>">
 <?php if ($user): ?>
 <header class="top">
     <a class="brand" href="<?= e(pb_url('/admin')) ?>">PageBrick</a>

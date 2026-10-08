@@ -241,6 +241,24 @@ final class MultilingualTest extends TestCase
         $this->assertSame($count + 1, (int) pb_db()->query('SELECT COUNT(*) FROM ' . pb_table('pages'))->fetchColumn(), 'only the translation is new');
     }
 
+    public function test_content_in_another_language_waits_and_the_panel_keeps_its_language(): void
+    {
+        $english = ['locale' => 'en', 'pages' => [['title' => 'About', 'slug' => 'sobre', 'template' => 'page']]];
+        try {
+            pb_import_content($english, PB_ROOT . '/core/demo');
+            $this->fail('English content went into a Portuguese site');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Endereço e idiomas', $e->getMessage());
+        }
+        $this->assertSame('Sobre', pb_page_by_slug('sobre')['title'], 'nothing was changed');
+
+        $this->assertEmpty(pb_find_user($this->admin)['locale']);
+        pb_set_site_locale('en');
+        $this->assertSame('pt-BR', pb_find_user($this->admin)['locale'], 'the panel keeps the language it spoke');
+        pb_import_content($english, PB_ROOT . '/core/demo');
+        $this->assertSame('About', pb_page_by_slug('about')['title']);
+    }
+
     public function test_the_site_address_can_change_in_the_panel(): void
     {
         $this->assertSame('https://example.com', pb_validate_site_url(' https://example.com/ '));

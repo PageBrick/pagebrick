@@ -8,6 +8,30 @@
         try { localStorage.setItem('pb-theme', root.dataset.theme); } catch (e) {}
     });
 
+    // Password fields: an eye inside the field. Open eye: show the password; closed eye: hide it again.
+    const eyes = {
+        show: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>',
+        hide: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.73 5.08a10.74 10.74 0 0 1 11.21 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.45 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></svg>',
+    };
+    document.querySelectorAll('input[type=password]').forEach((input) => {
+        const box = document.createElement('span');
+        box.className = 'password-field';
+        input.replaceWith(box);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'reveal';
+        const show = (visible) => {
+            input.type = visible ? 'text' : 'password';
+            button.innerHTML = visible ? eyes.hide : eyes.show;
+            button.title = visible ? document.body.dataset.hidePassword : document.body.dataset.showPassword;
+            button.setAttribute('aria-label', button.title);
+            button.setAttribute('aria-pressed', String(visible));
+        };
+        button.addEventListener('click', () => show(input.type === 'password'));
+        box.append(input, button);
+        show(false);
+    });
+
     const dialog = document.getElementById('pb-media');
     let picking = null; // the image field waiting for a choice
 
