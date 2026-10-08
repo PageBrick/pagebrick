@@ -436,6 +436,8 @@ function pb_seed_demo(): void
  * 'settings_translations' => [locale => texts] translates "Aparência e contato". Their languages get switched on.
  * 'replaces' => '{slug}' takes over another page (and its translations) when its own address doesn't exist yet,
  * moving it to the new address: a theme can turn the standard Services page into a Features page.
+ * Pages are also found at their address in another language (a site installed in Portuguese, switched to English,
+ * still has /sobre): they move to the address in the site's current language.
  */
 function pb_import_content(array $content, string $mediaDir, ?int $userId = null): void
 {
@@ -460,11 +462,24 @@ function pb_import_content(array $content, string $mediaDir, ?int $userId = null
         }
         $ids = $moved = [];
         $pages = $content['pages'] ?? [];
+        // A key's address in every language PageBrick speaks (sobre, about, nosotros): a site installed in one
+        // language and switched to another later still has its first pages at the old addresses.
+        $words = [];
+        foreach (array_keys(PB_LOCALES) as $locale) {
+            $file = PB_ROOT . "/core/lang/$locale.php";
+            $words[] = is_file($file) ? require $file : [];
+        }
+        $addresses = fn(string $key) => array_unique(array_map(fn(array $w) => pb_slugify($w[$key] ?? $key), $words));
         foreach ($pages as $p) {
             // The address in the site's language (sobre → about); the original one stays the key for "page:" links.
             $existing = pb_page_by_slug(pb_slugify(__($p['slug'])));
-            if (!$existing && isset($p['replaces']) && $existing = pb_page_by_slug(pb_slugify(__($p['replaces'])))) {
-                $moved[$p['slug']] = true; // e.g. the standard Services page becomes Features, at the new address
+            // Not there: the page it replaces (Services becoming Features), or itself at another language's address.
+            foreach (array_filter([$p['replaces'] ?? null, $p['slug']]) as $key) {
+                foreach ($addresses($key) as $address) {
+                    if (!$existing && ($existing = pb_page_by_slug($address))) {
+                        $moved[$p['slug']] = true; // it goes to the new address
+                    }
+                }
             }
             if ($existing) {
                 pb_page_snapshot($existing, $userId);

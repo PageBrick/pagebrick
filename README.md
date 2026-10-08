@@ -50,7 +50,7 @@ Open http://localhost:8080. In the installer use server `db`, database `pagebric
 
 Test accounts used in local development: `admin@pagebrick.test` (administrator) and `editor@pagebrick.test` (editor), both with the password `pagebrick-local`.
 
-E-mails sent by the local site are caught by Mailpit at http://localhost:8025. To use it, set server `mailpit`, port `1025` and security "None" under **System → Email**.
+E-mails sent by the local site are caught by Mailpit at http://localhost:8025. To use it, set server `mailpit`, port `1025` and security "None" under **Settings → Email**.
 
 Tests:
 

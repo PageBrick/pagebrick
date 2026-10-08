@@ -40,6 +40,7 @@ function pb_handle_request(): void
     if (pb_installed_version() < array_key_last(pb_migrations())) {
         pb_migrate();
     }
+    register_shutdown_function('pb_auto_update_after_response'); // looks for updates now and then, after the answer
     // The panel speaks the user's language if they chose one; the site always speaks the site's language.
     $user = $isAdmin ? pb_current_user() : null;
     pb_set_locale(!empty($user['locale']) ? $user['locale'] : pb_site_locale());

@@ -113,8 +113,8 @@ Esto protege contra plugins rotos, no contra plugins maliciosos: instala código
 
 ## Probar y entregar
 
-1. Pon la carpeta en `content/plugins/` y actívalo en **Sistema → Plugins**.
-2. Comprime la carpeta (`my-plugin.zip` con `my-plugin/` adentro) para subirla en otro sitio en **Sistema → Plugins → Subir plugin (.zip)**.
+1. Pon la carpeta en `content/plugins/` y actívalo en **Configuración → Plugins**.
+2. Comprime la carpeta (`my-plugin.zip` con `my-plugin/` adentro) para subirla en otro sitio en **Configuración → Plugins → Subir plugin (.zip)**.
 3. Para ofrecerlo en el catálogo oficial, consulta [publicacion.md](publicacion.md).
 
 Los plugins oficiales de `content/plugins/` (formulario de contacto y blog) son ejemplos completos.

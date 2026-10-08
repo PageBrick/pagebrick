@@ -36,7 +36,7 @@ Toda versão precisa passar nestes testes automáticos ([tests/CompatibilityTest
 4. **Troca:** cada pasta é trocada em um único passo, então os visitantes nunca veem meia atualização.
 5. **Conferência:** a primeira requisição na versão nova renderiza, nos bastidores, todas as páginas publicadas, a página 404 e o sitemap. Se algo falhar, ou se um plugin tiver sido desligado, a versão anterior volta com os plugins e o tema exatamente como estavam, e o painel explica o que quebrou.
 6. **Rede de segurança:** se a versão nova nem consegue iniciar (um erro fatal de PHP no núcleo), o `index.php` restaura o backup sozinho.
-7. **Depois:** **Voltar para a versão x.y** continua disponível em **Sistema → Atualizações**.
+7. **Depois:** **Voltar para a versão x.y** continua disponível em **Configurações → Atualizações**.
 
 ## Se um dia vier a versão 2 da API
 

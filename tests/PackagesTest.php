@@ -249,6 +249,71 @@ final class PackagesTest extends TestCase
         $this->assertSame('99.0.0', pb_available_updates()['core']['version']);
     }
 
+    /** A signed PageBrick $version in the catalog, and a site folder (core_root) running the current one. */
+    private function publishCore(string $version): void
+    {
+        $GLOBALS['pb_config']['core_root'] = "$this->dir/site";
+        @mkdir("$this->dir/site/core", 0777, true);
+        file_put_contents("$this->dir/site/core/bootstrap.php", '<?php // ' . PB_VERSION);
+        file_put_contents("$this->dir/site/index.php", '<?php');
+        $file = $this->zip(['pagebrick/core/bootstrap.php' => "<?php // $version", 'pagebrick/index.php' => '<?php'], "core-$version.zip");
+        $sha256 = hash_file('sha256', $file);
+        $signature = base64_encode(sodium_crypto_sign_detached(pb_package_message('core', 'core', $version, $sha256), sodium_crypto_sign_secretkey($this->keys)));
+        $this->publish([], ['version' => $version, 'api' => [1], 'requires_php' => '8.2', 'url' => $file, 'sha256' => $sha256, 'signature' => $signature]);
+    }
+
+    public function test_automatic_updates_follow_the_chosen_mode(): void
+    {
+        pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $feature = "$major." . ($minor + 1) . '.0';
+        $this->assertTrue(pb_auto_update_allows($fix, 'patch'));
+        $this->assertFalse(pb_auto_update_allows($feature, 'patch'));
+        $this->assertTrue(pb_auto_update_allows($feature, 'all'));
+        $this->assertFalse(pb_auto_update_allows($fix, 'manual'));
+        $this->assertFalse(pb_auto_update_allows(PB_VERSION, 'all'), 'never the same version again');
+
+        $this->publishCore($feature);
+        $this->assertSame('patch', pb_auto_update_mode(), 'fixes by themselves unless the owner chooses otherwise');
+        $this->assertNull(pb_auto_update(), 'a version with news waits for a click');
+        $this->assertSame($feature, pb_available_updates()['core']['version'], 'but the panel announces it');
+
+        $this->publishCore($fix);
+        pb_set_auto_update_mode('manual');
+        $this->assertNull(pb_auto_update());
+        pb_set_auto_update_mode('patch');
+        $GLOBALS['pb_sent_mail'] = [];
+        $this->assertSame($fix, pb_auto_update());
+        $this->assertStringContainsString("// $fix", file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->assertSame($fix, pb_pending_core_update()['to'], 'the next request checks every page, as with the button');
+        $this->assertSame('ana@example.com', $GLOBALS['pb_sent_mail'][0]['to']);
+        $this->assertNull(pb_auto_update(), 'one update at a time');
+    }
+
+    public function test_a_version_that_was_undone_waits_for_a_person(): void
+    {
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $this->publishCore($fix);
+        pb_set_option('core_update_result', json_encode(['ok' => false, 'from' => PB_VERSION, 'to' => $fix, 'problem' => 'x', 'at' => '2026-10-08 10:00:00']));
+        $this->assertNull(pb_auto_update());
+        $this->assertStringContainsString('// ' . PB_VERSION, file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->expectExceptionMessage('Escolha uma das opções');
+        pb_set_auto_update_mode('sometimes');
+    }
+
+    public function test_the_automatic_check_runs_at_most_once_an_hour(): void
+    {
+        pb_auto_update_after_response();
+        $first = pb_option('auto_update_at');
+        $this->assertGreaterThan(time() - 60, (int) $first);
+        pb_set_option('auto_update_at', (string) ((int) $first - 60));
+        $moved = pb_option('auto_update_at');
+        pb_auto_update_after_response();
+        $this->assertSame($moved, pb_option('auto_update_at'), 'within the hour nothing runs');
+    }
+
     public function test_two_installations_at_the_same_time_are_not_allowed(): void
     {
         $lock = fopen("$this->dir/backups/.lock", 'c');

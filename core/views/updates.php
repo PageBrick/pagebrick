@@ -22,7 +22,8 @@
         <?php endif ?>
     <?php endif ?>
     <?php if ($updates['core']): ?>
-        <p><?= e(sprintf(__('A versão %s está disponível.'), $updates['core']['version'])) ?></p>
+        <p><?= e(sprintf(__('A versão %s está disponível.'), $updates['core']['version'])) ?>
+            <?php if (!$blockers && pb_auto_update_allows((string) $updates['core']['version'], pb_auto_update_mode())): ?><?= e(__('Ela se instala sozinha nas próximas horas, ou agora pelo botão.')) ?><?php endif ?></p>
         <?php if (!empty($updates['core']['notes'])): ?><p class="muted"><?= e((string) $updates['core']['notes']) ?></p><?php endif ?>
         <?php if ($blockers): ?>
             <div class="flash error" role="alert">
@@ -40,6 +41,26 @@
         <?= $form('restore-core', sprintf(__('Voltar para a versão %s'), $coreBackups[0]['version']), 'link', __('Voltar para a versão anterior do PageBrick?')) ?>
     <?php endif ?>
 </div>
+
+<form class="card" method="post" action="<?= e(pb_url('/admin/updates')) ?>">
+    <?= pb_csrf_field() ?>
+    <input type="hidden" name="action" value="mode">
+    <h2><?= e(__('Como o PageBrick se atualiza')) ?></h2>
+    <div class="modes">
+        <?php foreach ([
+            'manual' => [__('Manual'), __('O painel avisa quando sai uma versão nova, e você clica para atualizar.')],
+            'patch' => [__('Automática só para correções'), __('Versões que só corrigem problemas (1.0.1, 1.0.2…) se instalam sozinhas. Versões com novidades (1.1, 2.0) esperam o seu clique. Recomendado.')],
+            'all' => [__('Automática para todas'), __('Toda versão nova se instala sozinha.')],
+        ] as $value => [$label, $help]): ?>
+            <label class="mode">
+                <input type="radio" name="mode" value="<?= $value ?>"<?= pb_auto_update_mode() === $value ? ' checked' : '' ?>>
+                <span><strong><?= e($label) ?></strong><span><?= e($help) ?></span></span>
+            </label>
+        <?php endforeach ?>
+    </div>
+    <p class="help"><?= e(__('Sozinha ou pelo botão, a proteção é a mesma: uma cópia da versão atual antes, todas as páginas conferidas depois e a volta automática se algo quebrar. Os administradores recebem um e-mail a cada atualização automática.')) ?></p>
+    <button type="submit"><?= e(__('Salvar')) ?></button>
+</form>
 
 <div class="card">
     <h2><?= e(__('Plugins e temas')) ?></h2>

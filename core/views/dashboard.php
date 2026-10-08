@@ -1,3 +1,18 @@
+<?php if (pb_has_role($user, 'admin')):
+    $updates = pb_available_updates();
+    $extras = count($updates['plugin']) + count($updates['theme']); ?>
+    <?php if ($updates['core'] || $extras): ?>
+        <p class="flash ok update-notice">
+            <?php if ($updates['core']): ?>
+                <?= e(sprintf(__('O PageBrick %s está disponível.'), $updates['core']['version'])) ?>
+                <?php if (pb_auto_update_allows((string) $updates['core']['version'], pb_auto_update_mode())): ?><?= e(__('Ele se instala sozinho nas próximas horas.')) ?><?php endif ?>
+            <?php else: ?>
+                <?= e(__('Há atualizações de plugins ou temas.')) ?>
+            <?php endif ?>
+            <a href="<?= e(pb_url('/admin/updates')) ?>"><?= e(__('Ver atualizações')) ?></a>
+        </p>
+    <?php endif ?>
+<?php endif ?>
 <div class="card">
     <h1><?= e(sprintf(__('Olá, %s!'), $user['name'])) ?></h1>
     <p><?= e(sprintf(__('Você está no painel do site %s. O que quer fazer?'), $siteTitle)) ?></p>

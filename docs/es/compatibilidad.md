@@ -36,7 +36,7 @@ Cada versión debe pasar estas pruebas automáticas ([tests/CompatibilityTest.ph
 4. **Cambio:** cada carpeta se reemplaza en un solo paso, así los visitantes nunca ven una actualización a medias.
 5. **Revisión:** la primera solicitud en la versión nueva genera, por detrás, todas las páginas publicadas, la página 404 y el sitemap. Si algo falla, o si se desactivó un plugin, vuelve la versión anterior con los plugins y el tema exactamente como estaban, y el panel explica qué se rompió.
 6. **Red de seguridad:** si la versión nueva ni siquiera arranca (un error fatal de PHP en el core), `index.php` restaura la copia de seguridad por sí solo.
-7. **Después:** **Volver a la versión x.y** sigue disponible en **Sistema → Actualizaciones**.
+7. **Después:** **Volver a la versión x.y** sigue disponible en **Configuración → Actualizaciones**.
 
 ## Si algún día llega una versión 2 de la API
 

@@ -113,8 +113,8 @@ This protects against broken plugins, not malicious ones: install code only from
 
 ## Testing and shipping
 
-1. Put the folder in `content/plugins/` and activate it in **System → Plugins**.
-2. Zip the folder (`my-plugin.zip` containing `my-plugin/`) to upload it on another site in **System → Plugins → Upload plugin**.
+1. Put the folder in `content/plugins/` and activate it in **Settings → Plugins**.
+2. Zip the folder (`my-plugin.zip` containing `my-plugin/`) to upload it on another site in **Settings → Plugins → Upload plugin**.
 3. To offer it in the official catalog, see [publishing.md](publishing.md).
 
 The official plugins in `content/plugins/` (contact form and blog) are complete examples.

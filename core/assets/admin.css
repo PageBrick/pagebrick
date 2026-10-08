@@ -189,6 +189,20 @@ a.button { display: inline-block; padding: .55rem 1.1rem; border-radius: 6px; ba
     background: transparent; color: var(--text); cursor: pointer; }
 .theme-switch:hover { border-color: var(--accent); }
 .theme-switch svg { width: 1rem; height: 1rem; }
+/* Settings: the technical screens behind a gear, next to the light/dark switch. */
+.settings-menu > summary { display: inline-grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--text); }
+.settings-menu > summary::after { content: none; }
+.settings-menu > summary:hover, .settings-menu[open] > summary, .settings-menu > summary[aria-current] { border-color: var(--accent); }
+.settings-menu > summary svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .4s ease; }
+.settings-menu[open] > summary svg { transform: rotate(60deg); }
+.settings-menu > div { left: auto; right: 0; }
+.settings-menu > div a { color: var(--text); text-decoration: none; }
+.settings-menu > summary { position: relative; }
+.settings-menu .dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border: 2px solid var(--card); border-radius: 50%; background: var(--brick); }
+.settings-menu .count { display: inline-grid; place-items: center; min-width: 1.3rem; height: 1.3rem; margin-left: .35rem; padding: 0 .35rem; border-radius: 999px;
+    background: var(--brick); color: #fff; font-size: .75rem; font-weight: 700; }
+.update-notice a { margin-left: .4rem; font-weight: 600; }
+.settings-menu > div strong { padding: .25rem 1rem .4rem; color: var(--muted); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 td.translations { white-space: nowrap; }
 td.translations form { display: inline; }
 td.translations .badge { margin: 0 .3rem 0 0; color: var(--text); text-decoration: none; }

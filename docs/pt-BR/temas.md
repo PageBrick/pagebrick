@@ -205,7 +205,7 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 
 Um tema pode trazer o próprio conteúdo, para um site novo parecer pronto assim que o tema é ativado. Crie um `demo.php` que devolve páginas, fotos (arquivos em `demo/`), menus e configurações, no mesmo formato do site de exemplo do núcleo ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Dentro dele, `page:{slug}` e `media:{chave}` apontam para as páginas e fotos do próprio conteúdo.
 
-O administrador importa com **Importar o conteúdo do tema** em **Sistema → Temas**. Páginas com o mesmo endereço recebem o conteúdo novo (a versão anterior fica no histórico), páginas novas são criadas, os menus são trocados e as configurações que o conteúdo não menciona continuam como estão. Para transformar uma página em outra (a página padrão Serviços em Recursos, por exemplo), dê à página nova `'replaces' => 'servicos'`: ela assume aquela página e as traduções dela, no endereço novo.
+O administrador importa com **Importar o conteúdo do tema** em **Configurações → Temas**. Páginas com o mesmo endereço recebem o conteúdo novo (a versão anterior fica no histórico), páginas novas são criadas, os menus são trocados e as configurações que o conteúdo não menciona continuam como estão. Para transformar uma página em outra (a página padrão Serviços em Recursos, por exemplo), dê à página nova `'replaces' => 'servicos'`: ela assume aquela página e as traduções dela, no endereço novo.
 
 ## Em construção e em manutenção
 
@@ -213,7 +213,7 @@ Enquanto o site está **Em construção** ou **Em manutenção** (Painel → Sit
 
 ## Sites em mais de um idioma
 
-Um site pode ser oferecido em idiomas extras (Aparência e contato → Outros idiomas do site). O idioma principal fica na raiz (`/sobre`); os outros, com prefixo: `/en-us/about`, `/es-es/nosotros`, `/pt-br/sobre`. Cada página ganha as suas traduções em **Páginas**, os menus levam às páginas traduzidas e os textos de Aparência e contato também podem ser traduzidos. Os seus templates não mudam: `$page`, `$site`, os menus e `__()` já falam o idioma de quem visita, e o `pb_head()` acrescenta as tags `hreflang` que os buscadores precisam.
+Um site pode ser oferecido em idiomas extras (Configurações, no ícone de engrenagem → Endereço e idiomas). O idioma principal fica na raiz (`/sobre`); os outros, com prefixo: `/en-us/about`, `/es-es/nosotros`, `/pt-br/sobre`. Cada página ganha as suas traduções em **Páginas**, os menus levam às páginas traduzidas e os textos de Aparência e contato também podem ser traduzidos. Os seus templates não mudam: `$page`, `$site`, os menus e `__()` já falam o idioma de quem visita, e o `pb_head()` acrescenta as tags `hreflang` que os buscadores precisam.
 
 Para um seletor de idioma, use `pb_language_links()`. Ela devolve os idiomas do site com `locale`, `name`, `url` e `current`, cada um levando a esta página naquele idioma (ou à página inicial dele), e uma lista vazia num site de um idioma só:
 
@@ -235,6 +235,6 @@ Envolva os textos do seu tema em `__()` e adicione `lang/en.php` e `lang/es.php`
 
 ## Testando e entregando
 
-1. Ative o tema em **Sistema → Temas**. O PageBrick antes renderiza todas as páginas do site com o seu tema e recusa o tema, com o motivo, se algo falhar. **Pré-visualizar** mostra o site com o seu tema só para você.
-2. Compacte a pasta do tema (`my-theme.zip` contendo `my-theme/`) e envie em outro site em **Sistema → Temas → Enviar tema (.zip)**.
+1. Ative o tema em **Configurações → Temas**. O PageBrick antes renderiza todas as páginas do site com o seu tema e recusa o tema, com o motivo, se algo falhar. **Pré-visualizar** mostra o site com o seu tema só para você.
+2. Compacte a pasta do tema (`my-theme.zip` contendo `my-theme/`) e envie em outro site em **Configurações → Temas → Enviar tema (.zip)**.
 3. Para oferecer o tema no catálogo oficial, veja [publicacao.md](publicacao.md).

@@ -66,7 +66,7 @@ php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.c
 4. Create the GitHub release `v{version}` with `pagebrick-{version}.zip` attached (the download address must match the one signed).
 5. Put the printed entry under `"core"` in the catalog repository.
 
-Sites see the new version within 12 hours, or right away with **Check now** in **System → Updates**.
+Sites see the new version within 12 hours, or right away with **Check now** in **Settings → Updates**. The dashboard announces it, and the gear icon gets a dot. By default a fix (1.0.1 → 1.0.2) installs itself, with the same backup, page check and automatic undo as the button; versions with new features (1.1, 2.0) wait for a click. Each site can switch to manual or to automatic for everything in **Settings → Updates**. So publish fixes as patch versions and new features as minor ones.
 
 ## Publishing a plugin or theme in the official catalog
 

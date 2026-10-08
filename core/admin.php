@@ -34,6 +34,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/menus' => ['editor', 'pb_admin_menus_save'],
         'GET /admin/settings' => ['editor', 'pb_admin_settings'],
         'POST /admin/settings' => ['editor', 'pb_admin_settings_save'],
+        'GET /admin/general' => ['admin', 'pb_admin_general'],
+        'POST /admin/general' => ['admin', 'pb_admin_general_save'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
         'POST /admin/account' => ['editor', 'pb_admin_account_save'],
         'GET /admin/users' => ['admin', 'pb_admin_users'],
@@ -430,20 +432,35 @@ function pb_admin_settings_save(): void
         pb_admin_settings(__('Informe o nome do site (até 100 caracteres).'));
         return;
     }
+    pb_set_option('site_title', $siteTitle);
+    pb_save_settings($_POST['f'] ?? []);
+    pb_flash('ok', __('Configurações salvas.'));
+    pb_redirect('/admin/settings');
+}
+
+/** Settings → Address and languages: technical, for administrators. */
+function pb_admin_general(?string $error = null): void
+{
+    pb_render('general', ['title' => __('Endereço e idiomas'), 'error' => $error,
+        'old' => $error ? ['site_url' => pb_post('site_url'), 'locale' => pb_post('locale'), 'locales' => (array) ($_POST['locales'] ?? [])] : []]);
+}
+
+function pb_admin_general_save(): void
+{
     try {
+        $siteUrl = pb_validate_site_url(pb_post('site_url'));
         if (pb_post('locale') !== pb_site_locale() && isset(PB_LOCALES[pb_post('locale')])) {
             pb_set_site_locale(pb_post('locale')); // first: when it can't change, nothing else is saved either
         }
     } catch (InvalidArgumentException $e) {
         http_response_code(422);
-        pb_admin_settings($e->getMessage());
+        pb_admin_general($e->getMessage());
         return;
     }
-    pb_set_option('site_title', $siteTitle);
+    pb_set_option('site_url', $siteUrl);
     pb_set_site_locales(is_array($_POST['locales'] ?? null) ? $_POST['locales'] : []);
-    pb_save_settings($_POST['f'] ?? []);
     pb_flash('ok', __('Configurações salvas.'));
-    pb_redirect('/admin/settings');
+    pb_redirect('/admin/general');
 }
 
 // ------------------------------------------------------------------ plugins
@@ -611,6 +628,7 @@ function pb_admin_updates_action(): void
             'check' => [pb_catalog(true), pb_catalog_error() ?? __('Verificação concluída.')][1],
             'update-core' => [pb_update_core(), __('Atualização instalada. O resultado da conferência do site aparece logo abaixo.')][1],
             'restore-core' => [pb_restore_core(), __('Versão anterior do PageBrick restaurada.')][1],
+            'mode' => [pb_set_auto_update_mode(pb_post('mode')), __('Preferência de atualização salva.')][1],
         };
         pb_flash('ok', $message);
     } catch (InvalidArgumentException $e) {
