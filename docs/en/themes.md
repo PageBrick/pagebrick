@@ -205,7 +205,7 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 
 A theme can bring its own content, so a new site looks finished the moment it is activated. Add `demo.php` returning pages, photos (files in `demo/`), menus and settings, in the same format as the core's example site ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Inside it, `page:{slug}` and `media:{key}` point to its own pages and photos.
 
-The administrator imports it with **Import the theme's content** in **System → Themes**. Pages with the same address get the new content (their previous version stays in their history), new pages are created, menus are replaced, and settings the content doesn't mention stay as they are.
+The administrator imports it with **Import the theme's content** in **System → Themes**. Pages with the same address get the new content (their previous version stays in their history), new pages are created, menus are replaced, and settings the content doesn't mention stay as they are. To turn a page into another one (the standard Services page into Features, say), give the new page `'replaces' => 'servicos'`: it takes over that page and its translations, at the new address.
 
 ## Under construction and maintenance
 

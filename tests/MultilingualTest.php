@@ -204,4 +204,32 @@ final class MultilingualTest extends TestCase
         $this->assertStringContainsString('En español.', $this->visit('/es-es/novedades')[1]);
         $this->assertSame('Pie en español', pb_settings_translation('es')['footer']['text']);
     }
+
+    public function test_ready_made_content_can_replace_a_page(): void
+    {
+        $services = pb_page_by_slug('servicos');
+        $english = $this->translate('servicos', 'Services', [], 'services');
+        $features = ['title' => 'Recursos', 'slug' => 'recursos', 'replaces' => 'servicos', 'template' => 'page', 'data' => ['intro' => 'Tudo.'],
+            'translations' => ['en' => ['title' => 'Features', 'slug' => 'features', 'data' => ['intro' => 'Everything.']]]];
+        pb_import_content(['pages' => [$features], 'menus' => ['main' => [['label' => 'Recursos', 'link' => 'page:recursos']]]], PB_ROOT . '/core/demo');
+
+        $this->assertSame('recursos', pb_page_find($services['id'])['slug'], 'the same page, at the new address');
+        $this->assertSame('features', pb_page_find($english['id'])['slug'], 'its translation moved too');
+        $this->assertNull(pb_page_by_slug('servicos'), 'no leftover Services page');
+        $this->assertSame('/recursos', pb_menu('main')[0]['url']);
+        $this->assertStringContainsString('Everything.', $this->visit('/en-us/features')[1]);
+
+        pb_import_content(['pages' => [$features]], PB_ROOT . '/core/demo');
+        $this->assertSame($services['id'], pb_page_by_slug('recursos')['id'], 'importing again finds it at its new address');
+    }
+
+    public function test_ready_made_content_follows_the_site_language_not_the_panel(): void
+    {
+        $about = pb_page_by_slug('sobre');
+        pb_set_locale('en'); // an administrator whose panel speaks English, on a Portuguese site
+        pb_import_content(['pages' => [['title' => 'Sobre nós', 'slug' => 'sobre', 'template' => 'page']]], PB_ROOT . '/core/demo');
+        $this->assertSame('Sobre nós', pb_page_find($about['id'])['title'], 'the same page, not a new "about"');
+        $this->assertNull(pb_page_by_slug('about'));
+        $this->assertSame('en', pb_locale(), 'the panel keeps its language');
+    }
 }

@@ -205,7 +205,7 @@ content/plugins/contact-form/style.css         →  content/themes/my-theme/plug
 
 Um tema pode trazer o próprio conteúdo, para um site novo parecer pronto assim que o tema é ativado. Crie um `demo.php` que devolve páginas, fotos (arquivos em `demo/`), menus e configurações, no mesmo formato do site de exemplo do núcleo ([core/standard.php](../../core/standard.php), `pb_standard_demo()`). Dentro dele, `page:{slug}` e `media:{chave}` apontam para as páginas e fotos do próprio conteúdo.
 
-O administrador importa com **Importar o conteúdo do tema** em **Sistema → Temas**. Páginas com o mesmo endereço recebem o conteúdo novo (a versão anterior fica no histórico), páginas novas são criadas, os menus são trocados e as configurações que o conteúdo não menciona continuam como estão.
+O administrador importa com **Importar o conteúdo do tema** em **Sistema → Temas**. Páginas com o mesmo endereço recebem o conteúdo novo (a versão anterior fica no histórico), páginas novas são criadas, os menus são trocados e as configurações que o conteúdo não menciona continuam como estão. Para transformar uma página em outra (a página padrão Serviços em Recursos, por exemplo), dê à página nova `'replaces' => 'servicos'`: ela assume aquela página e as traduções dela, no endereço novo.
 
 ## Em construção e em manutenção
 

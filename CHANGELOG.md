@@ -5,6 +5,7 @@ Versions follow [semantic versioning](https://semver.org/). Within API version 1
 ## 1.1.0 (in development)
 
 - Sites in more than one language: extra languages under /pt-br, /es-es or /en-us, page translations, translated menus and Appearance & contact texts, `hreflang` tags, and `pb_language_links()` for themes. Ready-made content can bring translations.
+- Ready-made content can turn a page into another one (`'replaces'`): the standard Services page becomes Features at its new address, translations included.
 - Light/dark switch in the panel header (remembered per browser; follows the system until used).
 
 ## 1.0.0
