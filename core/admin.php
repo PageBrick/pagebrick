@@ -34,6 +34,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/menus' => ['editor', 'pb_admin_menus_save'],
         'GET /admin/settings' => ['editor', 'pb_admin_settings'],
         'POST /admin/settings' => ['editor', 'pb_admin_settings_save'],
+        'POST /admin/panel-language' => ['editor', 'pb_admin_panel_language'],
         'GET /admin/general' => ['admin', 'pb_admin_general'],
         'POST /admin/general' => ['admin', 'pb_admin_general_save'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
@@ -52,6 +53,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/themes' => ['admin', 'pb_admin_themes_action'],
         'GET /admin/updates' => ['admin', 'pb_admin_updates'],
         'POST /admin/updates' => ['admin', 'pb_admin_updates_action'],
+        'POST /admin/updates/step' => ['admin', 'pb_admin_update_step'],
+        'GET /admin/updates/result' => ['admin', 'pb_admin_update_result'],
         'GET /admin/email' => ['admin', 'pb_admin_email'],
         'POST /admin/email' => ['admin', 'pb_admin_email_save'],
         'POST /admin/email/test' => ['admin', 'pb_admin_email_test'],
@@ -438,6 +441,18 @@ function pb_admin_settings_save(): void
     pb_redirect('/admin/settings');
 }
 
+/** The globe in the top bar: the panel's language for whoever is signed in. The site's language doesn't change. */
+function pb_admin_panel_language(): void
+{
+    try {
+        pb_set_user_locale((int) pb_current_user_id(), pb_post('locale'));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    $back = pb_post('back');
+    pb_redirect(preg_match('~^/admin(/[a-z0-9/_-]*)?(\?[^#\s]*)?$~i', $back) ? $back : '/admin');
+}
+
 /** Settings → Address and languages: technical, for administrators. */
 function pb_admin_general(?string $error = null): void
 {
@@ -564,6 +579,7 @@ function pb_admin_themes_action(): void
             'upload' => pb_admin_upload_package('theme'),
             'dismiss' => [pb_set_theme_state($slug, ['error' => null, 'error_at' => null]), __('Aviso dispensado.')][1],
             'import-demo' => pb_admin_import_theme_demo($slug),
+            'import-demo-language' => pb_admin_import_theme_demo($slug, true),
         };
         pb_flash('ok', $message);
     } catch (InvalidArgumentException $e) {
@@ -585,11 +601,15 @@ function pb_admin_preview_theme(string $slug): never
 }
 
 /** Imports the active theme's ready-made content (demo.php): pages, photos, menus and settings. */
-function pb_admin_import_theme_demo(string $slug): string
+function pb_admin_import_theme_demo(string $slug, bool $switchLanguage = false): string
 {
     $demo = $slug === pb_option('theme', PB_FALLBACK_THEME) ? pb_theme_demo() : null;
     if ($demo === null) {
         throw new InvalidArgumentException(__('Este tema não tem conteúdo para importar.'));
+    }
+    // Asked for on the Themes screen: the content's language becomes the site's main one. The panel's doesn't change.
+    if ($switchLanguage && isset($demo['locale'], PB_LOCALES[$demo['locale']]) && $demo['locale'] !== pb_site_locale()) {
+        pb_set_site_locale($demo['locale']);
     }
     pb_import_content($demo, pb_theme()['dir'] . '/demo', pb_current_user_id());
     return __('Conteúdo do tema importado. As páginas que já existiam guardaram a versão anterior no histórico.');
@@ -619,6 +639,31 @@ function pb_admin_updates(): void
         'checkedAt' => json_decode(pb_option('catalog_cache', 'null'), true)['fetched_at'] ?? null,
         'coreBackups' => pb_backups('core_'),
     ]);
+}
+
+/** One step of an update started on the Updates screen; admin.js shows each step as it ends. Answers JSON. */
+function pb_admin_update_step(): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+        $entry = pb_core_update_entry();
+        match (pb_post('step')) {
+            'download' => pb_core_update_download($entry),
+            'verify' => pb_core_update_verify($entry),
+            'apply' => pb_core_update_apply($entry),
+        };
+        echo json_encode(['ok' => true, 'version' => $entry['version']]);
+    } catch (InvalidArgumentException|RuntimeException|UnhandledMatchError $e) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'message' => $e instanceof UnhandledMatchError ? __('Ação inválida.') : $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
+}
+
+/** How the last update ended. Asked right after the new version is in place: this request is the one that checks every page. */
+function pb_admin_update_result(): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['version' => PB_VERSION, 'result' => json_decode(pb_option('core_update_result', 'null'), true)], JSON_UNESCAPED_UNICODE);
 }
 
 function pb_admin_updates_action(): void

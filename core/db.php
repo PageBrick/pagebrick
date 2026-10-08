@@ -105,6 +105,11 @@ function pb_migrations(): array
                 KEY token_hash (token_hash)
             ) $table",
         ],
+        // The panel's language no longer follows the site's: accounts that never chose one keep the one they see now.
+        6 => [
+            'UPDATE ' . pb_table('users') . " SET locale = COALESCE((SELECT value FROM " . pb_table('options') . " WHERE name = 'locale'), 'pt-BR')
+                WHERE locale IS NULL OR locale = ''",
+        ],
     ];
 }
 

@@ -81,8 +81,8 @@ function pb_load_translations(string $dir, bool $remember = true): void
     }
 }
 
-/** The best of our languages for the visitor's browser (used by the installer before anything is chosen). */
-function pb_browser_locale(): string
+/** The best of our languages for the visitor's browser, or $fallback (installer, and the panel before signing in). */
+function pb_browser_locale(string $fallback = 'pt-BR'): string
 {
     foreach (explode(',', strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')) as $part) {
         $tag = trim(explode(';', $part)[0]);
@@ -96,7 +96,7 @@ function pb_browser_locale(): string
             return 'en';
         }
     }
-    return 'pt-BR';
+    return $fallback;
 }
 
 /** A date (and time) written the way the current language writes it. */

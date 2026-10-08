@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.3
+
+- The panel's language is independent of the site's: each account has its own (set when it is made, changed with the new globe in the top bar or in My account), and "the same as the site" is gone. Accounts that never chose one keep the language they saw. The sign-in screen follows the browser's language.
+- Importing a theme's content written in another language offers "Import and make English the site's language": one click, and the panel stays as it is.
+- Updating PageBrick on the Updates screen shows each step as it really happens (download, signature, copy, swap, every page opened), like the demo on pagebrick.org.
+- Automatic updates also hand the page over first on LiteSpeed servers (as on PHP-FPM), so no visitor waits for the check or the update. Settings → Updates says whether this server makes a visitor wait.
+
 ## 1.0.2
 
 - Password fields have an eye: open to show the password, closed to hide it again (sign-in, account, users, e-mail, installer).

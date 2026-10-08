@@ -43,8 +43,10 @@ function pb_create_user(string $name, string $email, string $password, string $r
     if (pb_find_user_by_email($email)) {
         throw new InvalidArgumentException(__('Já existe um usuário com este e-mail.'));
     }
-    pb_db()->prepare('INSERT INTO ' . pb_table('users') . ' (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
-        ->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), $role]);
+    // The panel has its own language, apart from the site's: it starts as the one spoken where the account is made
+    // (the installer's at installation), and each person can change theirs.
+    pb_db()->prepare('INSERT INTO ' . pb_table('users') . ' (name, email, password_hash, role, locale) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), $role, pb_locale()]);
     return (int) pb_db()->lastInsertId();
 }
 

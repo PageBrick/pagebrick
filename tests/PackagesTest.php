@@ -291,6 +291,38 @@ final class PackagesTest extends TestCase
         $this->assertNull(pb_auto_update(), 'one update at a time');
     }
 
+    public function test_an_update_in_steps_checks_the_file_before_using_it(): void
+    {
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $this->publishCore($fix);
+        $entry = pb_core_update_entry();
+
+        pb_core_update_download($entry);
+        file_put_contents(pb_core_update_file(), 'swapped on the way');
+        try {
+            pb_core_update_verify($entry);
+            $this->fail('a file that is not the signed one went through');
+        } catch (InvalidArgumentException) {
+            $this->assertFileDoesNotExist(pb_core_update_file(), 'thrown away');
+        }
+
+        // The Updates screen calls the steps one by one and gets JSON back.
+        $_SESSION['user_id'] = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        $answers = [];
+        foreach (['download', 'verify', 'apply'] as $step) {
+            $_POST = ['step' => $step];
+            ob_start();
+            pb_admin('POST', '/admin/updates/step');
+            $answers[$step] = json_decode(ob_get_clean(), true);
+        }
+        $_POST = [];
+        $_SESSION = [];
+        $this->assertSame(['ok' => true, 'version' => $fix], $answers['apply']);
+        $this->assertStringContainsString("// $fix", file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->assertSame($fix, pb_pending_core_update()['to'], 'the next request (the screen asks for the result) checks every page');
+    }
+
     public function test_a_version_that_was_undone_waits_for_a_person(): void
     {
         [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));

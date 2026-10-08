@@ -27,8 +27,14 @@ $form = function (string $slug, string $action, string $label, string $class = '
                 <div class="plugin-actions">
                     <?php if ($slug === $active): ?>
                         <span class="badge"><?= e(__('Ativo')) ?></span>
-                        <?php if (is_file(pb_themes_dir() . "/$slug/demo.php")): ?>
-                            <?= $form($slug, 'import-demo', __('Importar o conteúdo do tema'), 'secondary', __('Isso cria as páginas que vêm com o tema e troca os menus. Páginas com o mesmo endereço recebem o conteúdo do tema (a versão anterior fica no histórico). Continuar?')) ?>
+                        <?php if (is_file(pb_themes_dir() . "/$slug/demo.php")):
+                            $demoLocale = pb_theme_demo()['locale'] ?? null; ?>
+                            <?php if ($demoLocale !== null && $demoLocale !== pb_site_locale() && isset(PB_LOCALES[$demoLocale])): ?>
+                                <p class="help"><?= e(sprintf(__('O conteúdo deste tema é em %1$s, e o idioma principal do site é %2$s. Ao importar, %1$s vira o idioma principal (o que os visitantes veem primeiro); o painel continua no seu idioma.'), PB_LOCALES[$demoLocale], PB_LOCALES[pb_site_locale()])) ?></p>
+                                <?= $form($slug, 'import-demo-language', sprintf(__('Importar e tornar %s o idioma do site'), PB_LOCALES[$demoLocale]), 'secondary', __('Isso cria as páginas que vêm com o tema e troca os menus. Páginas com o mesmo endereço recebem o conteúdo do tema (a versão anterior fica no histórico). Continuar?')) ?>
+                            <?php else: ?>
+                                <?= $form($slug, 'import-demo', __('Importar o conteúdo do tema'), 'secondary', __('Isso cria as páginas que vêm com o tema e troca os menus. Páginas com o mesmo endereço recebem o conteúdo do tema (a versão anterior fica no histórico). Continuar?')) ?>
+                            <?php endif ?>
                         <?php endif ?>
                     <?php elseif (!isset($theme['problem'])): ?>
                         <?= $form($slug, 'activate', __('Ativar')) ?>
