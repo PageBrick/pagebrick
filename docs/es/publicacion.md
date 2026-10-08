@@ -66,7 +66,7 @@ php tools/pagebrick.php release ./dist ~/.pagebrick/catalog.key https://github.c
 4. Crea el release de GitHub `v{version}` con `pagebrick-{version}.zip` adjunto (la dirección de descarga debe coincidir con la firmada).
 5. Pon la entrada impresa en `"core"` en el repositorio del catálogo.
 
-Los sitios ven la versión nueva en un plazo de 12 horas, o de inmediato con **Comprobar ahora** en **Configuración → Actualizaciones**.
+Los sitios ven la versión nueva en un plazo de 12 horas, o de inmediato con **Comprobar ahora** en **Configuración → Actualizaciones**. El panel lo avisa al inicio, y el engranaje muestra un punto. Por defecto, una corrección (1.0.1 → 1.0.2) se instala sola, con la misma copia de seguridad, revisión de páginas y vuelta automática del botón; las versiones con novedades (1.1, 2.0) esperan un clic. Cada sitio puede cambiar a manual o a automática para todo en **Configuración → Actualizaciones**. Por eso, publica las correcciones como versión de corrección y las novedades como versión menor.
 
 ## Publicar un plugin o tema en el catálogo oficial
 

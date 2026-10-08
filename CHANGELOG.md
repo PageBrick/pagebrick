@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.1
+
+- The dashboard announces new versions, and the gear icon gets a dot. Settings → Updates chooses how PageBrick updates: manual, automatic for fixes only (1.0.x, the default) or automatic for everything. An automatic update has the same backup, page check and undo as the button, never retries a version that was undone, and e-mails the administrators. It runs after a request, at most once an hour.
+- Settings move behind a gear icon (administrators only): Address and languages, Themes, Plugins, Updates, E-mail, Users.
+- The site's official address can be changed (to https:// after installing without a certificate).
+- The main language can change after installing: ready-made content finds the pages at their old addresses (/sobre on a site switched to English) and moves them, instead of making copies.
+
 ## 1.0.0
 
 First public version.

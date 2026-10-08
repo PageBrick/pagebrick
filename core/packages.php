@@ -498,6 +498,110 @@ function pb_update_core(): string
     return $backup;
 }
 
+// ------------------------------------------------------------------ automatic updates
+
+/** How PageBrick updates itself (Settings → Updates): by hand, only fixes (1.0.x) by itself, or everything by itself. */
+const PB_AUTO_UPDATE_MODES = ['manual', 'patch', 'all'];
+
+function pb_auto_update_mode(): string
+{
+    $mode = pb_option('auto_update', 'patch');
+    return in_array($mode, PB_AUTO_UPDATE_MODES, true) ? $mode : 'patch';
+}
+
+function pb_set_auto_update_mode(string $mode): void
+{
+    if (!in_array($mode, PB_AUTO_UPDATE_MODES, true)) {
+        throw new InvalidArgumentException(__('Escolha uma das opções de atualização.'));
+    }
+    pb_set_option('auto_update', $mode);
+}
+
+/** Whether $version may install by itself: 'patch' only takes fixes of the same major.minor (1.0.1 → 1.0.2, not 1.1.0). */
+function pb_auto_update_allows(string $version, string $mode, string $current = PB_VERSION): bool
+{
+    if (!preg_match('/^\d+\.\d+\.\d+$/', $version) || !version_compare($version, $current, '>')) {
+        return false;
+    }
+    return match ($mode) {
+        'all' => true,
+        'patch' => array_slice(explode('.', $version), 0, 2) === array_slice(explode('.', $current), 0, 2),
+        default => false,
+    };
+}
+
+/**
+ * Looks for a new PageBrick and, when the chosen mode allows it, installs it with the same safety as the button:
+ * backup first, every page checked on the next request, back by itself if anything breaks. A version that was
+ * already undone waits for a person. Tells the administrators by e-mail. Returns the version installed, or null.
+ */
+function pb_auto_update(): ?string
+{
+    $entry = pb_catalog()['core'] ?? null; // asks the catalog only when the copy is older than 12 hours
+    $mode = pb_auto_update_mode();
+    if (!is_array($entry) || pb_pending_core_update() !== null || !pb_auto_update_allows((string) ($entry['version'] ?? ''), $mode)
+        || pb_core_update_blockers($entry)) {
+        return null;
+    }
+    $last = json_decode(pb_option('core_update_result', 'null'), true);
+    if (is_array($last) && !$last['ok'] && $last['to'] === $entry['version']) {
+        return null;
+    }
+    $from = PB_VERSION;
+    pb_update_core();
+    $site = pb_option('site_title', 'PageBrick');
+    $panel = pb_locale();
+    pb_set_locale(pb_site_locale());
+    $subject = sprintf(__('%1$s foi atualizado para o PageBrick %2$s'), $site, $entry['version']);
+    $text = sprintf(__("O PageBrick do site %1\$s foi atualizado sozinho da versão %2\$s para a %3\$s.\n\nNo próximo acesso, todas as páginas do site são conferidas. Se alguma der erro, a versão anterior volta sozinha e o painel mostra o motivo em Configurações → Atualizações.\n\nPara escolher como o site se atualiza: %4\$s"),
+        $site, $from, $entry['version'], pb_absolute_url('/admin/updates'));
+    pb_set_locale($panel);
+    foreach (pb_list_users() as $user) {
+        if ($user['role'] === 'admin') {
+            try {
+                pb_mail($user['email'], $subject, $text);
+            } catch (RuntimeException $e) {
+                error_log("PageBrick: update e-mail not sent: {$e->getMessage()}");
+            }
+        }
+    }
+    return (string) $entry['version'];
+}
+
+/**
+ * Runs at the end of a request, at most once an hour and once at a time: refreshes the list of updates the panel
+ * shows and installs one by itself when the mode allows. Where PHP runs as FastCGI the visitor doesn't wait for it.
+ */
+function pb_auto_update_after_response(): void
+{
+    try {
+        if (($GLOBALS['pb_config'] ?? null) === null || pb_installed_version() < array_key_last(pb_migrations())) {
+            return;
+        }
+        $last = pb_option('auto_update_at');
+        if ($last === null) {
+            pb_set_option('auto_update_at', $last = '0');
+        }
+        if (time() - (int) $last < 3600) {
+            return;
+        }
+        // Only the request that moves the clock goes on: two visitors at once never update twice.
+        $claim = pb_db()->prepare('UPDATE ' . pb_table('options') . " SET value = ? WHERE name = 'auto_update_at' AND value = ?");
+        $claim->execute([(string) time(), $last]);
+        if ($claim->rowCount() !== 1) {
+            return;
+        }
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        ignore_user_abort(true);
+        // ponytail: under mod_php the visitor of that one request waits for the check (or the update); a real cron URL would avoid it.
+        pb_auto_update();
+    } catch (Throwable $e) {
+        error_log("PageBrick: automatic update skipped: {$e->getMessage()}");
+    }
+}
+
 /** The update waiting to be checked by its first request, or null. */
 function pb_pending_core_update(): ?array
 {

@@ -628,6 +628,7 @@ function pb_admin_updates_action(): void
             'check' => [pb_catalog(true), pb_catalog_error() ?? __('Verificação concluída.')][1],
             'update-core' => [pb_update_core(), __('Atualização instalada. O resultado da conferência do site aparece logo abaixo.')][1],
             'restore-core' => [pb_restore_core(), __('Versão anterior do PageBrick restaurada.')][1],
+            'mode' => [pb_set_auto_update_mode(pb_post('mode')), __('Preferência de atualização salva.')][1],
         };
         pb_flash('ok', $message);
     } catch (InvalidArgumentException $e) {
