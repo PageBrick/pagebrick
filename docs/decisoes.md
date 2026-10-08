@@ -40,9 +40,9 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 | — | Atualização segura | Atualizar pelo painel **não pode quebrar sites já feitos** em cima do PageBrick (ver "Lançamento 1.0") |
 | 28 | Idiomas | Português, inglês e espanhol no CMS e na documentação. **Um idioma principal por site**, escolhido na instalação e trocável depois, **mais idiomas extras opcionais** (ver 32); cada usuário pode ver o painel em outro idioma. Documentação: README principal em inglês, com versões em português e espanhol |
 | 29 | Headless | **API de conteúdo em JSON no núcleo já na 1.0** (`/api/v1/site`, `/api/v1/pages`, `/api/v1/pages/{slug}`; o Blog acrescenta `/api/v1/blog`), para front-ends feitos com Next.js, Astro ou aplicativos. Só leitura, só conteúdo publicado, nunca senhas. O formato das respostas entra na promessa de compatibilidade |
-| 30 | Publicação | Tudo é testado no GitHub (Actions) antes da release. **Primeira versão: 1.0.0.** A branch `main` do GitHub é só do CMS publicado (cada versão lançada); o desenvolvimento acontece na `develop` |
+| 30 | Publicação | Tudo é testado no GitHub (Actions) antes da release. **Primeira versão: 1.0.0.** A branch `main` do GitHub é só do CMS publicado (cada versão lançada); o desenvolvimento acontece na `develop`. A release 1.0.0 de 07/10/2026 (baixada uma vez, só em teste) foi substituída em 08/10 por uma 1.0.0 que já inclui os idiomas, para a primeira publicação ser uma só |
 | 31 | Tema do pagebrick.org | Repositório **público** `PageBrick/pagebrick.org`: um exemplo real de tema para desenvolvedores |
-| 32 | Sites em vários idiomas | No núcleo (1.1): o idioma principal na raiz e os extras com prefixo (`/pt-br`, `/es-es`, `/en-us`). Cada página tem suas traduções (`translation_of`), menus seguem as traduções, os textos de Aparência e contato podem ser traduzidos, `hreflang` para buscadores e `pb_language_links()` para o seletor do tema. O pagebrick.org é em inglês, com português e espanhol |
+| 32 | Sites em vários idiomas | No núcleo (já na 1.0): o idioma principal na raiz e os extras com prefixo (`/pt-br`, `/es-es`, `/en-us`). Cada página tem suas traduções (`translation_of`), menus seguem as traduções, os textos de Aparência e contato podem ser traduzidos, `hreflang` para buscadores e `pb_language_links()` para o seletor do tema. O pagebrick.org é em inglês, com português e espanhol |
 | — | Painel claro/escuro | Segue o sistema; um botão no topo troca e lembra a escolha naquele navegador |
 | — | Em construção / manutenção | Chaves no painel (início, só administradores): visitantes veem um aviso (resposta 503), quem está logado vê o site. O tema pode desenhar o aviso (`templates/closed.php`) |
 | — | Instalação | **Fácil como a do WordPress:** subir o .zip, abrir o site e seguir 4 telas (idioma, conferência do servidor, banco de dados com erros explicados, site e administrador). Sem permissão de gravar, o instalador mostra o `config.php` para criar à mão |
@@ -126,7 +126,7 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 
 ## Fica para depois
 
-Agendamento de publicação, comentários, multi-site, editor de blocos, site-loja, conteúdo multi-idioma (plugin).
+Agendamento de publicação, comentários, multi-site, editor de blocos, site-loja.
 
 ## Ordem de construção
 
