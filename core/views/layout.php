@@ -65,6 +65,25 @@ if ($user && pb_has_role($user, 'admin')) {
             <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
         <?php endforeach ?>
     </nav>
+    <?php if ($user):
+        $back = $current . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''); ?>
+        <details class="nav-more settings-menu">
+            <summary title="<?= e(__('Idioma do painel')) ?>" aria-label="<?= e(__('Idioma do painel') . ': ' . PB_LOCALES[pb_locale()]) ?>">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+            </summary>
+            <div>
+                <strong><?= e(__('Idioma do painel')) ?></strong>
+                <?php foreach (PB_LOCALES as $code => $name): ?>
+                    <form method="post" action="<?= e(pb_url('/admin/panel-language')) ?>">
+                        <?= pb_csrf_field() ?>
+                        <input type="hidden" name="back" value="<?= e($back) ?>">
+                        <button type="submit" name="locale" value="<?= e($code) ?>" class="menu-item" lang="<?= e($code) ?>"<?= $code === pb_locale() ? ' aria-current="true"' : '' ?>><?= e($name) ?></button>
+                    </form>
+                <?php endforeach ?>
+                <p class="help"><?= e(__('Só o painel, só para você. O site não muda.')) ?></p>
+            </div>
+        </details>
+    <?php endif ?>
     <?php if ($system):
         $inSystem = array_filter(array_keys($system), fn($path) => str_starts_with($current, $path));
         $available = pb_available_updates(); // from the saved copy of the catalog: no network here

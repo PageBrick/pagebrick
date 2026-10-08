@@ -11,12 +11,11 @@
         <input id="email" name="email" type="email" required maxlength="190" autocomplete="username" value="<?= e($user['email']) ?>">
         <label for="locale"><?= e(__('Idioma do painel')) ?></label>
         <select id="locale" name="locale">
-            <option value=""><?= e(sprintf(__('O mesmo do site (%s)'), PB_LOCALES[pb_site_locale()])) ?></option>
             <?php foreach (PB_LOCALES as $code => $name): ?>
-                <option value="<?= e($code) ?>"<?= $code === ($user['locale'] ?? '') ? ' selected' : '' ?>><?= e($name) ?></option>
+                <option value="<?= e($code) ?>"<?= $code === (($user['locale'] ?? '') ?: pb_locale()) ? ' selected' : '' ?>><?= e($name) ?></option>
             <?php endforeach ?>
         </select>
-        <p class="help"><?= e(__('Vale só para você. O site e os outros usuários continuam no idioma do site.')) ?></p>
+        <p class="help"><?= e(__('Vale só para você e não muda o site: o idioma que os visitantes veem fica em Configurações → Endereço e idiomas.')) ?></p>
         <label for="password"><?= e(__('Nova senha')) ?></label>
         <input id="password" name="password" type="password" minlength="8" autocomplete="new-password">
         <p class="help"><?= e(__('Deixe em branco para manter a senha atual.')) ?></p>

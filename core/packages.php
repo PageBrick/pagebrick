@@ -478,6 +478,16 @@ function pb_core_update_blockers(array $entry): array
  */
 function pb_update_core(): string
 {
+    $entry = pb_core_update_entry();
+    pb_core_update_download($entry);
+    return pb_core_update_apply($entry);
+}
+
+// The same update in steps, so the Updates screen can show each one as it happens (POST /admin/updates/step).
+
+/** The newest PageBrick in the catalog, when this site can take it; throws with the reason otherwise. */
+function pb_core_update_entry(): array
+{
     $entry = pb_catalog_entry('core', 'core') ?? throw new InvalidArgumentException(__('O catálogo não informou nenhuma versão do PageBrick.'));
     if (!version_compare((string) ($entry['version'] ?? ''), PB_VERSION, '>')) {
         throw new InvalidArgumentException(__('O PageBrick já está na versão mais nova.'));
@@ -485,12 +495,49 @@ function pb_update_core(): string
     if ($blockers = pb_core_update_blockers($entry)) {
         throw new InvalidArgumentException(implode(' ', $blockers));
     }
+    return $entry;
+}
+
+/** Where a downloaded version waits between the steps (the backups folder is closed to the web). */
+function pb_core_update_file(): string
+{
+    return pb_backups_dir() . '/core-update.zip';
+}
+
+/** Step 1: downloads the new version. */
+function pb_core_update_download(array $entry): void
+{
     $file = pb_download((string) ($entry['url'] ?? ''), 60 * 1024 * 1024);
+    if (!is_dir(pb_backups_dir())) {
+        mkdir(pb_backups_dir(), 0755, true);
+    }
+    copy($file, pb_core_update_file());
+    unlink($file);
+}
+
+/** Step 2: checks it was signed by the project and is the very file the catalog describes; if not, it's thrown away. */
+function pb_core_update_verify(array $entry): void
+{
     try {
-        pb_verify_package($file, $entry + ['slug' => 'core'], 'core');
-        $backup = pb_apply_core_package($file, pb_core_root());
+        pb_verify_package(pb_core_update_file(), $entry + ['slug' => 'core'], 'core');
+    } catch (InvalidArgumentException $e) {
+        @unlink(pb_core_update_file());
+        throw $e;
+    }
+}
+
+/**
+ * Step 3: keeps a copy of the current version and puts the new one in place (checked again first, whatever came
+ * before). The new version then checks the whole site on its first request and goes back by itself if anything
+ * breaks (pb_verify_core_update); index.php puts the backup back if it can't even start. Returns the backup file.
+ */
+function pb_core_update_apply(array $entry): string
+{
+    pb_core_update_verify($entry);
+    try {
+        $backup = pb_apply_core_package(pb_core_update_file(), pb_core_root());
     } finally {
-        @unlink($file);
+        @unlink(pb_core_update_file());
     }
     pb_set_option('core_update', json_encode(['from' => PB_VERSION, 'to' => (string) $entry['version'], 'backup' => $backup, 'at' => time()]));
     // Read by index.php without the core: the safety net for a version that can't start at all.
@@ -547,6 +594,9 @@ function pb_auto_update(): ?string
     if (is_array($last) && !$last['ok'] && $last['to'] === $entry['version']) {
         return null;
     }
+    if (is_file(pb_core_update_file()) && filemtime(pb_core_update_file()) > time() - 600) {
+        return null; // someone is updating step by step on the Updates screen right now
+    }
     $from = PB_VERSION;
     pb_update_core();
     $site = pb_option('site_title', 'PageBrick');
@@ -568,9 +618,15 @@ function pb_auto_update(): ?string
     return (string) $entry['version'];
 }
 
+/** Whether this server can hand the page over before the automatic check runs (PHP-FPM or LiteSpeed): nobody waits. */
+function pb_can_answer_first(): bool
+{
+    return function_exists('fastcgi_finish_request') || function_exists('litespeed_finish_request');
+}
+
 /**
  * Runs at the end of a request, at most once an hour and once at a time: refreshes the list of updates the panel
- * shows and installs one by itself when the mode allows. Where PHP runs as FastCGI the visitor doesn't wait for it.
+ * shows and installs one by itself when the mode allows. Under PHP-FPM or LiteSpeed the visitor doesn't wait for it.
  */
 function pb_auto_update_after_response(): void
 {
@@ -592,10 +648,12 @@ function pb_auto_update_after_response(): void
             return;
         }
         if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
+            fastcgi_finish_request(); // PHP-FPM
+        } elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request(); // LiteSpeed (LSAPI)
         }
         ignore_user_abort(true);
-        // ponytail: under mod_php the visitor of that one request waits for the check (or the update); a real cron URL would avoid it.
+        // ponytail: elsewhere (mod_php, CGI) the visitor of that one request waits for the check (or the update); a loopback request would avoid it.
         pb_auto_update();
     } catch (Throwable $e) {
         error_log("PageBrick: automatic update skipped: {$e->getMessage()}");

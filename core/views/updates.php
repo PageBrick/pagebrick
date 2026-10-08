@@ -32,7 +32,17 @@
             </div>
         <?php else: ?>
             <p class="help"><?= e(__('Como funciona: antes, o PageBrick guarda uma cópia da versão atual. Depois, confere todas as páginas do site com a versão nova; se alguma der erro, volta sozinho para a versão atual. Páginas, fotos, temas e plugins não são alterados.')) ?></p>
-            <?= $form('update-core', sprintf(__('Atualizar para %s'), $updates['core']['version']), '', __('Atualizar o PageBrick agora?')) ?>
+            <?php $to = (string) $updates['core']['version']; // admin.js runs the update step by step and shows each one ?>
+            <form method="post" action="<?= e(pb_url('/admin/updates')) ?>" data-confirm="<?= e(__('Atualizar o PageBrick agora?')) ?>" data-update-core
+                  data-step-url="<?= e(pb_url('/admin/updates/step')) ?>" data-result-url="<?= e(pb_url('/admin/updates/result')) ?>"
+                  data-download="<?= e(sprintf(__('Baixando a versão %s'), $to)) ?>" data-verify="<?= e(__('Conferindo a assinatura')) ?>"
+                  data-backup="<?= e(__('Guardando uma cópia da versão atual')) ?>" data-swap="<?= e(__('Trocando o núcleo')) ?>"
+                  data-check="<?= e(__('Abrindo todas as páginas do site')) ?>" data-ok="<?= e(sprintf(__('Tudo certo: o site está na versão %s.'), $to)) ?>"
+                  data-undone="<?= e(sprintf(__('A versão %1$s foi desfeita sozinha, porque %3$s. O site continua na versão %2$s, e os visitantes não viram nada.'), $to, PB_VERSION, '%s')) ?>"
+                  data-failed="<?= e(__('A atualização parou. Recarregue a página para ver como o site ficou.')) ?>" data-continue="<?= e(__('Continuar')) ?>">
+                <?= pb_csrf_field() ?>
+                <button type="submit" name="action" value="update-core"><?= e(sprintf(__('Atualizar para %s'), $to)) ?></button>
+            </form>
         <?php endif ?>
     <?php else: ?>
         <p class="muted"><?= e(__('Está na versão mais nova.')) ?></p>
@@ -59,6 +69,9 @@
         <?php endforeach ?>
     </div>
     <p class="help"><?= e(__('Sozinha ou pelo botão, a proteção é a mesma: uma cópia da versão atual antes, todas as páginas conferidas depois e a volta automática se algo quebrar. Os administradores recebem um e-mail a cada atualização automática.')) ?></p>
+    <p class="help"><?= e(pb_can_answer_first()
+        ? __('Neste servidor, a verificação acontece depois que a página é entregue: nenhum visitante espera por ela.')
+        : __('Neste servidor (sem PHP-FPM nem LiteSpeed), quando sai uma versão nova, o primeiro visitante depois da verificação espera alguns segundos enquanto ela é instalada.')) ?></p>
     <button type="submit"><?= e(__('Salvar')) ?></button>
 </form>
 

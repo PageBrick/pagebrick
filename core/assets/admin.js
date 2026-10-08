@@ -127,6 +127,54 @@
         if (message && !confirm(message)) event.preventDefault();
     });
 
+    // Updating PageBrick: each step shows up as it really happens, like the demo on pagebrick.org. The last one is
+    // the new version's first request, which opens every page. Without JavaScript the form posts as before.
+    document.addEventListener('submit', async (event) => {
+        const form = event.target;
+        if (!form.matches('[data-update-core]') || event.defaultPrevented) return;
+        event.preventDefault();
+        const text = form.dataset;
+        const log = document.createElement('ol');
+        log.className = 'update-log';
+        log.setAttribute('aria-live', 'polite');
+        form.hidden = true;
+        form.after(log);
+        const line = (label, state = 'running') => {
+            const item = document.createElement('li');
+            item.className = state;
+            item.textContent = label;
+            log.append(item);
+            return item;
+        };
+        const json = async (response) => {
+            const answer = await response.json();
+            if (answer.ok === false) throw Object.assign(new Error(answer.message), {fromServer: true});
+            return answer;
+        };
+        let current = [];
+        try {
+            for (const [step, labels] of [['download', [text.download]], ['verify', [text.verify]], ['apply', [text.backup, text.swap]]]) {
+                current = labels.map((label) => line(label));
+                const body = new FormData(form);
+                body.set('step', step);
+                await json(await fetch(text.stepUrl, {method: 'POST', body, headers: {Accept: 'application/json'}}));
+                current.forEach((item) => { item.className = 'done'; });
+            }
+            current = [line(text.check)];
+            const {result} = await json(await fetch(text.resultUrl, {headers: {Accept: 'application/json'}}));
+            const ok = Boolean(result && result.ok);
+            current[0].className = ok ? 'done' : 'failed';
+            line(ok ? text.ok : text.undone.replace('%s', (result && result.problem) || '?'), ok ? 'result ok' : 'result rolled-back');
+        } catch (error) {
+            current.forEach((item) => { item.className = 'failed'; });
+            line(error.fromServer ? error.message : text.failed, 'result failed');
+        }
+        const next = document.createElement('a');
+        next.href = location.pathname;
+        next.textContent = text.continue;
+        log.after(next);
+    });
+
     // The rich text editor doesn't take attachments: images go in image fields.
     document.addEventListener('trix-file-accept', (event) => event.preventDefault());
 })();

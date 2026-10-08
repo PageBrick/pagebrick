@@ -252,11 +252,31 @@ final class MultilingualTest extends TestCase
         }
         $this->assertSame('Sobre', pb_page_by_slug('sobre')['title'], 'nothing was changed');
 
-        $this->assertEmpty(pb_find_user($this->admin)['locale']);
+        $this->assertSame('pt-BR', pb_find_user($this->admin)['locale'], 'an account starts in the language it was made in');
         pb_set_site_locale('en');
-        $this->assertSame('pt-BR', pb_find_user($this->admin)['locale'], 'the panel keeps the language it spoke');
+        $this->assertSame('pt-BR', pb_find_user($this->admin)['locale'], 'the panel keeps its language');
         pb_import_content($english, PB_ROOT . '/core/demo');
         $this->assertSame('About', pb_page_by_slug('about')['title']);
+    }
+
+    public function test_the_panel_language_is_independent_of_the_site(): void
+    {
+        // Accounts from before 1.0.3 had none and followed the site: the migration gives them the one they saw.
+        pb_db()->exec('UPDATE ' . pb_table('users') . ' SET locale = NULL');
+        pb_set_option('db_version', '5');
+        pb_migrate();
+        $this->assertSame('pt-BR', pb_find_user($this->admin)['locale']);
+
+        pb_set_locale('es'); // an account made by someone using the panel in Spanish
+        $id = pb_create_user('Bea', 'bea@example.com', 'senha-de-teste-123', 'editor');
+        $this->assertSame('es', pb_find_user($id)['locale']);
+        pb_set_locale('pt-BR');
+
+        unset($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        $this->assertSame('en', pb_browser_locale('en'), 'the sign-in screen falls back to the site when the browser says nothing');
+        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'es-ES,es;q=0.9';
+        $this->assertSame('es', pb_browser_locale('en'), 'otherwise it speaks the browser\'s language');
+        unset($_SERVER['HTTP_ACCEPT_LANGUAGE']);
     }
 
     public function test_the_site_address_can_change_in_the_panel(): void

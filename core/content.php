@@ -446,7 +446,7 @@ function pb_import_content(array $content, string $mediaDir, ?int $userId = null
     // English texts would sit where the Portuguese ones belong, and the language menu would say the wrong thing.
     $locale = $content['locale'] ?? pb_site_locale();
     if ($locale !== pb_site_locale()) {
-        throw new InvalidArgumentException(sprintf(__('Este conteúdo é em %1$s, e o idioma principal do site é %2$s. Troque o idioma do site em Configurações → Endereço e idiomas e importe de novo.'),
+        throw new InvalidArgumentException(sprintf(__('Este conteúdo é em %1$s, e o idioma principal do site é %2$s. Troque o idioma do site (o painel não muda) em Configurações → Endereço e idiomas, ou use o botão de importar que já troca o idioma.'),
             PB_LOCALES[$locale] ?? $locale, PB_LOCALES[pb_site_locale()]));
     }
     // Addresses follow the site's language (sobre → about on an English site), whatever language the panel speaks.
