@@ -73,6 +73,19 @@ final class PreferencesTest extends TestCase
         $this->assertStringNotContainsString('data-theme="dark"', explode('<head>', $this->open($this->admin))[0], 'another person keeps their own');
     }
 
+    public function test_a_signed_in_person_never_inherits_what_the_browser_remembers(): void
+    {
+        // The browser remembers the theme of whoever used it last (for the sign-in screen). On a shared computer that is
+        // someone else's choice: the next person must not wear it nor have it saved on their account.
+        $this->assertStringNotContainsString('else if (t)', $this->open($this->editor), 'the panel ignores it');
+        $this->assertStringNotContainsString("getItem('pb-theme')", file_get_contents(PB_ROOT . '/core/assets/admin.js'), 'and so does the switch script');
+
+        $_SESSION = [];
+        ob_start();
+        pb_admin('GET', '/admin/login');
+        $this->assertStringContainsString('else if (t) root.dataset.theme = t', ob_get_clean(), 'only the sign-in screen, where nobody is known, uses it');
+    }
+
     public function test_the_switch_saves_through_the_preferences_route(): void
     {
         $_POST = ['theme' => 'dark'];

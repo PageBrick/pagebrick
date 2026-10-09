@@ -859,7 +859,9 @@ function pb_admin_users(?string $error = null): void
 function pb_admin_users_create(): void
 {
     try {
-        pb_create_user(pb_post('name'), pb_post('email'), pb_post('password'), pb_post('role'));
+        $id = pb_create_user(pb_post('name'), pb_post('email'), pb_post('password'), pb_post('role'));
+        // A new person starts in the site's language, not in the panel language of whoever made the account.
+        pb_set_user_locale($id, pb_site_locale());
     } catch (InvalidArgumentException $e) {
         http_response_code(422);
         pb_admin_users($e->getMessage());

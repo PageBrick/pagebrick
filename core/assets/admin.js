@@ -17,10 +17,8 @@
         try { localStorage.setItem('pb-theme', root.dataset.theme); } catch (e) {}
         keepTheme(root.dataset.theme);
     });
-    // A choice made in this browser before preferences were kept on the server is kept once, the first time.
-    if (themeSwitch && !document.documentElement.hasAttribute('data-theme-saved')) {
-        try { const old = localStorage.getItem('pb-theme'); if (old) keepTheme(old); } catch (e) { /* storage blocked */ }
-    }
+    // What this browser remembers belongs to nobody in particular (whoever used it last), so a signed-in person never
+    // inherits it: their own choice comes from their account.
 
     // Password fields: an eye inside the field. Open eye: show the password; closed eye: hide it again.
     const eyes = {

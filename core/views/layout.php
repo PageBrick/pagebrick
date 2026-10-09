@@ -51,7 +51,7 @@ if ($user && pb_has_role($user, 'admin')) {
 <link rel="icon" href="<?= e($asset('favicon.svg')) ?>" type="image/svg+xml">
 <?php if ($user): ?><meta name="pb-csrf" content="<?= e(pb_csrf_token()) ?>">
 <?php endif ?>
-<script>try { const root = document.documentElement, t = localStorage.getItem('pb-theme'); if (root.hasAttribute('data-theme-saved')) localStorage.setItem('pb-theme', root.dataset.theme); else if (t) root.dataset.theme = t; } catch (e) {}</script>
+<script>try { const root = document.documentElement, t = localStorage.getItem('pb-theme'); if (root.hasAttribute('data-theme-saved')) localStorage.setItem('pb-theme', root.dataset.theme);<?= $user ? '' : ' else if (t) root.dataset.theme = t;' ?> } catch (e) {}</script>
 <?php if (!empty($editor)): ?>
 <link rel="stylesheet" href="<?= e($asset('trix.css')) ?>">
 <script src="<?= e($asset('trix.js')) ?>"></script>
