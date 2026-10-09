@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.6
+
+- The page editor fits a phone's width: on pages with a rich text field, the toolbar no longer makes the whole page wider than the screen (the browser zoomed out and the text turned tiny); its buttons wrap instead.
+
 ## 1.0.5
 
 - E-mails now leave from `no-reply@yourdomain` unless a sender is set in Settings → E-mail.
