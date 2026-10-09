@@ -35,6 +35,7 @@ function pb_admin(string $method, string $path): void
         'GET /admin/settings' => ['editor', 'pb_admin_settings'],
         'POST /admin/settings' => ['editor', 'pb_admin_settings_save'],
         'POST /admin/panel-language' => ['editor', 'pb_admin_panel_language'],
+        'POST /admin/preferences' => ['editor', 'pb_admin_preferences'],
         'GET /admin/general' => ['admin', 'pb_admin_general'],
         'POST /admin/general' => ['admin', 'pb_admin_general_save'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
@@ -46,8 +47,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/users/delete' => ['admin', 'pb_admin_users_delete'],
         'GET /admin/plugins' => ['admin', 'pb_admin_plugins'],
         'POST /admin/plugins' => ['admin', 'pb_admin_plugins_action'],
-        'GET /admin/plugins/settings' => ['admin', 'pb_admin_plugin_settings'],
-        'POST /admin/plugins/settings' => ['admin', 'pb_admin_plugin_settings_save'],
+        'GET /admin/plugins/settings' => ['editor', 'pb_admin_plugin_settings'],
+        'POST /admin/plugins/settings' => ['editor', 'pb_admin_plugin_settings_save'],
         'POST /admin/safe-mode/exit' => ['editor', 'pb_admin_safe_mode_exit'],
         'GET /admin/themes' => ['admin', 'pb_admin_themes'],
         'POST /admin/themes' => ['admin', 'pb_admin_themes_action'],
@@ -440,6 +441,20 @@ function pb_admin_settings_save(): void
     pb_save_settings($_POST['f'] ?? []);
     pb_flash('ok', __('Configurações salvas.'));
     pb_redirect('/admin/settings');
+}
+
+/** Remembers what the person prefers in the panel (the light/dark switch asks for it); answers JSON. */
+function pb_admin_preferences(): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+        $theme = pb_post('theme');
+        pb_set_user_pref((int) pb_current_user_id(), 'theme', $theme === 'system' ? null : $theme);
+        echo json_encode(['ok' => true]);
+    } catch (InvalidArgumentException $e) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
 }
 
 /** The globe in the top bar: the panel's language for whoever is signed in. The site's language doesn't change. */

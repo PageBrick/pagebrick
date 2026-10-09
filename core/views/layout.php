@@ -9,14 +9,19 @@ $nav = [
     '/admin/menus' => __('Menus'),
     '/admin/settings' => __('Aparência e contato'),
 ];
-$pluginSettings = []; // screens plugins asked to have in the gear menu (pb_add_admin_page(..., 'settings'))
+// What plugins add to the panel lives under its own icon: their screens (for whoever the plugin allows) and the
+// settings screens of the active ones. Installing, switching on and off and deleting is for administrators.
+$pluginNames = $user ? pb_plugins_available() : [];
+$pluginScreens = [];
 foreach ($GLOBALS['pb_admin_pages'] ?? [] as $slug => $page) {
     if ($user && pb_has_role($user, $page['role'])) {
-        if (($page['placement'] ?? 'menu') === 'settings') {
-            $pluginSettings["/admin/p/$slug"] = $page['label'];
-        } else {
-            $nav["/admin/p/$slug"] = $page['label'];
-        }
+        $pluginScreens["/admin/p/$slug"] = $page['label'];
+    }
+}
+$pluginConfig = [];
+foreach (array_keys($GLOBALS['pb_plugin_settings'] ?? []) as $slug) {
+    if ($user && isset($pluginNames[$slug])) {
+        $pluginConfig["/admin/plugins/settings?plugin=$slug"] = sprintf(__('Configurar %s'), $pluginNames[$slug]['name']);
     }
 }
 $brokenPlugins = [];
@@ -25,27 +30,28 @@ if ($user && pb_has_role($user, 'admin')) {
     $system = [
         '/admin/general' => __('Endereço e idiomas'),
         '/admin/themes' => __('Temas'),
-        '/admin/plugins' => __('Plugins'),
         '/admin/updates' => __('Atualizações'),
         '/admin/email' => __('E-mail'),
         '/admin/users' => __('Usuários'),
-    ] + $pluginSettings;
-    $available = pb_plugins_available();
+    ];
     foreach (pb_plugin_states() as $slug => $state) {
         if (!empty($state['error'])) {
-            $brokenPlugins[] = $available[$slug]['name'] ?? $slug;
+            $brokenPlugins[] = $pluginNames[$slug]['name'] ?? $slug;
         }
     }
 }
 ?>
+<?php $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the server: it follows the person to any browser ?>
 <!doctype html>
-<html lang="<?= e(pb_locale()) ?>">
+<html lang="<?= e(pb_locale()) ?>"<?= $savedTheme !== '' ? ' data-theme="' . e($savedTheme) . '" data-theme-saved' : '' ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e(isset($title) ? "$title · PageBrick" : 'PageBrick') ?></title>
 <link rel="icon" href="<?= e($asset('favicon.svg')) ?>" type="image/svg+xml">
-<script>try { const t = localStorage.getItem('pb-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<?php if ($user): ?><meta name="pb-csrf" content="<?= e(pb_csrf_token()) ?>">
+<?php endif ?>
+<script>try { const root = document.documentElement, t = localStorage.getItem('pb-theme'); if (root.hasAttribute('data-theme-saved')) localStorage.setItem('pb-theme', root.dataset.theme); else if (t) root.dataset.theme = t; } catch (e) {}</script>
 <?php if (!empty($editor)): ?>
 <link rel="stylesheet" href="<?= e($asset('trix.css')) ?>">
 <script src="<?= e($asset('trix.js')) ?>"></script>
@@ -70,6 +76,31 @@ if ($user && pb_has_role($user, 'admin')) {
             <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
         <?php endforeach ?>
     </nav>
+    <?php if ($pluginScreens || $pluginConfig || pb_has_role($user, 'admin')):
+        $inPlugins = array_filter(array_keys($pluginScreens), fn($path) => str_starts_with($current, $path)) || str_starts_with($current, '/admin/plugins'); ?>
+        <details class="nav-more settings-menu plugins-menu">
+            <summary title="<?= e(__('Plugins')) ?>" aria-label="<?= e(__('Plugins')) ?>"<?= $inPlugins ? ' aria-current="page"' : '' ?>>
+                <?php if ($brokenPlugins): ?><span class="dot" aria-hidden="true"></span><?php endif ?>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>
+            </summary>
+            <div>
+                <strong><?= e(__('Plugins')) ?></strong>
+                <?php foreach ($pluginScreens as $path => $label): ?>
+                    <a href="<?= e(pb_url($path)) ?>"<?= str_starts_with($current, $path) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
+                <?php endforeach ?>
+                <?php if ($pluginConfig): ?>
+                    <hr>
+                    <?php foreach ($pluginConfig as $path => $label): ?>
+                        <a href="<?= e(pb_url($path)) ?>"><?= e($label) ?></a>
+                    <?php endforeach ?>
+                <?php endif ?>
+                <?php if (pb_has_role($user, 'admin')): ?>
+                    <hr>
+                    <a href="<?= e(pb_url('/admin/plugins')) ?>"<?= $current === '/admin/plugins' ? ' aria-current="page"' : '' ?>><?= e(__('Gerenciar plugins')) ?></a>
+                <?php endif ?>
+            </div>
+        </details>
+    <?php endif ?>
     <?php if ($user):
         $back = $current . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''); ?>
         <details class="nav-more settings-menu">
@@ -107,7 +138,7 @@ if ($user && pb_has_role($user, 'admin')) {
             </div>
         </details>
     <?php endif ?>
-    <button type="button" class="theme-switch" data-theme-switch title="<?= e(__('Alternar entre claro e escuro')) ?>" aria-label="<?= e(__('Alternar entre claro e escuro')) ?>">
+    <button type="button" class="theme-switch" data-theme-switch data-url="<?= e(pb_url('/admin/preferences')) ?>" title="<?= e(__('Alternar entre claro e escuro')) ?>" aria-label="<?= e(__('Alternar entre claro e escuro')) ?>">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
     </button>
     <a href="<?= e(pb_url('/')) ?>" target="_blank"><?= e(__('Ver o site')) ?></a>

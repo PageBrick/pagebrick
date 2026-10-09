@@ -41,6 +41,44 @@ final class OfficialPluginsTest extends TestCase
 
     // ---------------------------------------------------------------- contact form
 
+    public function test_an_editor_uses_a_plugin_but_does_not_manage_it(): void
+    {
+        $editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
+        $open = function (string $path, array $query = [], string $method = 'GET') use ($editor): string {
+            $_SESSION['user_id'] = $editor;
+            $_GET = $query;
+            $_SERVER['REQUEST_URI'] = $path;
+            http_response_code(200);
+            ob_start();
+            pb_admin($method, $path);
+            $_GET = [];
+            return ob_get_clean();
+        };
+
+        $home = $open('/admin');
+        preg_match('~<details class="nav-more settings-menu plugins-menu">.*?</details>~s', $home, $menu);
+        $this->assertStringContainsString('href="/admin/p/mensagens"', $menu[0], 'the messages of the contact form');
+        $this->assertStringContainsString('href="/admin/p/blog"', $menu[0]);
+        $this->assertStringContainsString('Configurar Formulário de contato', $menu[0], "and the plugin's settings");
+        $this->assertStringNotContainsString('Gerenciar plugins', $menu[0]);
+
+        $this->assertStringContainsString('name="f[to]"', $open('/admin/plugins/settings', ['plugin' => 'contact-form']), 'the editor can set where the messages go');
+        $this->assertSame(200, http_response_code());
+        $this->assertStringNotContainsString('href="/admin/plugins"', $open('/admin/plugins/settings', ['plugin' => 'contact-form']), 'without a way back to the list they cannot open');
+
+        $this->assertStringContainsString('Acesso negado', $open('/admin/plugins'), 'the list of plugins is for administrators');
+        $this->assertSame(403, http_response_code());
+        foreach (['deactivate', 'delete', 'activate', 'install', 'update'] as $action) {
+            $_POST = ['plugin' => 'blog', 'action' => $action];
+            $this->assertStringContainsString('Acesso negado', $open('/admin/plugins', [], 'POST'), "an editor cannot $action a plugin");
+            $this->assertSame(403, http_response_code());
+        }
+        $_POST = [];
+        $this->assertTrue(pb_plugin_states()['blog']['active'], 'and the blog is still on');
+        $this->assertDirectoryExists(pb_plugins_dir() . '/blog');
+        $_SESSION = [];
+    }
+
     public function test_contact_page_shows_the_form_and_its_stylesheet(): void
     {
         $html = $this->visit('/contato');

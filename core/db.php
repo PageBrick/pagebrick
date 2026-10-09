@@ -110,6 +110,10 @@ function pb_migrations(): array
             'UPDATE ' . pb_table('users') . " SET locale = COALESCE((SELECT value FROM " . pb_table('options') . " WHERE name = 'locale'), 'pt-BR')
                 WHERE locale IS NULL OR locale = ''",
         ],
+        // What each person prefers in the panel (the theme, light or dark), kept on the server so it follows them.
+        7 => [
+            'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN prefs TEXT NULL',
+        ],
     ];
 }
 

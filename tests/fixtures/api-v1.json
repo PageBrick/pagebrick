@@ -794,11 +794,6 @@
                     "name": "role",
                     "type": "string",
                     "optional": true
-                },
-                {
-                    "name": "placement",
-                    "type": "string",
-                    "optional": true
                 }
             ],
             "returns": "void"

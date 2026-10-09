@@ -75,6 +75,30 @@ function pb_update_own_account(array $user, string $currentPassword, string $nam
 }
 
 /** The panel language for one user; '' follows the site's language. */
+/** The preferences a person keeps in the panel: ['theme' => 'dark' | 'light']. The language has its own column. */
+const PB_USER_PREFS = ['theme' => ['light', 'dark']];
+
+function pb_user_prefs(array $user): array
+{
+    $prefs = json_decode((string) ($user['prefs'] ?? ''), true);
+    return is_array($prefs) ? $prefs : [];
+}
+
+/** Saves one preference of a person (null forgets it: the panel then follows the system). Only known ones, with known values. */
+function pb_set_user_pref(int $id, string $key, ?string $value): void
+{
+    if (!isset(PB_USER_PREFS[$key]) || ($value !== null && !in_array($value, PB_USER_PREFS[$key], true))) {
+        throw new InvalidArgumentException(__('Preferência inválida.'));
+    }
+    $prefs = pb_user_prefs(pb_find_user($id) ?? []);
+    if ($value === null) {
+        unset($prefs[$key]);
+    } else {
+        $prefs[$key] = $value;
+    }
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET prefs = ? WHERE id = ?')->execute([$prefs ? json_encode($prefs) : null, $id]);
+}
+
 function pb_set_user_locale(int $id, string $locale): void
 {
     if ($locale !== '' && !isset(PB_LOCALES[$locale])) {

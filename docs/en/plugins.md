@@ -73,7 +73,7 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | change a value; a filter must return the same type it received |
 | `pb_add_route($method, $path, $handler)` | a public address; the handler echoes the answer |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | show a template of the plugin as a page of the site, inside the theme's layout, with SEO tags |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $placement = 'menu')` | a panel screen; the handler echoes it for GET and POST. `'settings'` as $placement puts it under the gear icon with the technical screens (API keys, connections), for administrators only |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | a panel screen under the Plugins icon; the handler echoes it for GET and POST. `'editor'` lets editors and administrators in, `'admin'` only administrators. Installing, switching on and off and deleting plugins is always for administrators |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | settings screen and its values (read like theme fields: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | the plugin's tables; name them with `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | address of a file of the plugin (or of the theme's copy of it) |

@@ -236,3 +236,4 @@ td.translations form { display: inline; }
 td.translations .badge { margin: 0 .3rem 0 0; color: var(--text); text-decoration: none; }
 td.translations .badge.draft { border-style: dashed; color: var(--muted); }
 td.translations button { margin-right: .5rem; }
+.settings-menu > div hr { margin: .4rem 0; border: 0; border-top: 1px solid var(--line); }

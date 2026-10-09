@@ -73,7 +73,7 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | alterar um valor; um filtro precisa retornar o mesmo tipo que recebeu |
 | `pb_add_route($method, $path, $handler)` | um endereço público; o handler imprime a resposta com `echo` |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | mostrar um template do plugin como uma página do site, dentro do layout do tema, com as tags de SEO |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $placement = 'menu')` | uma tela do painel; o handler imprime a tela com `echo`, em GET e POST. `'settings'` em $placement põe a tela na engrenagem, com as telas técnicas (chaves de API, conexões), só para administradores |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | uma tela do painel, sob o ícone de Plugins; o handler imprime a tela com `echo`, em GET e POST. `'editor'` deixa entrar editores e administradores, `'admin'` só administradores. Instalar, ligar, desligar e excluir plugins é sempre dos administradores |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | a tela de configurações e os valores dela (lidos como os campos de tema: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | as tabelas do plugin; dê nome a elas com `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | endereço de um arquivo do plugin (ou da cópia dele no tema) |

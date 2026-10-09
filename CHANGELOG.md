@@ -5,7 +5,9 @@ Versions follow [semantic versioning](https://semver.org/). Within API version 1
 ## 1.0.5
 
 - E-mails now leave from `no-reply@yourdomain` unless a sender is set in Settings → E-mail.
-- For plugins (API, only additions): `pb_http()` makes a request to another service (https only, with headers, an optional POST body, a size limit, and a way for tests to answer instead of the network), and `pb_add_admin_page()` takes a fifth argument, `'settings'`, to put a plugin's technical screen under the gear icon instead of the top menu.
+- Plugins have their own icon in the top bar (a plug), apart from the gear: their screens are listed there, for whoever each plugin allows. Editors can use plugin screens and plugin settings; only administrators install, switch on and off, update and delete plugins ("Manage plugins" in that same menu).
+- Each person's preferences are kept with their account and follow them to any browser: the light/dark choice (new) and the panel's language. A choice already made in a browser is kept the first time.
+- For plugins (API, only additions): `pb_http()` makes a request to another service (https only, with headers, an optional POST body, a size limit, and a way for tests to answer instead of the network).
 
 ## 1.0.4
 
