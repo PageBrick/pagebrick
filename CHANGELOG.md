@@ -2,6 +2,14 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.0.5
+
+- E-mails now leave from `no-reply@yourdomain` unless a sender is set in Settings → E-mail.
+- Plugins have their own icon in the top bar (a plug), apart from the gear: their screens are listed there, for whoever each plugin allows. Editors can use plugin screens and plugin settings; only administrators install, switch on and off, update and delete plugins ("Manage plugins" in that same menu).
+- Each person's preferences are kept with their account and follow them to any browser: the light/dark choice (new) and the panel's language. A new person starts in the site's language. What a browser remembers is never handed to the next person who signs in on it (whoever chose dark before 1.0.5 chooses once more).
+- The installer's language choices line up (the round button sat in the middle of each box).
+- For plugins (API, only additions): `pb_http()` makes a request to another service (https only, with headers, an optional POST body, a size limit, and a way for tests to answer instead of the network).
+
 ## 1.0.4
 
 - Sending a theme or plugin (.zip), updating one or installing one from the catalog shows each step as it happens, like PageBrick's own updates: sending or downloading, checking the signature or the package, keeping a copy, installing and, when it's the one in use, opening every page with it. If a page breaks, the previous version is put back right there and the screen says why.

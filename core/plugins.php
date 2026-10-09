@@ -326,7 +326,10 @@ function pb_match_route(string $method, string $path): ?array
     return null;
 }
 
-/** A screen in the panel at /admin/p/{slug}, listed in the menu. The handler echoes the screen (GET and POST). */
+/**
+ * A screen in the panel at /admin/p/{slug}, listed under the Plugins icon for whoever $role allows ('editor' lets
+ * editors and administrators in, 'admin' only administrators). The handler echoes the screen (GET and POST).
+ */
 function pb_add_admin_page(string $slug, string $label, callable $handler, string $role = 'editor'): void
 {
     $GLOBALS['pb_admin_pages'][$slug] = ['label' => $label, 'handler' => $handler, 'role' => $role, 'owner' => $GLOBALS['pb_running_plugin'] ?? null];

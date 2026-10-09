@@ -73,13 +73,14 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | change a value; a filter must return the same type it received |
 | `pb_add_route($method, $path, $handler)` | a public address; the handler echoes the answer |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | show a template of the plugin as a page of the site, inside the theme's layout, with SEO tags |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | a panel screen; the handler echoes it for GET and POST |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | a panel screen under the Plugins icon; the handler echoes it for GET and POST. `'editor'` lets editors and administrators in, `'admin'` only administrators. Installing, switching on and off and deleting plugins is always for administrators |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | settings screen and its values (read like theme fields: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | the plugin's tables; name them with `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | address of a file of the plugin (or of the theme's copy of it) |
 | `pb_db()`, `pb_table($name)`, `pb_option()`, `pb_set_option()` | the database (PDO; always use prepared statements) and small saved values |
 | `pb_mail($to, $subject, $body, $replyTo = '')` | send an e-mail with the site's settings |
 | `pb_json($data)`, `pb_post($name)`, `pb_query($name)` | answer JSON; read form and query values as strings |
+| `pb_http($url, $headers = [], $timeout = 8, $body = null)` | a request to another service (https only): returns `['status' => 200, 'body' => '…']` whatever the status, throws when it can't connect; giving $body makes it a POST. Tests can answer instead with `$GLOBALS['pb_config']['http']` |
 | `pb_sign($data)`, `pb_signature_valid($data, $signature)` | protect public forms without cookies (see below) |
 | `pb_csrf_field()` | hidden field for forms in your panel screens (the core checks it on every panel POST) |
 

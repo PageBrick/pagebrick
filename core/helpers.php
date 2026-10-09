@@ -90,6 +90,48 @@ function pb_json(array $data, int $status = 200): never
     exit;
 }
 
+/**
+ * A request to another service, for plugins that connect to one (an API, a feed). Returns ['status' => 200, 'body' => '…']
+ * whatever the status is, so the plugin decides what a 403 means; throws RuntimeException when it can't connect or the
+ * answer is over 2 MB, and InvalidArgumentException for an address that isn't https:// or a header with a line break.
+ * $headers is ['Name' => 'value']; giving $body makes it a POST. Tests can set $GLOBALS['pb_config']['http'] to a
+ * function ($url, $headers, $timeout, $body): array that answers instead of the network.
+ */
+function pb_http(string $url, array $headers = [], int $timeout = 8, ?string $body = null): array
+{
+    if (!preg_match('~^https://~i', $url) && empty($GLOBALS['pb_config']['allow_insecure_urls'])) {
+        throw new InvalidArgumentException(__('Endereço inseguro: só https é aceito.'));
+    }
+    $lines = [];
+    foreach ($headers as $name => $value) {
+        if (!preg_match('/^[A-Za-z0-9-]+$/', (string) $name) || preg_match('/[\r\n]/', (string) $value)) {
+            throw new InvalidArgumentException(__('Cabeçalho inválido.'));
+        }
+        $lines[] = "$name: $value";
+    }
+    if (is_callable($GLOBALS['pb_config']['http'] ?? null)) {
+        return ($GLOBALS['pb_config']['http'])($url, $headers, $timeout, $body);
+    }
+    $context = stream_context_create(['http' => ['method' => $body === null ? 'GET' : 'POST', 'header' => implode("\r\n", $lines), 'content' => $body ?? '',
+        'timeout' => max(1, min($timeout, 60)), 'ignore_errors' => true, 'follow_location' => 1, 'max_redirects' => 3, 'user_agent' => 'PageBrick/' . PB_VERSION]]);
+    $max = 2 * 1024 * 1024;
+    $answer = @file_get_contents($url, false, $context, 0, $max + 1);
+    // With redirects the status lines pile up: the last one is the answer.
+    $status = 0;
+    foreach ($http_response_header ?? [] as $line) {
+        if (preg_match('~^HTTP/\S+\s+(\d{3})~', $line, $m)) {
+            $status = (int) $m[1];
+        }
+    }
+    if ($answer === false || $status === 0) {
+        throw new RuntimeException(sprintf(__('Não consegui conectar a %s.'), (string) parse_url($url, PHP_URL_HOST)));
+    }
+    if (strlen($answer) > $max) {
+        throw new RuntimeException(__('A resposta é grande demais.'));
+    }
+    return ['status' => $status, 'body' => $answer];
+}
+
 /** Cuts text to $max characters without breaking UTF-8. */
 function pb_limit(string $text, int $max): string
 {

@@ -1,12 +1,24 @@
 // PageBrick panel: repeatable lists, image picker, link fields and confirmations. No build step.
 (() => {
-    // Light or dark: follows the system until the switch is used, then remembers the choice in this browser.
-    document.querySelector('[data-theme-switch]')?.addEventListener('click', () => {
+    // Light or dark: follows the system until the switch is used. The choice is kept on the server, with the person's
+    // account, so it follows them to any browser; this browser also remembers it for the sign-in screen.
+    const themeSwitch = document.querySelector('[data-theme-switch]');
+    const keepTheme = (theme) => {
+        const token = document.querySelector('meta[name=pb-csrf]')?.content;
+        if (themeSwitch && token) {
+            fetch(themeSwitch.dataset.url, { method: 'POST', body: new URLSearchParams({ _csrf: token, theme }), keepalive: true });
+        }
+    };
+    themeSwitch?.addEventListener('click', () => {
         const root = document.documentElement;
         const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
         root.dataset.theme = dark ? 'light' : 'dark';
+        root.setAttribute('data-theme-saved', '');
         try { localStorage.setItem('pb-theme', root.dataset.theme); } catch (e) {}
+        keepTheme(root.dataset.theme);
     });
+    // What this browser remembers belongs to nobody in particular (whoever used it last), so a signed-in person never
+    // inherits it: their own choice comes from their account.
 
     // Password fields: an eye inside the field. Open eye: show the password; closed eye: hide it again.
     const eyes = {

@@ -67,6 +67,17 @@ final class CoreTest extends TestCase
         return $mail && preg_match('/token=([0-9a-f]{64})/', $mail['text'], $m) ? $m[1] : null;
     }
 
+    public function test_the_default_sender_is_no_reply_at_the_site_domain(): void
+    {
+        $GLOBALS['pb_config']['mail'] = 'memory';
+        $GLOBALS['pb_sent_mail'] = [];
+        pb_set_option('site_url', 'https://www.padaria.example');
+        pb_mail('cliente@example.com', 'Oi', 'texto');
+        pb_set_option('mail', json_encode(['from_email' => 'contato@padaria.example']));
+        pb_mail('cliente@example.com', 'Oi', 'texto');
+        $this->assertSame(['no-reply@padaria.example', 'contato@padaria.example'], array_column($GLOBALS['pb_sent_mail'], 'fromEmail'));
+    }
+
     public function test_forgot_password_link_works_once(): void
     {
         $token = $this->resetLink(' ANA@example.com');

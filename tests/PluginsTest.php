@@ -24,6 +24,44 @@ final class PluginsTest extends TestCase
         return ob_get_clean();
     }
 
+    public function test_plugin_screens_live_under_the_plugins_icon_for_whoever_may_use_them(): void
+    {
+        $admin = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        $editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
+        pb_add_admin_page('vitrine', 'Vitrine', fn() => print('tela da vitrine'));                // editors and administrators
+        pb_add_admin_page('chaves', 'Chaves da API', fn() => print('tela das chaves'), 'admin'); // administrators only
+
+        $panel = function (int $user, string $path, string $method = 'GET'): string {
+            $_SESSION['user_id'] = $user;
+            ob_start();
+            pb_admin($method, $path);
+            return ob_get_clean();
+        };
+        $menu = fn(string $html) => preg_match('~<details class="nav-more settings-menu plugins-menu">.*?</details>~s', $html, $m) ? $m[0] : '';
+
+        $home = $panel($admin, '/admin');
+        $this->assertStringContainsString('href="/admin/p/vitrine"', $menu($home));
+        $this->assertStringContainsString('href="/admin/p/chaves"', $menu($home));
+        $this->assertStringContainsString('href="/admin/plugins"', $menu($home), 'administrators manage plugins from there');
+        $this->assertStringNotContainsString('/admin/p/vitrine', preg_replace('~<details.*?</details>~s', '', $home), 'and nowhere else: not in the top menu');
+        $this->assertStringNotContainsString('href="/admin/plugins"', preg_replace('~<details class="nav-more settings-menu plugins-menu">.*?</details>~s', '', $home), 'nor in the gear menu');
+
+        $home = $panel($editor, '/admin');
+        $this->assertStringContainsString('href="/admin/p/vitrine"', $menu($home));
+        $this->assertStringNotContainsString('/admin/p/chaves', $home, 'an editor does not see what is not theirs');
+        $this->assertStringNotContainsString('href="/admin/plugins"', $home);
+        $this->assertStringContainsString('tela da vitrine', $panel($editor, '/admin/p/vitrine'), 'but uses what plugins offer editors');
+        $this->assertStringNotContainsString('tela das chaves', $panel($editor, '/admin/p/chaves'));
+        $this->assertSame(403, http_response_code());
+
+        $this->assertStringNotContainsString('Instalar', $panel($editor, '/admin/plugins'), 'managing plugins is for administrators');
+        $_POST = ['plugin' => 'good', 'action' => 'activate'];
+        $panel($editor, '/admin/plugins', 'POST');
+        $_POST = [];
+        $this->assertArrayNotHasKey('good', array_filter(pb_plugin_states(), fn($s) => !empty($s['active'])), 'an editor cannot switch a plugin on');
+        $_SESSION = [];
+    }
+
     public function test_plugins_with_problems_are_listed_but_cannot_be_activated(): void
     {
         $plugins = pb_plugins_available();

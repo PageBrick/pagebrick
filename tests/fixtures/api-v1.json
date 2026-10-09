@@ -103,6 +103,31 @@
             ],
             "returns": "never"
         },
+        "pb_http": {
+            "params": [
+                {
+                    "name": "url",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "headers",
+                    "type": "array",
+                    "optional": true
+                },
+                {
+                    "name": "timeout",
+                    "type": "int",
+                    "optional": true
+                },
+                {
+                    "name": "body",
+                    "type": "?string",
+                    "optional": true
+                }
+            ],
+            "returns": "array"
+        },
         "pb_limit": {
             "params": [
                 {
