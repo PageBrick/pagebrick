@@ -103,7 +103,8 @@ td.actions > * { display: inline-block; margin-left: 1rem; }
 @media (max-width: 860px) { .editor-side { position: static; max-height: none; } }
 .revisions { padding-left: 1rem; }
 .revisions li { margin: .3rem 0; }
-@media (max-width: 860px) { .editor { grid-template-columns: 1fr; } }
+/* One column on a phone: "minmax(0, 1fr)" lets it shrink to the screen (a plain "1fr" grows to the widest field, such as the rich text toolbar). */
+@media (max-width: 860px) { .editor { grid-template-columns: minmax(0, 1fr); } }
 
 /* Fields */
 .pb-group, .pb-list { margin: 1.25rem 0 0; border: 1px solid var(--line); border-radius: 8px; padding: .75rem 1rem 1rem; }
@@ -120,6 +121,7 @@ td.actions > * { display: inline-block; margin-left: 1rem; }
 .pb-link input[hidden] { display: none; }
 trix-editor { background: var(--bg); border-color: var(--line); min-height: 8rem; }
 trix-toolbar .trix-button-group--file-tools, trix-toolbar [data-trix-attribute="code"] { display: none; }
+trix-toolbar .trix-button-row { flex-wrap: wrap; gap: .25rem 0; } /* the buttons wrap on a narrow screen instead of widening the page */
 @media (prefers-color-scheme: dark) { trix-toolbar .trix-button { background: #f3f3f6; } }
 
 /* Plugins */
