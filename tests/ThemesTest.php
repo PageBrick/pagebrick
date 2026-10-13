@@ -57,6 +57,32 @@ final class ThemesTest extends TestCase
         $this->assertArrayNotHasKey('problem', $themes['second']);
     }
 
+    public function test_a_themes_picture_has_its_time_in_the_address(): void
+    {
+        // a theme sent again with another picture must not keep showing the old one: the address changes with the file
+        $file = self::$themes . '/default/screenshot.webp';
+        $this->assertFileExists($file);
+        touch($file, 1_700_000_000);
+        $first = pb_themes_available()['default']['screenshot_v'];
+        touch($file, 1_700_000_100);
+        $second = pb_themes_available()['default']['screenshot_v'];
+        $this->assertSame(1_700_000_000, $first);
+        $this->assertSame(1_700_000_100, $second);
+
+        $themes = pb_themes_available();
+        $states = [];
+        $active = 'default';
+        $catalog = [];
+        $updates = [];
+        ob_start();
+        try {
+            include PB_ROOT . '/core/views/themes.php';
+        } finally {
+            $html = ob_get_clean();
+        }
+        $this->assertStringContainsString('content/themes/default/screenshot.webp?v=1700000100', $html);
+    }
+
     public function test_switching_themes_keeps_every_piece_of_content(): void
     {
         pb_activate_theme('second');

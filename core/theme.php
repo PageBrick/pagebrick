@@ -93,6 +93,7 @@ function pb_themes_available(): array
         foreach (['webp', 'png', 'jpg'] as $ext) {
             if (is_file(dirname($file) . "/screenshot.$ext")) {
                 $theme['screenshot'] = "screenshot.$ext";
+                $theme['screenshot_v'] = (int) filemtime(dirname($file) . "/screenshot.$ext"); // in the address: a theme sent again shows its new picture
                 break;
             }
         }
