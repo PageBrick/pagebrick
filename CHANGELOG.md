@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.2.2
+
+- **A theme sent again shows its new picture on the Themes screen.** The picture's address never changed, so the browser (or the hosting in front of the site) kept showing the old one even though the file had been replaced, and it looked as if the theme had to be sent twice. The address now carries the file's time, like the theme's CSS and scripts.
+
 ## 1.2.1
 
 - PageBrick is now described as what it is: a simple, open-source CMS for any kind of website, for anyone to install and for developers to extend. Only the texts of the README and of the package changed; nothing in a site changes.

@@ -17,7 +17,7 @@ $form = function (string $slug, string $action, string $label, string $class = '
             $backup = pb_backups("theme_{$slug}_")[0] ?? null; ?>
             <div class="theme<?= $slug === $active ? ' is-active' : '' ?>">
                 <?php if (isset($theme['screenshot'])): ?>
-                    <img src="<?= e(pb_url("content/themes/$slug/{$theme['screenshot']}")) ?>" alt="" loading="lazy">
+                    <img src="<?= e(pb_url("content/themes/$slug/{$theme['screenshot']}") . '?v=' . $theme['screenshot_v']) ?>" alt="" loading="lazy">
                 <?php else: ?>
                     <div class="theme-noshot" aria-hidden="true"><?= e(pb_limit($theme['name'], 1)) ?></div>
                 <?php endif ?>
