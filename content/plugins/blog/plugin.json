@@ -1,0 +1,11 @@
+{
+    "name": "Blog",
+    "version": "1.0.0",
+    "description": "Textos com data, organizados em categorias e subcategorias. O nome e o endereço são configuráveis: Blog em /blog, Notícias em /noticias, Artigos em /artigos…",
+    "author": "PageBrick",
+    "api": 1,
+    "i18n": {
+        "en": {"description": "Dated posts organized in categories and subcategories. Name and address are configurable: Blog at /blog, News at /news, Articles at /articles…"},
+        "es": {"description": "Textos con fecha, organizados en categorías y subcategorías. El nombre y la dirección se configuran: Blog en /blog, Noticias en /noticias, Artículos en /articulos…"}
+    }
+}

@@ -1,0 +1,12 @@
+/* Blog. Uses the theme's colors when it defines them (PageBrick's default theme does). */
+.blog-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2.5rem 2rem; margin: 0; padding: 0; list-style: none; }
+.blog-list > li > a { color: inherit; text-decoration: none; }
+.blog-list > li > a:hover h3 { text-decoration: underline; text-decoration-color: var(--brand, #d24e2b); }
+.blog-img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; margin-bottom: 1rem; border-radius: var(--radius, 4px); }
+.blog-list h3 { margin: 0 0 .35rem; }
+.blog-list p { margin: 0 0 .5rem; color: var(--muted, #565a66); }
+.blog-meta, .blog-trail { color: var(--muted, #565a66); font-size: .9rem; }
+.blog-categories { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+.blog-categories a { display: inline-block; padding: .3rem .8rem; border: 1px solid var(--rule, #e2e3e8); border-radius: 99px; color: var(--ink, #171923); text-decoration: none; font-size: .95rem; }
+.blog-categories a:hover { border-color: var(--brand, #d24e2b); }
+.blog-pages { display: flex; gap: 2rem; justify-content: center; margin-top: 3rem; }

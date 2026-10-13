@@ -1,0 +1,482 @@
+<?php
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+/** Installing from .zip and from the signed catalog, backups, rollback and PageBrick's own update. */
+final class PackagesTest extends TestCase
+{
+    private string $dir;
+    private string $keys;
+
+    protected function setUp(): void
+    {
+        pb_test_fresh_db();
+        $this->dir = sys_get_temp_dir() . '/pb-pkg-' . bin2hex(random_bytes(4));
+        foreach (['plugins', 'themes', 'backups', 'downloads'] as $folder) {
+            mkdir("$this->dir/$folder", 0777, true);
+        }
+        $this->keys = sodium_crypto_sign_keypair();
+        $GLOBALS['pb_config'] = pb_test_config([
+            'plugins_dir' => "$this->dir/plugins",
+            'themes_dir' => "$this->dir/themes",
+            'backups_dir' => "$this->dir/backups",
+            'trusted_keys' => [base64_encode(sodium_crypto_sign_publickey($this->keys))],
+            'allow_insecure_urls' => true,
+            'catalog_url' => "$this->dir/downloads/catalog.json",
+        ]);
+        pb_migrate();
+    }
+
+    protected function tearDown(): void
+    {
+        pb_rmtree($this->dir);
+    }
+
+    /** A .zip with [path => contents]. */
+    private function zip(array $files, string $name = 'package.zip'): string
+    {
+        $file = "$this->dir/downloads/$name";
+        $zip = new ZipArchive();
+        $zip->open($file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        foreach ($files as $path => $contents) {
+            $zip->addFromString($path, $contents);
+        }
+        $zip->close();
+        return $file;
+    }
+
+    private function plugin(string $slug, string $version, string $code = '<?php'): array
+    {
+        return [
+            "$slug/plugin.json" => json_encode(['name' => ucfirst($slug), 'version' => $version, 'api' => 1]),
+            "$slug/plugin.php" => $code,
+        ];
+    }
+
+    /** A catalog entry for $file, signed with $keys (the trusted pair by default). */
+    private function entry(string $slug, string $version, string $file, ?string $keys = null): array
+    {
+        $sha256 = hash_file('sha256', $file);
+        $secret = sodium_crypto_sign_secretkey($keys ?? $this->keys);
+        return ['slug' => $slug, 'name' => ucfirst($slug), 'version' => $version, 'api' => 1, 'url' => $file, 'sha256' => $sha256,
+            'signature' => base64_encode(sodium_crypto_sign_detached(pb_package_message('plugin', $slug, $version, $sha256), $secret))];
+    }
+
+    private function publish(array $plugins, ?array $core = null): void
+    {
+        file_put_contents("$this->dir/downloads/catalog.json", json_encode(['format' => 1, 'plugins' => $plugins, 'core' => $core]));
+        pb_catalog(true);
+    }
+
+    public static function dangerousZips(): array
+    {
+        $manifest = json_encode(['name' => 'X', 'version' => '1.0.0', 'api' => 1]);
+        return [
+            'path escaping the folder' => [['evil/plugin.json' => $manifest, 'evil/plugin.php' => '<?php', 'evil/../../escape.php' => 'x'], 'caminhos inválidos'],
+            'loose files, no folder' => [['plugin.json' => $manifest, 'plugin.php' => '<?php'], 'única pasta principal'],
+            'two main folders' => [['a/plugin.json' => $manifest, 'a/plugin.php' => '<?php', 'b/x.php' => 'x'], 'única pasta principal'],
+            'server config file' => [['evil/plugin.json' => $manifest, 'evil/plugin.php' => '<?php', 'evil/.htaccess' => 'SetHandler x'], 'configuração do servidor'],
+            'no manifest' => [['evil/readme.txt' => 'oi'], 'plugin.json'],
+            'bad folder name' => [['Meu Plugin/plugin.json' => $manifest, 'Meu Plugin/plugin.php' => '<?php'], 'letras minúsculas'],
+        ];
+    }
+
+    #[DataProvider('dangerousZips')]
+    public function test_dangerous_or_malformed_zips_are_refused(array $files, string $reason): void
+    {
+        $this->expectExceptionMessage($reason);
+        pb_install_package($this->zip($files), 'plugin');
+    }
+
+    public function test_links_inside_a_zip_are_refused(): void
+    {
+        $file = $this->zip($this->plugin('evil', '1.0.0') + ['evil/link' => '/etc/passwd']);
+        $zip = new ZipArchive();
+        $zip->open($file);
+        $zip->setExternalAttributesName('evil/link', ZipArchive::OPSYS_UNIX, 0120777 << 16);
+        $zip->close();
+
+        $this->expectExceptionMessage('atalhos');
+        pb_install_package($file, 'plugin');
+    }
+
+    public function test_a_file_that_is_not_a_zip_is_refused(): void
+    {
+        file_put_contents("$this->dir/downloads/fake.zip", 'isto não é um zip');
+        $this->expectExceptionMessage('não é um .zip válido');
+        pb_install_package("$this->dir/downloads/fake.zip", 'plugin');
+    }
+
+    public function test_replacing_a_plugin_keeps_a_backup_and_restore_brings_it_back(): void
+    {
+        $first = pb_install_package($this->zip($this->plugin('good', '1.0.0')), 'plugin');
+        $this->assertNull($first['backup']);
+
+        $second = pb_install_package($this->zip($this->plugin('good', '2.0.0')), 'plugin');
+        $this->assertFileExists($second['backup']);
+        $this->assertSame('2.0.0', pb_package_version('plugin', 'good'));
+        $this->assertSame('1.0.0', pb_backups('plugin_good_')[0]['version']);
+
+        pb_restore_package('plugin', 'good');
+        $this->assertSame('1.0.0', pb_package_version('plugin', 'good'));
+
+        foreach (['3.0.0', '4.0.0', '5.0.0', '6.0.0'] as $version) {
+            pb_install_package($this->zip($this->plugin('good', $version)), 'plugin');
+        }
+        $this->assertCount(PB_BACKUPS_KEPT, pb_backups('plugin_good_'), 'old backups are pruned');
+        $this->assertSame([], glob("$this->dir/plugins/.tmp-*"), 'no leftovers');
+    }
+
+    public function test_backups_of_similar_names_do_not_mix(): void
+    {
+        pb_install_package($this->zip($this->plugin('news', '1.0.0')), 'plugin');
+        pb_install_package($this->zip($this->plugin('news', '1.1.0')), 'plugin');
+        pb_install_package($this->zip($this->plugin('news-extra', '9.0.0')), 'plugin');
+        pb_install_package($this->zip($this->plugin('news-extra', '9.1.0')), 'plugin');
+
+        $this->assertSame(['1.0.0'], array_column(pb_backups('plugin_news_'), 'version'));
+    }
+
+    public function test_catalog_installs_only_correctly_signed_packages(): void
+    {
+        $file = $this->zip($this->plugin('good', '1.0.0'), 'good-1.0.0.zip');
+        $good = $this->entry('good', '1.0.0', $file);
+
+        $refused = [
+            'changed after signing' => [['sha256' => hash('sha256', 'outro conteúdo')] + $good, 'não confere'],
+            'signed by an unknown key' => [$this->entry('good', '1.0.0', $file, sodium_crypto_sign_keypair()), 'assinatura'],
+            'signature of another version' => [['version' => '2.0.0'] + $good, 'assinatura'],
+            'paid package' => [['price' => 'R$ 99'] + $good, 'pago'],
+            'other API version' => [['api' => 2] + $good, 'outra versão'],
+        ];
+        foreach ($refused as $case => [$entry, $reason]) {
+            $this->publish([$entry]);
+            try {
+                pb_install_from_catalog('plugin', 'good');
+                $this->fail("Installed: $case");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString($reason, $e->getMessage(), $case);
+            }
+            $this->assertDirectoryDoesNotExist("$this->dir/plugins/good", $case);
+        }
+
+        $this->publish([$good]);
+        pb_install_from_catalog('plugin', 'good');
+        $this->assertSame('1.0.0', pb_package_version('plugin', 'good'));
+    }
+
+    public function test_a_signed_zip_with_another_folder_inside_is_refused(): void
+    {
+        $file = $this->zip($this->plugin('other', '1.0.0'), 'good-1.0.0.zip');
+        $this->publish([$this->entry('good', '1.0.0', $file)]);
+
+        $this->expectExceptionMessage('não corresponde');
+        pb_install_from_catalog('plugin', 'good');
+    }
+
+    public function test_only_https_downloads_outside_development(): void
+    {
+        $GLOBALS['pb_config']['allow_insecure_urls'] = false;
+        $this->expectExceptionMessage('só https');
+        pb_download('http://example.com/plugin.zip', 1000);
+    }
+
+    public function test_a_broken_update_puts_the_previous_version_back_by_itself(): void
+    {
+        $v1 = $this->zip($this->plugin('good', '1.0.0', '<?php pb_add_filter("slot:test", fn(string $h) => $h . "v1");'), 'good-1.0.0.zip');
+        $this->publish([$this->entry('good', '1.0.0', $v1)]);
+        pb_install_from_catalog('plugin', 'good');
+        pb_activate_plugin('good');
+
+        $v2 = $this->zip($this->plugin('good', '2.0.0', '<?php throw new RuntimeException("v2 quebrada");'), 'good-2.0.0.zip');
+        $this->publish([$this->entry('good', '2.0.0', $v2)]);
+        $this->assertArrayHasKey('good', pb_available_updates()['plugin']);
+        pb_update_plugin('good');
+
+        pb_test_new_request();
+        pb_load_plugins(); // first run of v2: it breaks
+        $state = pb_plugin_states()['good'];
+        $this->assertTrue($state['active']);
+        $this->assertStringContainsString('anterior foi restaurada', $state['error']);
+        $this->assertSame('1.0.0', pb_package_version('plugin', 'good'));
+
+        pb_test_new_request();
+        pb_load_plugins();
+        $this->assertSame('v1', pb_slot('test'), 'next request runs the restored version');
+    }
+
+    public function test_pagebrick_update_replaces_only_its_own_files_and_can_be_undone(): void
+    {
+        $root = "$this->dir/site";
+        foreach (['core/bootstrap.php' => 'velho', 'vendor/lib.php' => 'velho', 'index.php' => 'velho', 'config.php' => 'segredo',
+                     '.htaccess' => 'meu', 'content/themes/meu.txt' => 'meu'] as $path => $contents) {
+            @mkdir(dirname("$root/$path"), 0777, true);
+            file_put_contents("$root/$path", $contents);
+        }
+        $release = $this->zip([
+            'pagebrick/core/bootstrap.php' => 'novo', 'pagebrick/core/novo.php' => 'novo', 'pagebrick/vendor/lib.php' => 'novo',
+            'pagebrick/index.php' => 'novo', 'pagebrick/config.php' => 'invadido', 'pagebrick/.htaccess' => 'trocado',
+            'pagebrick/content/themes/meu.txt' => 'trocado',
+        ], 'pagebrick-9.0.0.zip');
+
+        $backup = pb_apply_core_package($release, $root, '1.0.0');
+
+        $this->assertSame('novo', file_get_contents("$root/core/bootstrap.php"));
+        $this->assertFileExists("$root/core/novo.php");
+        $this->assertSame('novo', file_get_contents("$root/vendor/lib.php"));
+        $this->assertSame('novo', file_get_contents("$root/index.php"));
+        $this->assertSame('segredo', file_get_contents("$root/config.php"), 'config.php is never touched');
+        $this->assertSame('meu', file_get_contents("$root/.htaccess"), '.htaccess is never touched');
+        $this->assertSame('meu', file_get_contents("$root/content/themes/meu.txt"), 'content/ is never touched');
+        $this->assertFileExists($backup);
+
+        pb_restore_core($root);
+        $this->assertSame('velho', file_get_contents("$root/core/bootstrap.php"));
+        $this->assertFileDoesNotExist("$root/core/novo.php");
+        $this->assertSame('velho', file_get_contents("$root/index.php"));
+    }
+
+    public function test_a_zip_that_is_not_pagebrick_is_not_applied_as_an_update(): void
+    {
+        $this->expectExceptionMessage('não é uma versão do PageBrick');
+        pb_apply_core_package($this->zip(['outra-coisa/index.php' => 'x']), "$this->dir/site", '1.0.0');
+    }
+
+    public function test_core_updates_are_announced_from_the_catalog(): void
+    {
+        $this->publish([], ['version' => '99.0.0', 'url' => 'x', 'sha256' => 'x', 'signature' => 'x']);
+        $this->assertSame('99.0.0', pb_available_updates()['core']['version']);
+    }
+
+    /** A signed PageBrick $version in the catalog, and a site folder (core_root) running the current one. */
+    private function publishCore(string $version): void
+    {
+        $GLOBALS['pb_config']['core_root'] = "$this->dir/site";
+        @mkdir("$this->dir/site/core", 0777, true);
+        file_put_contents("$this->dir/site/core/bootstrap.php", '<?php // ' . PB_VERSION);
+        file_put_contents("$this->dir/site/index.php", '<?php');
+        $file = $this->zip(['pagebrick/core/bootstrap.php' => "<?php // $version", 'pagebrick/index.php' => '<?php'], "core-$version.zip");
+        $sha256 = hash_file('sha256', $file);
+        $signature = base64_encode(sodium_crypto_sign_detached(pb_package_message('core', 'core', $version, $sha256), sodium_crypto_sign_secretkey($this->keys)));
+        $this->publish([], ['version' => $version, 'api' => [1], 'requires_php' => '8.2', 'url' => $file, 'sha256' => $sha256, 'signature' => $signature]);
+    }
+
+    public function test_automatic_updates_follow_the_chosen_mode(): void
+    {
+        pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $feature = "$major." . ($minor + 1) . '.0';
+        $this->assertTrue(pb_auto_update_allows($fix, 'patch'));
+        $this->assertFalse(pb_auto_update_allows($feature, 'patch'));
+        $this->assertTrue(pb_auto_update_allows($feature, 'all'));
+        $this->assertFalse(pb_auto_update_allows($fix, 'manual'));
+        $this->assertFalse(pb_auto_update_allows(PB_VERSION, 'all'), 'never the same version again');
+
+        $this->publishCore($feature);
+        $this->assertSame('patch', pb_auto_update_mode(), 'fixes by themselves unless the owner chooses otherwise');
+        $this->assertNull(pb_auto_update(), 'a version with news waits for a click');
+        $this->assertSame($feature, pb_available_updates()['core']['version'], 'but the panel announces it');
+
+        $this->publishCore($fix);
+        pb_set_auto_update_mode('manual');
+        $this->assertNull(pb_auto_update());
+        pb_set_auto_update_mode('patch');
+        $GLOBALS['pb_sent_mail'] = [];
+        $this->assertSame($fix, pb_auto_update());
+        $this->assertStringContainsString("// $fix", file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->assertSame($fix, pb_pending_core_update()['to'], 'the next request checks every page, as with the button');
+        $this->assertSame('ana@example.com', $GLOBALS['pb_sent_mail'][0]['to']);
+        $this->assertNull(pb_auto_update(), 'one update at a time');
+    }
+
+    public function test_an_update_in_steps_checks_the_file_before_using_it(): void
+    {
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $this->publishCore($fix);
+        $entry = pb_core_update_entry();
+
+        pb_core_update_download($entry);
+        file_put_contents(pb_core_update_file(), 'swapped on the way');
+        try {
+            pb_core_update_verify($entry);
+            $this->fail('a file that is not the signed one went through');
+        } catch (InvalidArgumentException) {
+            $this->assertFileDoesNotExist(pb_core_update_file(), 'thrown away');
+        }
+
+        // The Updates screen calls the steps one by one and gets JSON back.
+        $_SESSION['user_id'] = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
+        $answers = [];
+        foreach (['download', 'verify', 'apply'] as $step) {
+            $_POST = ['step' => $step];
+            ob_start();
+            pb_admin('POST', '/admin/updates/step');
+            $answers[$step] = json_decode(ob_get_clean(), true);
+        }
+        $_POST = [];
+        $_SESSION = [];
+        $this->assertSame(['ok' => true, 'version' => $fix], $answers['apply']);
+        $this->assertStringContainsString("// $fix", file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->assertSame($fix, pb_pending_core_update()['to'], 'the next request (the screen asks for the result) checks every page');
+    }
+
+    public function test_a_version_that_was_undone_waits_for_a_person(): void
+    {
+        [$major, $minor, $patch] = array_map('intval', explode('.', PB_VERSION));
+        $fix = "$major.$minor." . ($patch + 1);
+        $this->publishCore($fix);
+        pb_set_option('core_update_result', json_encode(['ok' => false, 'from' => PB_VERSION, 'to' => $fix, 'problem' => 'x', 'at' => '2026-10-08 10:00:00']));
+        $this->assertNull(pb_auto_update());
+        $this->assertStringContainsString('// ' . PB_VERSION, file_get_contents("$this->dir/site/core/bootstrap.php"));
+        $this->expectExceptionMessage('Escolha uma das opções');
+        pb_set_auto_update_mode('sometimes');
+    }
+
+    public function test_the_automatic_check_runs_at_most_once_an_hour(): void
+    {
+        pb_auto_update_after_response();
+        $first = pb_option('auto_update_at');
+        $this->assertGreaterThan(time() - 60, (int) $first);
+        pb_set_option('auto_update_at', (string) ((int) $first - 60));
+        $moved = pb_option('auto_update_at');
+        pb_auto_update_after_response();
+        $this->assertSame($moved, pb_option('auto_update_at'), 'within the hour nothing runs');
+    }
+
+    public function test_the_hourly_check_reads_the_catalog_itself_so_a_new_version_shows_up_without_the_button(): void
+    {
+        pb_set_auto_update_mode('manual'); // nothing installs: this is only about the panel finding out
+        $this->publish([], null);
+        $this->assertNull(pb_available_updates()['core'], 'the copy of the catalog kept for 12 hours lists nothing new');
+
+        // A version is published: the copy in the panel's hands is still the old one...
+        file_put_contents("$this->dir/downloads/catalog.json", json_encode(['format' => 1, 'plugins' => [],
+            'core' => ['version' => '99.0.0', 'url' => 'x', 'sha256' => 'x', 'signature' => 'x']]));
+        $this->assertNull(pb_available_updates()['core']);
+
+        // ...until the hourly check runs: it asks the catalog, and the bell, the dashboard and the sidebar can announce it.
+        $this->assertNull(pb_auto_update(), 'manual: it only looks');
+        $this->assertSame('99.0.0', pb_available_updates()['core']['version']);
+    }
+
+    public function test_a_slow_catalog_does_not_hold_up_the_hourly_check(): void
+    {
+        $timeouts = [];
+        foreach ((new ReflectionFunction('pb_download'))->getParameters() as $parameter) {
+            $timeouts[$parameter->getName()] = $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null;
+        }
+        $this->assertSame(30, $timeouts['timeout'], 'a file download keeps its 30 seconds');
+        $source = (string) file_get_contents(PB_ROOT . '/core/packages.php');
+        $this->assertStringContainsString('pb_download(pb_catalog_url(), 2 * 1024 * 1024, 5)', $source, 'the catalog is a small file: five seconds are plenty, and the old copy stays if it does not answer');
+    }
+
+    public function test_after_files_were_replaced_every_request_makes_its_code_cache_look_at_them(): void
+    {
+        if (!function_exists('opcache_invalidate') || ini_get('opcache.revalidate_freq') === false) {
+            $this->markTestSkipped('this PHP has no OPcache');
+        }
+        $saved = [ini_get('opcache.validate_timestamps'), ini_get('opcache.revalidate_freq')];
+        try {
+            ini_set('opcache.validate_timestamps', '0');
+            ini_set('opcache.revalidate_freq', '300'); // a host that checks the files every five minutes, or never
+            pb_follow_code_changes();
+            $this->assertSame('300', ini_get('opcache.revalidate_freq'), 'nothing was replaced: the host keeps its own setting');
+
+            pb_install_package($this->zip($this->plugin('good', '1.0.0')), 'plugin');
+            pb_follow_code_changes();
+            $this->assertSame('0', ini_get('opcache.revalidate_freq'), 'files were just replaced: this request looks at the files');
+            $this->assertSame('1', ini_get('opcache.validate_timestamps'));
+
+            ini_set('opcache.validate_timestamps', '0');
+            ini_set('opcache.revalidate_freq', '300');
+            pb_set_option('code_changed_at', (string) (time() - PB_CODE_WATCH - 1));
+            pb_follow_code_changes();
+            $this->assertSame('300', ini_get('opcache.revalidate_freq'), 'a quarter of an hour later, the host setting is left alone again');
+        } finally {
+            ini_set('opcache.validate_timestamps', $saved[0]);
+            ini_set('opcache.revalidate_freq', $saved[1]);
+        }
+    }
+
+    public function test_every_way_of_replacing_files_notes_the_moment(): void
+    {
+        $this->assertSame('0', pb_option('code_changed_at', '0'));
+        pb_install_package($this->zip($this->plugin('good', '1.0.0')), 'plugin');
+        $this->assertGreaterThan(time() - 60, (int) pb_option('code_changed_at'), 'a plugin or theme from a .zip, from the catalog or put back');
+
+        pb_set_option('code_changed_at', '0');
+        $root = "$this->dir/site";
+        @mkdir("$root/core", 0777, true);
+        file_put_contents("$root/core/bootstrap.php", 'velho');
+        file_put_contents("$root/index.php", 'velho');
+        pb_apply_core_package($this->zip(['pagebrick/core/bootstrap.php' => 'novo', 'pagebrick/index.php' => 'novo'], 'core.zip'), $root, '1.0.0');
+        $this->assertGreaterThan(time() - 60, (int) pb_option('code_changed_at'), 'and PageBrick itself');
+
+        // The first request of a new version notes it too: the version that put it in place may be one that did not.
+        pb_set_option('code_changed_at', '0');
+        $GLOBALS['pb_config']['core_root'] = $root; // the check of the pages is not what is under test: an interrupted one skips it
+        pb_set_option('core_update', json_encode(['from' => '1.0.0', 'to' => PB_VERSION, 'backup' => "$this->dir/no-such-backup.zip", 'at' => time(), 'verifying' => true]));
+        pb_verify_core_update(['plugins' => '{}', 'themes' => '{}']);
+        $this->assertGreaterThan(time() - 60, (int) pb_option('code_changed_at'));
+    }
+
+    public function test_installed_files_carry_the_moment_of_the_install_not_the_time_they_were_packed(): void
+    {
+        // A .zip keeps the time each file had where it was made; PHP's code cache tells new from old by that time alone.
+        $old = strtotime('2020-01-01 12:00:00');
+        $file = $this->zip($this->plugin('good', '1.0.0'));
+        $zip = new ZipArchive();
+        $zip->open($file);
+        $zip->setMtimeName('good/plugin.php', $old);
+        $zip->close();
+        pb_install_package($file, 'plugin');
+        $this->assertGreaterThan(time() - 60, filemtime("$this->dir/plugins/good/plugin.php"));
+
+        $root = "$this->dir/site";
+        @mkdir("$root/core", 0777, true);
+        file_put_contents("$root/core/bootstrap.php", 'velho');
+        file_put_contents("$root/index.php", 'velho');
+        $file = $this->zip(['pagebrick/core/bootstrap.php' => 'novo', 'pagebrick/index.php' => 'novo'], 'core.zip');
+        $zip = new ZipArchive();
+        $zip->open($file);
+        $zip->setMtimeName('pagebrick/core/bootstrap.php', $old);
+        $zip->close();
+        pb_apply_core_package($file, $root, '1.0.0');
+        $this->assertGreaterThan(time() - 60, filemtime("$root/core/bootstrap.php"), 'PageBrick itself too');
+    }
+
+    public function test_two_installations_at_the_same_time_are_not_allowed(): void
+    {
+        $lock = fopen("$this->dir/backups/.lock", 'c');
+        flock($lock, LOCK_EX);
+        try {
+            $this->expectExceptionMessage('em andamento');
+            pb_install_package($this->zip($this->plugin('good', '1.0.0')), 'plugin');
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    public function test_the_maintainer_tool_signs_packages_the_site_accepts(): void
+    {
+        $keyFile = "$this->dir/key";
+        $tool = PB_ROOT . '/tools/pagebrick.php';
+        exec('php ' . escapeshellarg($tool) . ' keygen ' . escapeshellarg($keyFile), $out, $code);
+        $this->assertSame(0, $code);
+        $GLOBALS['pb_config']['trusted_keys'] = [trim(end($out))];
+
+        mkdir("$this->dir/src/good", 0777, true);
+        file_put_contents("$this->dir/src/good/plugin.json", json_encode(['name' => 'Good', 'version' => '1.2.0', 'api' => 1]));
+        file_put_contents("$this->dir/src/good/plugin.php", '<?php');
+        $json = shell_exec('php ' . escapeshellarg($tool) . ' package plugin ' . escapeshellarg("$this->dir/src/good") . ' '
+            . escapeshellarg($keyFile) . ' ' . escapeshellarg("$this->dir/downloads") . ' ' . escapeshellarg("$this->dir/downloads") . ' 2>/dev/null');
+        $this->publish([json_decode($json, true)]);
+
+        pb_install_from_catalog('plugin', 'good');
+        $this->assertSame('1.2.0', pb_package_version('plugin', 'good'));
+    }
+}

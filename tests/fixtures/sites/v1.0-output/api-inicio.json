@@ -1,0 +1,89 @@
+{
+    "id": 1,
+    "title": "Início",
+    "slug": "inicio",
+    "path": "/",
+    "template": "home",
+    "home": true,
+    "updated_at": "AAAA-MM-DDTHH:MM:SS+00:00",
+    "seo": {
+        "title": "Agência Cliente",
+        "description": "Descreva sua empresa em uma ou duas frases. É o texto que aparece no Google."
+    },
+    "fields": {
+        "hero": {
+            "title": "Diga aqui, em uma frase, o que sua empresa faz",
+            "text": "É o primeiro texto que o visitante lê. Conte para quem você trabalha e por que vale a pena falar com você. Troque este texto em Páginas, no painel.",
+            "button_label": "Conheça nossos serviços",
+            "button_link": "/servicos",
+            "image": {
+                "url": "http://localhost/content/uploads/AAAA/MM/ARQUIVO.webp",
+                "thumb": "http://localhost/content/uploads/AAAA/MM/ARQUIVO-thumb.webp",
+                "alt": "Foto de exemplo: atendente trabalhando no balcão de uma loja",
+                "width": 960,
+                "height": 722
+            }
+        },
+        "about": {
+            "title": "Quem somos",
+            "text": "<p>Conte como a empresa começou, há quanto tempo está no mercado e o que ela valoriza. Duas ou três frases bastam.</p><p>As fotos desta página são exemplos. Uma foto real da equipe, da fachada ou do espaço de trabalho deixa o site mais confiável: para trocar, use o botão Escolher imagem.</p>",
+            "image": {
+                "url": "http://localhost/content/uploads/AAAA/MM/ARQUIVO.webp",
+                "thumb": "http://localhost/content/uploads/AAAA/MM/ARQUIVO-thumb.webp",
+                "alt": "Foto de exemplo: equipe reunida em uma mesa de trabalho",
+                "width": 960,
+                "height": 640
+            }
+        },
+        "services": {
+            "title": "O que fazemos",
+            "intro": "Liste os principais serviços, cada um com um nome curto e uma explicação de duas linhas.",
+            "items": [
+                {
+                    "title": "Primeiro serviço",
+                    "text": "Explique o que está incluído e para quem ele serve.",
+                    "image": {
+                        "url": "http://localhost/content/uploads/AAAA/MM/ARQUIVO.webp",
+                        "thumb": "http://localhost/content/uploads/AAAA/MM/ARQUIVO-thumb.webp",
+                        "alt": "Foto de exemplo: pessoa planejando um projeto no computador",
+                        "width": 960,
+                        "height": 720
+                    }
+                },
+                {
+                    "title": "Segundo serviço",
+                    "text": "Use as palavras que o seu cliente usaria, sem termos técnicos.",
+                    "image": {
+                        "url": "http://localhost/content/uploads/AAAA/MM/ARQUIVO.webp",
+                        "thumb": "http://localhost/content/uploads/AAAA/MM/ARQUIVO-thumb.webp",
+                        "alt": "Foto de exemplo: mãos medindo uma peça de madeira",
+                        "width": 960,
+                        "height": 640
+                    }
+                },
+                {
+                    "title": "Terceiro serviço",
+                    "text": "Tem mais serviços? Use \"Adicionar serviço\". Tem menos? Use \"Remover\".",
+                    "image": {
+                        "url": "http://localhost/content/uploads/AAAA/MM/ARQUIVO.webp",
+                        "thumb": "http://localhost/content/uploads/AAAA/MM/ARQUIVO-thumb.webp",
+                        "alt": "Foto de exemplo: reunião com anotações coloridas sobre a mesa",
+                        "width": 960,
+                        "height": 636
+                    }
+                }
+            ],
+            "link_label": "Ver todos os serviços",
+            "link": "/servicos"
+        },
+        "numbers": null,
+        "testimonials": null,
+        "cta": {
+            "title": "Vamos conversar?",
+            "text": "Diga ao visitante qual é o próximo passo: pedir um orçamento, agendar uma visita ou tirar uma dúvida.",
+            "button_label": "Fale com a gente",
+            "button_link": "/contato"
+        },
+        "video": ""
+    }
+}
