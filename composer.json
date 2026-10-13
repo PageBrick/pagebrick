@@ -1,6 +1,6 @@
 {
     "name": "pagebrick/pagebrick",
-    "description": "CMS simples para sites institucionais, feito para agências.",
+    "description": "CMS simples e de código aberto para qualquer tipo de site.",
     "type": "project",
     "license": "MIT",
     "require": {

@@ -2,12 +2,12 @@
 
 <p align="center"><a href="README.md">English</a> · <a href="README.pt-BR.md">Português</a> · <b>Español</b></p>
 
-Un CMS sencillo para sitios web de empresas. Un dueño sin conocimientos técnicos lo instala y publica el sitio de su empresa con un diseño listo; las agencias crean sus propios temas sobre una estructura ordenada, con total libertad en el front-end y la garantía de que las actualizaciones no romperán los sitios que entregan.
+Un CMS sencillo y de código abierto para cualquier tipo de sitio: una página personal, un proyecto, un club, una tienda o una empresa. Cualquier persona lo instala, sin conocimientos técnicos, y publica su sitio con un diseño listo; quien desarrolla crea sus propios temas sobre una estructura ordenada, con total libertad en el front-end y la garantía de que las actualizaciones no romperán los sitios entregados.
 
 ## Qué hace
 
 - Instalador por pasos (idioma, comprobación del servidor, base de datos, sitio) que crea un sitio de ejemplo terminado: Inicio, Nosotros, Servicios, Contacto y Política de privacidad, con fotos. En portugués, inglés o español.
-- Páginas con campos, secciones que el cliente puede ocultar, historial con "restaurar", borradores y vista previa.
+- Páginas con campos, secciones que quien edita puede ocultar, historial con "restaurar", borradores y vista previa.
 - Logo, color y estilo de fuente en **Configuración → Apariencia** (administradores); WhatsApp, datos de contacto y redes sociales en **Contacto**.
 - Temas que puedes cambiar sin perder contenido, con vista previa privada antes de activarlos.
 - Formulario de contacto (mensajes en el panel y por correo electrónico, protección contra spam sin captcha) y un blog con categorías, como plugins oficiales.
@@ -20,7 +20,7 @@ Un CMS sencillo para sitios web de empresas. Un dueño sin conocimientos técnic
 - API de contenido (JSON) para front-ends hechos con Next.js, Astro o cualquier otro framework.
 - Interruptores de "En construcción" y "En mantenimiento": los visitantes ven un aviso, quien inició sesión ve el sitio.
 - SEO básico (título y descripción por página, direcciones amigables, sitemap.xml, robots.txt), imágenes redimensionadas a WebP, sin cookies para los visitantes.
-- Dos roles: Administrador (la agencia) y Editor (el cliente).
+- Dos roles: Administrador (instala, temas, plugins y ajustes) y Editor (escribe el contenido).
 
 ## Requisitos
 
