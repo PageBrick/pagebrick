@@ -135,6 +135,7 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 - Documentação para desenvolvedores em `docs/en`, `docs/pt-BR` e `docs/es`: temas, plugins, compatibilidade e publicação. README principal em inglês, com versões em português e espanhol.
 - **Licença MIT a partir da versão 1.2.0**, com o histórico do repositório recomeçado num único primeiro commit. As versões e tags anteriores saíram do GitHub; os sites atualizam pelo catálogo para a 1.2.0, com um clique. O que já está instalado não muda: nenhuma configuração, tema ou plugin é tocado pela atualização.
 - **Para qualquer tipo de site (1.2.1).** O README (nos três idiomas) e a descrição do pacote deixaram de falar só de empresas, agências e clientes: o PageBrick é um CMS simples e de código aberto para qualquer pessoa instalar, e para quem desenvolve estender. Os dois papéis passaram a ser descritos pelo que fazem (Administrador instala, temas, plugins e configurações; Editor escreve o conteúdo). Só textos: nada muda num site.
+- **A figura do tema na tela de Temas leva a data do arquivo no endereço (1.2.2).** O endereço era sempre o mesmo, então o navegador (ou a hospedagem na frente do site) seguia mostrando a figura antiga depois de o tema ser enviado de novo, e parecia que era preciso enviar o tema duas vezes. O arquivo já era trocado de verdade: só o endereço não mudava. Teste em `ThemesTest`.
 
 ## Fica para depois
 
