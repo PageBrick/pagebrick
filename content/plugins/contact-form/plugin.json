@@ -1,0 +1,11 @@
+{
+    "name": "Formulário de contato",
+    "version": "1.0.0",
+    "description": "Formulário na página de contato. As mensagens chegam por e-mail e ficam guardadas no painel, em Mensagens. Protegido contra spam sem captcha.",
+    "author": "PageBrick",
+    "api": 1,
+    "i18n": {
+        "en": {"name": "Contact form", "description": "A form on the contact page. Messages arrive by e-mail and are kept in the panel, under Messages. Protected against spam without a captcha."},
+        "es": {"name": "Formulario de contacto", "description": "Formulario en la página de contacto. Los mensajes llegan por correo y quedan guardados en el panel, en Mensajes. Protegido contra spam sin captcha."}
+    }
+}

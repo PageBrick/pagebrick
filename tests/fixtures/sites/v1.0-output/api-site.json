@@ -1,0 +1,72 @@
+{
+    "name": "Agência Cliente",
+    "locale": "pt-BR",
+    "url": "http://localhost/",
+    "settings": {
+        "identity": {
+            "logo": null,
+            "icon": null,
+            "color": "#d24e2b",
+            "fonts": "sobria",
+            "share_image": null
+        },
+        "contact": {
+            "whatsapp": "(19) 99999-8888",
+            "whatsapp_message": "",
+            "phone": "(19) 3333-4444",
+            "email": "oi@cliente.example",
+            "address": "Rua A, 10",
+            "hours": ""
+        },
+        "social": {
+            "instagram": "",
+            "facebook": "",
+            "linkedin": "",
+            "youtube": "",
+            "tiktok": ""
+        },
+        "footer": {
+            "text": "",
+            "credit": "show"
+        },
+        "agency": {
+            "slogan": "Feito com carinho",
+            "accent": "#0a7c66"
+        }
+    },
+    "menus": {
+        "main": [
+            {
+                "label": "Início",
+                "link": "/"
+            },
+            {
+                "label": "Sobre",
+                "link": "/sobre"
+            },
+            {
+                "label": "Serviços",
+                "link": "/servicos"
+            },
+            {
+                "label": "Contato",
+                "link": "/contato"
+            }
+        ],
+        "footer": [
+            {
+                "label": "Sobre",
+                "link": "/sobre"
+            },
+            {
+                "label": "Contato",
+                "link": "/contato"
+            },
+            {
+                "label": "Política de privacidade",
+                "link": "/politica-de-privacidade"
+            }
+        ],
+        "top": []
+    }
+}
