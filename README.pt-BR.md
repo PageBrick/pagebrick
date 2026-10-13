@@ -2,12 +2,12 @@
 
 <p align="center"><a href="README.md">English</a> · <b>Português</b> · <a href="README.es.md">Español</a></p>
 
-Um CMS simples para sites de empresas. Um dono de empresa sem conhecimento técnico instala e publica o site com um layout pronto; agências criam os próprios temas sobre uma estrutura organizada, com liberdade total no front-end e a garantia de que as atualizações não vão quebrar os sites entregues.
+Um CMS simples e de código aberto para qualquer tipo de site: uma página pessoal, um projeto, um clube, uma loja ou uma empresa. Qualquer pessoa instala, sem conhecimento técnico, e publica o site com um layout pronto; quem desenvolve cria os próprios temas sobre uma estrutura organizada, com liberdade total no front-end e a garantia de que as atualizações não vão quebrar os sites entregues.
 
 ## O que ele faz
 
 - Instalador em etapas (idioma, conferência do servidor, banco de dados, site) que cria um site de exemplo pronto: Início, Sobre, Serviços, Contato e Política de privacidade, com fotos. Em português, inglês ou espanhol.
-- Páginas com campos, seções que o cliente pode esconder, histórico com "restaurar", rascunhos e pré-visualização.
+- Páginas com campos, seções que quem edita pode esconder, histórico com "restaurar", rascunhos e pré-visualização.
 - Logo, cor e estilo de letra em **Configurações → Aparência** (administradores); WhatsApp, dados de contato e redes sociais em **Contato**.
 - Temas que você troca sem perder conteúdo, com pré-visualização privada antes de ativar.
 - Formulário de contato (mensagens no painel e por e-mail, proteção contra spam sem captcha) e blog com categorias, como plugins oficiais.
@@ -20,7 +20,7 @@ Um CMS simples para sites de empresas. Um dono de empresa sem conhecimento técn
 - API de conteúdo (JSON) para front-ends feitos com Next.js, Astro ou qualquer outro framework.
 - Chaves de "Em construção" e "Em manutenção": visitantes veem um aviso, quem está logado vê o site.
 - SEO básico (título e descrição por página, endereços amigáveis, sitemap.xml, robots.txt), imagens redimensionadas para WebP, nenhum cookie para os visitantes.
-- Dois papéis: Administrador (a agência) e Editor (o cliente).
+- Dois papéis: Administrador (instala, temas, plugins e configurações) e Editor (escreve o conteúdo).
 
 ## Requisitos
 

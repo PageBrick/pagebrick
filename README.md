@@ -2,12 +2,12 @@
 
 <p align="center"><b>English</b> · <a href="README.pt-BR.md">Português</a> · <a href="README.es.md">Español</a></p>
 
-A simple CMS for business websites. A non-technical owner installs it and publishes the company site with a ready-made layout; agencies build their own themes on an organized structure, with complete freedom on the front end and the guarantee that updates won't break the sites they deliver.
+A simple, open-source CMS for any kind of website: a personal page, a project, a club, a shop or a business. Anyone can install it, without technical knowledge, and publish a site with a ready-made layout; developers build their own themes on an organized structure, with complete freedom on the front end and the guarantee that updates won't break the sites they deliver.
 
 ## What it does
 
 - Step-by-step installer (language, server check, database, site) that creates a finished example site: Home, About, Services, Contact and Privacy policy, with photos. In Portuguese, English or Spanish.
-- Pages with fields, sections the client can hide, history with "restore", drafts and preview.
+- Pages with fields, sections editors can hide, history with "restore", drafts and preview.
 - Logo, color and font style under **Settings → Appearance** (administrators); WhatsApp, contact details and social links under **Contact**.
 - Themes you can switch without losing content, with a private preview before activating.
 - Contact form (messages in the panel and by e-mail, spam protection without captcha) and a blog with categories, as official plugins.
@@ -20,7 +20,7 @@ A simple CMS for business websites. A non-technical owner installs it and publis
 - Content API (JSON) for front ends built with Next.js, Astro or any other framework.
 - "Under construction" and "Maintenance" switches: visitors see a notice, people logged in see the site.
 - SEO basics (title and description per page, friendly addresses, sitemap.xml, robots.txt), images resized to WebP, no cookies for visitors.
-- Two roles: Administrator (the agency) and Editor (the client).
+- Two roles: Administrator (installs, themes, plugins and settings) and Editor (writes the content).
 
 ## Requirements
 

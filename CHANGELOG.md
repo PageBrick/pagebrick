@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.2.1
+
+- PageBrick is now described as what it is: a simple, open-source CMS for any kind of website, for anyone to install and for developers to extend. Only the texts of the README and of the package changed; nothing in a site changes.
+
 ## 1.2.0
 
 - PageBrick is now released under the MIT License ([LICENSE](LICENSE)): use it, change it and share it in any project, as long as the notice stays. Nothing changes for the sites that already run it: no setting, no theme and no plugin is touched by the update.

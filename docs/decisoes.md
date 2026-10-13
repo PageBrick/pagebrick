@@ -134,6 +134,7 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 - Teste ao vivo (07/10/2026): instalação em inglês a partir do .zip num servidor separado; atualização boa pelo painel (0.1.0 → 0.1.1) mantida; atualização quebrada de propósito (0.1.2) desfeita sozinha no primeiro acesso, com o aviso de qual página quebrou.
 - Documentação para desenvolvedores em `docs/en`, `docs/pt-BR` e `docs/es`: temas, plugins, compatibilidade e publicação. README principal em inglês, com versões em português e espanhol.
 - **Licença MIT a partir da versão 1.2.0**, com o histórico do repositório recomeçado num único primeiro commit. As versões e tags anteriores saíram do GitHub; os sites atualizam pelo catálogo para a 1.2.0, com um clique. O que já está instalado não muda: nenhuma configuração, tema ou plugin é tocado pela atualização.
+- **Para qualquer tipo de site (1.2.1).** O README (nos três idiomas) e a descrição do pacote deixaram de falar só de empresas, agências e clientes: o PageBrick é um CMS simples e de código aberto para qualquer pessoa instalar, e para quem desenvolve estender. Os dois papéis passaram a ser descritos pelo que fazem (Administrador instala, temas, plugins e configurações; Editor escreve o conteúdo). Só textos: nada muda num site.
 
 ## Fica para depois
 
