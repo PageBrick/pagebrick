@@ -136,10 +136,13 @@ Esta é a "planta oficial" do PageBrick. Toda mudança de rumo deve ser registra
 - **Licença MIT a partir da versão 1.2.0**, com o histórico do repositório recomeçado num único primeiro commit. As versões e tags anteriores saíram do GitHub; os sites atualizam pelo catálogo para a 1.2.0, com um clique. O que já está instalado não muda: nenhuma configuração, tema ou plugin é tocado pela atualização.
 - **Para qualquer tipo de site (1.2.1).** O README (nos três idiomas) e a descrição do pacote deixaram de falar só de empresas, agências e clientes: o PageBrick é um CMS simples e de código aberto para qualquer pessoa instalar, e para quem desenvolve estender. Os dois papéis passaram a ser descritos pelo que fazem (Administrador instala, temas, plugins e configurações; Editor escreve o conteúdo). Só textos: nada muda num site.
 - **A figura do tema na tela de Temas leva a data do arquivo no endereço (1.2.2).** O endereço era sempre o mesmo, então o navegador (ou a hospedagem na frente do site) seguia mostrando a figura antiga depois de o tema ser enviado de novo, e parecia que era preciso enviar o tema duas vezes. O arquivo já era trocado de verdade: só o endereço não mudava. Teste em `ThemesTest`.
+- **Vitrine do repositório e `main` protegida (14/10/2026).** O README (nos três idiomas) ganhou selos, o GIF da edição e os cinco pilares; há `CONTRIBUTING.md`, `CODEOWNERS` e uma issue de tradução (good first issue). O GitHub ficou com as tags cms, headless-cms, lightweight, mysql, open-source, php, web-development e website-builder (`flat-file-cms` ficou de fora de propósito: o PageBrick usa MySQL) e com a denúncia privada de vulnerabilidades ligada. A `main` só recebe mudanças por **pull request** (sem push direto, sem apagar nem reescrever o histórico), com os 6 testes do CI verdes e só por mesclagem (merge commit); administradores podem ignorar a regra apenas por pull request. Consequência para publicar: o fluxo passa a ser PR `develop` → `main`, esperar o CI, mesclar, e só então marcar a tag. O trabalho de todos vai para `develop`.
 
 ## Fica para depois
 
 Agendamento de publicação, comentários, multi-site, editor de blocos, site-loja.
+
+- **Refazer o GIF do README (`docs/media/editing.gif`) depois das mudanças no painel de administração** (edição em blocos, editor de texto novo): ele mostra o painel como era no dia em que foi gravado. A receita está em `tools/readme-film/record.mjs` (Puppeteer + ffmpeg, menos de 10 s, algumas centenas de KB).
 
 ## Ordem de construção
 
