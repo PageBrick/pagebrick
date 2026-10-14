@@ -2,7 +2,30 @@
 
 <p align="center"><b>English</b> · <a href="README.pt-BR.md">Português</a> · <a href="README.es.md">Español</a></p>
 
+<p align="center">
+<a href="https://github.com/PageBrick/pagebrick/releases/latest"><img src="https://img.shields.io/github/v/release/PageBrick/pagebrick?label=version&color=D24E2B" alt="version"></a>
+<a href="https://github.com/PageBrick/pagebrick/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/PageBrick/pagebrick/tests.yml?branch=main&label=tests" alt="tests"></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/PageBrick/pagebrick?label=license" alt="license"></a>
+<img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4" alt="PHP 8.2+">
+</p>
+
+<p align="center"><img src="docs/media/editing.gif" alt="Changing the headline of a page in the PageBrick panel, saving it, and seeing it on the site" width="860"></p>
+
 A simple, open-source CMS for any kind of website: a personal page, a project, a club, a shop or a business. Anyone can install it, without technical knowledge, and publish a site with a ready-made layout; developers build their own themes on an organized structure, with complete freedom on the front end and the guarantee that updates won't break the sites they deliver.
+
+## Five pillars: updates that don't break sites
+
+Clicking **Update** must never break a site someone built. Every promise below is checked by automated tests on each release ([how it is enforced](docs/en/compatibility.md)).
+
+<p align="center"><img src="docs/media/five-pillars.en.svg" alt="The five pillars of PageBrick updates: a frozen API, a frozen site, checked before, checked after, your files untouched." width="860"></p>
+
+| | Pillar | The promise |
+|---|---|---|
+| 1 | **A frozen API** | Everything themes and plugins use is listed and versioned. Within a version, nothing is removed or changed. |
+| 2 | **A frozen site** | A real site built on 1.0 must deliver the same HTML, byte for byte, on every new release. |
+| 3 | **Checked before** | If an active plugin or the theme isn't ready for the new version, the panel says which one and waits. |
+| 4 | **Checked after** | The first visit after an update renders every page. If one fails, the previous version comes back on its own. |
+| 5 | **Your files untouched** | Updates replace the core only. Themes, plugins, photos and settings stay exactly as they are. |
 
 ## What it does
 
