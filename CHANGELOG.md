@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.2.3
+
+- The front page of the repository now shows badges, a short film of the panel, the five pillars behind the update promise and a guide for contributors ([CONTRIBUTING.md](CONTRIBUTING.md)). Only texts and pictures changed; nothing in a site changes.
+
 ## 1.2.2
 
 - **A theme sent again shows its new picture on the Themes screen.** The picture's address never changed, so the browser (or the hosting in front of the site) kept showing the old one even though the file had been replaced, and it looked as if the theme had to be sent twice. The address now carries the file's time, like the theme's CSS and scripts.
