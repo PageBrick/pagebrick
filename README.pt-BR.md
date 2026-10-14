@@ -2,7 +2,30 @@
 
 <p align="center"><a href="README.md">English</a> · <b>Português</b> · <a href="README.es.md">Español</a></p>
 
+<p align="center">
+<a href="https://github.com/PageBrick/pagebrick/releases/latest"><img src="https://img.shields.io/github/v/release/PageBrick/pagebrick?label=versão&color=D24E2B" alt="versão"></a>
+<a href="https://github.com/PageBrick/pagebrick/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/PageBrick/pagebrick/tests.yml?branch=main&label=testes" alt="testes"></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/PageBrick/pagebrick?label=licença" alt="licença"></a>
+<img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4" alt="PHP 8.2+">
+</p>
+
+<p align="center"><img src="docs/media/editing.gif" alt="Trocando o título de uma página no painel do PageBrick, salvando e vendo no site" width="860"></p>
+
 Um CMS simples e de código aberto para qualquer tipo de site: uma página pessoal, um projeto, um clube, uma loja ou uma empresa. Qualquer pessoa instala, sem conhecimento técnico, e publica o site com um layout pronto; quem desenvolve cria os próprios temas sobre uma estrutura organizada, com liberdade total no front-end e a garantia de que as atualizações não vão quebrar os sites entregues.
+
+## Cinco pilares: atualizações que não quebram o site
+
+Clicar em **Atualizar** nunca pode quebrar um site que alguém construiu. Cada promessa abaixo é conferida por testes automáticos a cada versão ([como é garantido](docs/pt-BR/compatibilidade.md)).
+
+<p align="center"><img src="docs/media/five-pillars.pt-BR.svg" alt="Os cinco pilares das atualizações do PageBrick: API congelada, site congelado, conferido antes, conferido depois, seus arquivos intactos." width="860"></p>
+
+| | Pilar | A promessa |
+|---|---|---|
+| 1 | **Uma API congelada** | Tudo o que temas e plugins usam está listado e tem versão. Dentro de uma versão, nada é removido nem muda. |
+| 2 | **Um site congelado** | Um site real feito na 1.0 precisa entregar o mesmo HTML, byte por byte, em toda versão nova. |
+| 3 | **Conferido antes** | Se um plugin ativo ou o tema não estiver pronto para a versão nova, o painel diz qual e espera. |
+| 4 | **Conferido depois** | A primeira visita depois da atualização abre todas as páginas. Se uma falhar, a versão anterior volta sozinha. |
+| 5 | **Seus arquivos intactos** | A atualização troca só o núcleo. Temas, plugins, fotos e configurações ficam exatamente como estão. |
 
 ## O que ele faz
 
