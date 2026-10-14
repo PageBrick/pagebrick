@@ -6,3 +6,4 @@
 /content/backups/*
 !/content/backups/.htaccess
 /.dev/
+/tools/readme-film/frames/
