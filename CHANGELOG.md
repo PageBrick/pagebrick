@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.3.2
+
+- **The message about a refused request says "code or a command".** A host's security filter can refuse a form that has PHP code inside HTML (not only a command like `curl https://…`), and the panel's message named only the command. It now says "a text that looks like code or a command, such as `<?php` or `curl https://…`", and suggests changing or deleting it.
+
 ## 1.3.1
 
 - **An update also renews the default theme.** Until now an update replaced only `core/`, `vendor/` and `index.php`, so a site that was already installed kept the files of the default theme it was born with, and the new things of a release that live in the theme (like the sections the client adds, in 1.3.0) never reached it. The default theme is PageBrick's own (it is what a site falls back to when its theme breaks), so it now travels with the core: every release carries a copy in `core/default-theme/`, and the first request after an update, before the pages are checked, puts it in `content/themes/default`. What was there is kept in the backups (**Themes** can put it back), and the automatic undo and **Back to the previous version** bring it back too. It is renewed even when the update was applied by an older version, because `core/` always comes along. Only the theme called "default" is renewed: to change it, copy its folder under another name ([docs](docs/en/themes.md)).
