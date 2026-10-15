@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.5.0
+
+- **Add a person by name, e-mail and role, and they choose their own password.** Settings → Users: leave **Password (optional)** empty and the person gets an e-mail with a link; they open it, choose a password and go straight into the panel, with no second step. The link works once and for 7 days (the one of "I forgot my password" lasts 1 hour), only its hash is stored, and until it is used the account has a password nobody knows. Typing a password still makes the account at once, as before.
+- **Pending invitations are on the list.** A person who has not chosen a password yet shows **Invitation pending**, with **Resend invitation** (the new link replaces the old one). The e-mail is written in the language of the site, whatever language the panel of the person inviting is in.
+- **If the e-mail cannot go, the link comes to the screen.** The panel says so and shows the link with a **Copy the link** button, once, to send some other way, such as WhatsApp. An administrator who types a password for a pending person, or a person who uses "I forgot my password", also ends the invitation.
+
 ## 1.4.1
 
 - **The installer puts back the `.htaccess` files an upload left out.** Many FTP and file-manager programs skip the files whose names start with a dot, and a host's own `.htaccess` (the one that picks the PHP version) can sit there instead: with no PageBrick rules in it every address of the panel was a 404 from the host, right after a finished installation. Now, from its first screen, the installer creates the missing `.htaccess` (and the two inside `content/uploads` and `content/backups`), or puts the PageBrick lines on top of the one the host made, leaving its lines as they were. If the file cannot be written, step 2 shows the lines to paste by hand, in words that fit a file manager (show hidden files, open or create `.htaccess`), and hides "Let's go" until the check turns green.

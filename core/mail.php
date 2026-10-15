@@ -77,6 +77,9 @@ function pb_mail(string $to, string $subject, string $text, string $replyTo = ''
     $fromEmail = pb_mail_sender($settings);
     $fromName = $settings['from_name'] ?: pb_option('site_title', 'PageBrick');
 
+    if (($GLOBALS['pb_config']['mail'] ?? '') === 'fail') {
+        throw new RuntimeException(__('O e-mail não foi enviado: a hospedagem recusou o envio.')); // tests
+    }
     if (($GLOBALS['pb_config']['mail'] ?? '') === 'memory') {
         $GLOBALS['pb_sent_mail'][] = compact('to', 'subject', 'text', 'replyTo', 'fromEmail'); // tests
         return;

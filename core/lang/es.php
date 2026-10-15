@@ -120,7 +120,7 @@ Alguien pidió crear una contraseña nueva para tu cuenta en el panel de %2$s. P
 %3$s
 
 Si no fuiste tú, ignora este correo: tu contraseña sigue siendo la misma.',
-    'Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.' => 'Este enlace ya no sirve: dura 1 hora y solo se puede usar una vez. Pide uno nuevo.',
+    'Este link não vale mais: ele só pode ser usado uma vez e tem prazo (1 hora para trocar a senha, 7 dias para um convite). Peça um novo.' => 'Este enlace ya no sirve: solo se puede usar una vez y tiene plazo (1 hora para cambiar la contraseña, 7 días para una invitación). Pide uno nuevo.',
     'As duas senhas não são iguais.' => 'Las dos contraseñas no son iguales.',
     'Página não encontrada.' => 'Página no encontrada.',
     'Informe um título com até 200 caracteres.' => 'Escribe un título de hasta 200 caracteres.',
@@ -854,4 +854,35 @@ Para elegir cómo se actualiza el sitio: %4$s',
     'Não consegui falar com o servidor SMTP. Confira o endereço do servidor, a porta e a segurança (587 com TLS, ou 465 com SSL).' => 'No pude comunicarme con el servidor SMTP. Revisa la dirección del servidor, el puerto y la seguridad (587 con TLS, o 465 con SSL).',
     'O servidor não aceitou o e-mail que envia. Use o mesmo endereço do usuário SMTP.' => 'El servidor no aceptó el correo que envía. Usa la misma dirección del usuario SMTP.',
     'Se ele não chegar e o e-mail do seu domínio fica em outro serviço (Titan, Google, Zoho…), preencha nos campos abaixo o servidor SMTP desse serviço.' => 'Si no llega y el correo de tu dominio está en otro servicio (Titan, Google, Zoho…), completa en los campos de abajo el servidor SMTP de ese servicio.',
+    'Esta pessoa já criou a senha: não há convite para enviar.' => 'Esta persona ya creó la contraseña: no hay invitación que enviar.',
+    'Convite para o painel de %s' => 'Invitación al panel de %s',
+    'Olá, %1$s.
+
+%2$s convidou você para o painel de %3$s, como %4$s. Para criar a sua senha e entrar, abra este link em até %5$d dias:
+
+%6$s
+
+Se você não esperava este convite, ignore este e-mail: nada acontece enquanto o link não for aberto.' => 'Hola, %1$s.
+
+%2$s te invitó al panel de %3$s, como %4$s. Para crear tu contraseña y entrar, abre este enlace en un plazo de %5$d días:
+
+%6$s
+
+Si no esperabas esta invitación, ignora este correo: no pasa nada mientras no se abra el enlace.',
+    'Convite enviado para %1$s. O link vale %2$d dias.' => 'Invitación enviada a %1$s. El enlace vale %2$d días.',
+    'O e-mail com o convite não saiu. Copie o link abaixo e envie para %s por outro meio, como o WhatsApp.' => 'El correo con la invitación no salió. Copia el enlace de abajo y envíalo a %s por otro medio, como WhatsApp.',
+    'Link do convite' => 'Enlace de la invitación',
+    'Para %1$s. Vale uma vez, por %2$d dias; um convite novo troca este link.' => 'Para %1$s. Vale una vez, por %2$d días; una invitación nueva reemplaza este enlace.',
+    'Copiado!' => '¡Copiado!',
+    'Copiar o link' => 'Copiar el enlace',
+    'Convite pendente' => 'Invitación pendiente',
+    'Reenviar convite' => 'Reenviar invitación',
+    'Senha (opcional)' => 'Contraseña (opcional)',
+    'Em branco: a pessoa recebe um convite por e-mail e cria a própria senha.' => 'En blanco: la persona recibe una invitación por correo y crea su propia contraseña.',
+    'Criar a sua senha' => 'Crear tu contraseña',
+    'Bem-vindo ao painel de %s' => 'Bienvenido al panel de %s',
+    'Crie a sua senha para entrar. Pelo menos 8 caracteres.' => 'Crea tu contraseña para entrar. Al menos 8 caracteres.',
+    'Repita a senha' => 'Repite la contraseña',
+    'Criar a senha e entrar' => 'Crear la contraseña y entrar',
+    'Senha criada. Bem-vindo ao painel de %s!' => '¡Contraseña creada! ¡Bienvenido al panel de %s!',
 ];

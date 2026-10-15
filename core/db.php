@@ -118,6 +118,10 @@ function pb_migrations(): array
         8 => [
             'ALTER TABLE ' . pb_table('pages') . ' ADD COLUMN draft MEDIUMTEXT NULL, ADD COLUMN draft_at DATETIME NULL',
         ],
+        // A person invited by e-mail has not chosen a password yet: set until they do (see pb_invite_user).
+        9 => [
+            'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN invited_at DATETIME NULL',
+        ],
     ];
 }
 
