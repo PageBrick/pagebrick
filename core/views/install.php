@@ -54,19 +54,22 @@ $url = fn(int $step) => pb_url('/?step=' . $step);
             <?php endforeach ?>
             <li id="rewrite-check" class="warn">
                 <strong>…</strong> <?= e(__('Endereços amigáveis (arquivo .htaccess)')) ?>
-                <span hidden><?= e(__('O arquivo .htaccess não está funcionando. Confira se ele foi enviado junto com os outros arquivos (alguns programas escondem arquivos que começam com ponto) e se a hospedagem usa Apache com mod_rewrite.')) ?></span>
             </li>
         </ul>
+        <div id="rewrite-help" class="card" role="alert" hidden>
+            <?php require __DIR__ . '/install-rules-help.php' ?>
+            <p><a class="button" href="<?= e($url(2)) ?>"><?= e(__('Conferir de novo')) ?></a></p>
+        </div>
         <?php if ($blocked): ?>
             <p class="error" role="alert"><?= e(__('Resolva os itens marcados com ✕ e recarregue esta página.')) ?></p>
         <?php else: ?>
-            <p><a class="button" href="<?= e($url(3)) ?>"><?= e(__('Vamos lá')) ?> →</a></p>
+            <p id="go"><a class="button" href="<?= e($url(3)) ?>"><?= e(__('Vamos lá')) ?> →</a></p>
         <?php endif ?>
         <script>
             fetch(<?= json_encode(pb_url('/install-check'), JSON_UNESCAPED_SLASHES) ?>, {cache: 'no-store'})
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(() => { const li = document.getElementById('rewrite-check'); li.className = 'ok'; li.querySelector('strong').textContent = '✓'; })
-                .catch(() => { const li = document.getElementById('rewrite-check'); li.querySelector('strong').textContent = '!'; li.querySelector('span').hidden = false; });
+                .catch(() => { const li = document.getElementById('rewrite-check'); li.className = 'bad'; li.querySelector('strong').textContent = '✕'; document.getElementById('rewrite-help').hidden = false; const go = document.getElementById('go'); if (go) go.hidden = true; });
         </script>
 
     <?php elseif ($step === 3): ?>

@@ -43,6 +43,72 @@ function pb_install_checks(): array
     ];
 }
 
+/**
+ * What the three dotfiles of a site hold: the .htaccess that sends every address to index.php and closes the internal folders (the same file as the
+ * one in the zip, a test keeps both alike), and the two that close content/uploads to code and content/backups to everybody.
+ */
+function pb_dotfile_rules(): array
+{
+    return [
+        '.htaccess' => <<<'HT'
+# PageBrick: every request goes through index.php.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Internal files are never served directly (core/assets/ holds the panel's CSS and JS).
+    RewriteRule ^core/(?!assets/) - [F,L]
+    RewriteRule ^(tests|docs|vendor|tools|content/backups)(/|$) - [F,L]
+    RewriteRule ^(config\.php|composer\.(json|lock)|phpunit\.xml|docker-compose\.yml)$ - [F,L]
+    # PHP inside content/ (themes, plugins, uploads) only runs through PageBrick.
+    RewriteRule ^content/.*\.(php|phtml|phar)$ - [F,L]
+    # Hidden files (.git, .env...), except .well-known used by SSL certificates.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+HT,
+        'content/uploads/.htaccess' => <<<'HT'
+# Uploaded files are data, never code.
+<FilesMatch "\.(php\d?|phtml|phar|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>
+Options -ExecCGI -Indexes
+
+HT,
+        'content/backups/.htaccess' => <<<'HT'
+# Backups of replaced versions: never served.
+Require all denied
+
+HT,
+    ];
+}
+
+/**
+ * Puts those files in place when the upload left them out (many FTP and file-manager programs skip the files whose names start with a dot, and without
+ * the .htaccess every address of the panel is a 404): a missing one is created, and an .htaccess that already has other rules (the host's own, for the
+ * PHP version) gets ours on top. Returns whether the site's .htaccess has the rules now, written here or already there.
+ */
+function pb_install_dotfiles(string $root): bool
+{
+    $ready = true;
+    foreach (pb_dotfile_rules() as $path => $rules) {
+        $file = "$root/$path";
+        $current = is_file($file) ? (string) file_get_contents($file) : '';
+        $has = $path === '.htaccess' ? str_contains($current, 'RewriteRule ^ index.php [L]') : $current !== '';
+        if (!$has && is_dir(dirname($file)) && (is_file($file) ? is_writable($file) : is_writable(dirname($file)))) {
+            $has = @file_put_contents($file, $rules . ($current === '' ? '' : "\n" . $current), LOCK_EX) !== false;
+        }
+        if ($path === '.htaccess') {
+            $ready = $has;
+        }
+    }
+    return $ready;
+}
+
 /** A database error the person installing can act on. */
 function pb_install_db_error(PDOException $e, array $db): string
 {
@@ -140,6 +206,7 @@ function pb_install_page(string $method): void
         echo '{"rewrite": true}';
         return;
     }
+    $rulesIn = pb_install_dotfiles(PB_ROOT);
     $checks = pb_install_checks();
     $blocked = (bool) array_filter($checks, fn($check) => $check[3] && !$check[1]);
     $step = max(1, min(4, (int) pb_query('step') ?: 1));
@@ -178,8 +245,10 @@ function pb_install_page(string $method): void
             }
             session_regenerate_id(true);
             $_SESSION['user_id'] = $result['admin_id'];
-            pb_flash('ok', __('PageBrick instalado. Bem-vindo!'));
-            pb_redirect('/admin');
+            // The panel opens on its own once the browser has seen that /admin answers; if it doesn't, this page says why instead of a bare 404.
+            pb_render('install-done', ['title' => __('PageBrick instalado'), 'rulesIn' => $rulesIn]);
+            pb_flash('ok', __('PageBrick instalado. Bem-vindo!')); // after the page, which would show it (and use it up) itself
+            return;
         } catch (InvalidArgumentException $e) {
             http_response_code(422);
             $errors[] = $e->getMessage();
@@ -189,5 +258,5 @@ function pb_install_page(string $method): void
 
     unset($old['db_pass'], $old['admin_password']); // never echo passwords back
     pb_render('install', ['title' => __('Instalar o PageBrick'), 'step' => $step, 'checks' => $checks, 'blocked' => $blocked,
-        'errors' => $errors, 'old' => $old, 'locale' => pb_locale()]);
+        'errors' => $errors, 'old' => $old, 'locale' => pb_locale(), 'rulesIn' => $rulesIn]);
 }

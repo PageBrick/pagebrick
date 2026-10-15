@@ -1014,7 +1014,7 @@ function pb_admin_email_test(): void
     $user = pb_current_user();
     try {
         pb_mail($user['email'], __('Teste de e-mail do PageBrick'), __('Se você recebeu esta mensagem, o envio de e-mails do site está funcionando.'));
-        pb_flash('ok', sprintf(__('E-mail de teste enviado para %s. Confira a caixa de entrada (e o spam).'), $user['email']));
+        pb_flash('ok', pb_mail_test_notice($user['email']));
     } catch (RuntimeException $e) {
         pb_flash('error', $e->getMessage());
     }
