@@ -103,6 +103,7 @@
         const box = event.target.closest('[data-link]');
         if (box) syncLink(box);
     });
+    document.addEventListener('pb:added', (event) => event.target.querySelectorAll?.('[data-link]').forEach(syncLink)); // fields that came with a new section
 
     document.addEventListener('click', (event) => {
         // The menus of the header (notices, account) close when clicking anywhere else.

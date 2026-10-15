@@ -226,6 +226,53 @@ Campos que não estão na lista (um destaque que sempre fica no topo, por exempl
 
 Para um tema que também precise rodar num PageBrick anterior à 1.3, confira antes `method_exists($page, 'order')` e `function_exists('pb_section')`.
 
+## Deixando o cliente adicionar seções
+
+Além de mexer nas seções que você fez, o cliente pode **adicionar** outras: texto, foto com texto, cartões, perguntas e respostas, depoimentos, chamada para ação, números, galeria de fotos e vídeo do YouTube. No editor da página, um botão **Adicionar seção** e um "+" entre as seções (na lista e na própria página) abrem uma galeria com um desenho de cada tipo; o cliente também pode duplicar uma seção ou remover uma (com **Desfazer**). O núcleo guarda tudo junto com a página e imprime como **HTML simples, sem CSS e sem script**, com nomes de classe estáveis: o visual é trabalho seu, no seu tema.
+
+1. Ligue no `theme.php`, em cada tipo de página que deve ter: `'blocks' => true` para todos os tipos, ou uma lista como `'blocks' => ['text', 'cards']`. Um tema que não diz nada não ganha nenhuma, e nada muda.
+2. Imprima a página com `pb_sections($page, $names, $render)`. Ele percorre as seções na ordem que o cliente escolheu, chama o seu `$render($name)` para cada nome seu e imprime cada seção que o cliente adicionou, marcando todas enquanto o cliente edita.
+
+```php
+// theme.php
+return ['templates' => [
+    'page' => ['sections' => ['content'], 'blocks' => true], // 'content': o que os campos do próprio modelo imprimem (título, texto…)
+    'home' => [
+        'sections' => ['hero', 'about' => 'image_text', 'services' => 'cards', 'cta' => 'cta'],
+        'blocks' => true,
+    ],
+]];
+```
+
+```php
+<?php // templates/page.php
+echo pb_sections($page, ['content'], fn($name) => pb_include(__DIR__ . '/parts/page-content.php', ['page' => $page, 'title' => $title]));
+```
+
+Um nome com um tipo (`'about' => 'image_text'`) diz que a sua seção guarda a mesma coisa que aquele tipo de seção: o painel passa a oferecer **Duplicar** nela, e a cópia é uma seção que o cliente também pode remover. Um nome sem tipo (`'hero'`) não pode ser copiado. `'content'` é o nome para o que os campos do próprio modelo imprimem (o título, a introdução, o texto), para que o cliente possa pôr seções antes dele também.
+
+### O que cada tipo imprime
+
+Cada um é um `<section class="pb-block pb-block-{tipo}">` com um `h2` quando tem título; o que está vazio fica de fora.
+
+| Tipo | Campos | Dentro |
+|---|---|---|
+| `text` | `title`, `text` | `.pb-block-body` |
+| `image_text` | `title`, `text`, `image`, `side` (`left` ou `right`) | `.pb-block-image` e `.pb-block-words`, na ordem em que aparecem; classe `pb-side-left` ou `pb-side-right` |
+| `cards` | `title`, `intro`, `items` (`title`, `text`, `image`, `link`), `link_label`, `link` | `ul.pb-cards > li.pb-card` |
+| `faq` | `title`, `items` (`question`, `answer`) | `details.pb-faq-item`: o do próprio navegador, sem script |
+| `testimonials` | `title`, `items` (`quote`, `name`, `role`) | `figure.pb-quote` |
+| `cta` | `title`, `text`, `button_label`, `button_link` | `a.pb-button` |
+| `numbers` | `title`, `items` (`value`, `label`) | `ul.pb-numbers > li.pb-number` |
+| `gallery` | `title`, `items` (`image`, `caption`) | `ul.pb-gallery`, com um `figure` em cada |
+| `video` | `title`, `url`, `caption` | `figure.pb-video > iframe` de youtube-nocookie.com; de um endereço do YouTube só se usa o código do vídeo (`pb_youtube_id()`) |
+
+### Desenhando um do seu jeito
+
+Ponha um arquivo com o nome do tipo em `templates/blocks/` do seu tema (`templates/blocks/cards.php`). Ele roda com `$block` (os campos, lidos como `$page`: `$block->title`, `$block->items`), `$type`, `$id` e `$page`. Um tipo sem arquivo seu é desenhado pelo núcleo; copie um de `core/blocks/` para começar.
+
+As seções ficam nos dados da página, então um tema que não as liga as esconde, e voltar ao tema as traz de volta. A API de conteúdo lista as que estão no site em `blocks` (cada uma `{id, type, fields}`), e `section_order` as chama de `block-{id}`. Para um tema que também precise rodar num PageBrick anterior à 1.3, confira antes `function_exists('pb_sections')`.
+
 ## Substituindo os templates de um plugin
 
 Os plugins renderizam as páginas públicas deles dentro do seu layout. Quando o markup não é o que você quer, copie o arquivo para o seu tema, em `plugins/{plugin}/` com o mesmo caminho, e altere:

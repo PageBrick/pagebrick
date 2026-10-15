@@ -27,6 +27,11 @@ $states = [
           'offline' => __('Sem conexão. Tente de novo.'),
           'moved' => __('"%1$s" agora é a seção %2$s de %3$s'),
           'loading' => __('Atualizando a página…'),
+          'pieceAdded' => __('Seção "%s" adicionada'),
+          'pieceCopied' => __('Seção "%s" duplicada'),
+          'pieceRemoved' => __('Seção "%s" removida'),
+          'pieceBack' => __('Seção "%s" de volta'),
+          'undo' => __('Desfazer'),
           'changes' => $states['changes'],
           'live' => $states['live'],
       ], JSON_UNESCAPED_UNICODE)) ?>">
@@ -87,23 +92,31 @@ $states = [
                 <?= pb_field_inputs($fields, $page['data'], 'f') ?>
             </div>
 
-            <?php if ($sections): ?>
-                <section class="pb-sections-box" aria-labelledby="sections-title">
+            <?php if ($sections || $pieceTypes): ?>
+                <section class="pb-sections-box" aria-labelledby="sections-title" data-sections-box>
                     <h2 id="sections-title"><?= e(__('Seções da página')) ?></h2>
-                    <p class="help"><?= e(__('Arraste pela alça para mudar a ordem. A página ao lado mostra o resultado na hora.')) ?></p>
+                    <p class="help"><?= e($pieceTypes ? __('Arraste pela alça para mudar a ordem, ou use + para adicionar uma seção. A página ao lado mostra o resultado na hora.') : __('Arraste pela alça para mudar a ordem. A página ao lado mostra o resultado na hora.')) ?></p>
                     <div class="pb-sections" data-sections data-sortable>
                         <?php foreach ($sections as $name => $section): ?>
-                            <?php if ($section['group']): ?>
-                                <?= pb_group_input($section['group'], is_array($page['data'][$name] ?? null) ? $page['data'][$name] : [], "f[$name]", $name) ?>
+                            <?php if ($section['piece']): ?>
+                                <?= pb_piece_row($section['piece']['id'], $section['piece']['type'], $section['piece']['data']) ?>
+                            <?php elseif ($section['group']): ?>
+                                <?= pb_group_input($section['group'], is_array($page['data'][$name] ?? null) ? $page['data'][$name] : [], "f[$name]", $name,
+                                    pb_row_actions($section['label'], $section['copy'] !== '' && $pieceTypes !== [], false, $pieceTypes !== [])) ?>
                             <?php else: ?>
-                                <div class="pb-group pb-section pb-section-fixed" data-section="<?= e($name) ?>" data-sort="<?= e($name) ?>">
-                                    <div class="pb-section-row"><?= pb_section_grip($section['label']) ?><span class="pb-section-name"><?= e($section['label']) ?></span></div>
-                                    <p class="help"><?= e(__('Aqui entra o que os plugins instalados adicionam à página, como as últimas notícias.')) ?></p>
+                                <div class="pb-section pb-section-fixed" data-section="<?= e($name) ?>" data-sort="<?= e($name) ?>" data-tools="0">
+                                    <?= pb_row_tools($section['label'], pb_row_actions($section['label'], false, false, $pieceTypes !== [])) ?>
+                                    <div class="pb-section-row"><span class="pb-section-name"><?= e($section['label']) ?></span></div>
+                                    <p class="help"><?= e($section['help']) ?></p>
                                     <input type="hidden" name="f[_order][]" value="<?= e($name) ?>">
                                 </div>
                             <?php endif ?>
                         <?php endforeach ?>
                     </div>
+                    <?php if ($pieceTypes): ?>
+                        <p class="pb-sections-empty" data-sections-empty<?= $sections ? ' hidden' : '' ?>><?= e(__('Esta página ainda não tem seções. Escolha uma para começar.')) ?></p>
+                        <button type="button" class="pb-add" data-open-gallery><?= pb_admin_icon('plus') ?><span><?= e(__('Adicionar seção')) ?></span></button>
+                    <?php endif ?>
                 </section>
             <?php endif ?>
 
@@ -143,6 +156,16 @@ $states = [
 
         <?php require __DIR__ . '/studio-preview.php'; ?>
     </div>
+
+    <?php if ($pieceTypes): ?>
+        <dialog class="pb-gallery" data-gallery aria-labelledby="gallery-title" data-section-url="<?= e(pb_url('/admin/pages/section')) ?>">
+            <div class="pb-gallery-head">
+                <h2 id="gallery-title"><?= e(__('Que seção você quer adicionar?')) ?></h2>
+                <button type="button" class="icon-btn" data-gallery-close title="<?= e(__('Fechar')) ?>" aria-label="<?= e(__('Fechar')) ?>"><?= pb_admin_icon('x') ?></button>
+            </div>
+            <div class="pb-gallery-grid"><?= pb_block_gallery($pieceTypes) ?></div>
+        </dialog>
+    <?php endif ?>
 </form>
 
 <?php foreach ($revisions as $r): ?>

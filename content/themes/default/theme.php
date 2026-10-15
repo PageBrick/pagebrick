@@ -12,8 +12,17 @@
 
 return [
     'templates' => [
-        // The sections of the home page the client can put in any order (their fields are the standard ones; templates/home.php prints them
-        // with $page->order() and pb_section()). 'plugins' is where plugins add theirs. A theme that doesn't list 'sections' keeps its own order.
-        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+        // The sections of a page the client can put in any order (their fields are the standard ones; the template prints them with
+        // pb_sections(), or $page->order() and pb_section()). 'plugins' is where plugins add theirs; 'content' is the page's own fields (title, text...).
+        // 'about' => 'image_text' says that the section is the same thing as that kind of piece, so the client can duplicate it.
+        // 'blocks' => true lets the client add pieces of any kind (text, photo with text, cards...) and put them among the sections: core/blocks/*.php
+        // draws them as plain HTML, and a file of the same name in templates/blocks/ replaces it. A theme that doesn't say 'blocks' gets none.
+        'home' => [
+            'sections' => ['hero', 'about' => 'image_text', 'services' => 'cards', 'numbers' => 'numbers', 'testimonials' => 'testimonials', 'plugins', 'cta' => 'cta'],
+            'blocks' => true,
+        ],
+        'page' => ['sections' => ['content'], 'blocks' => true],
+        'services' => ['sections' => ['content', 'cta' => 'cta'], 'blocks' => true],
+        'contact' => ['sections' => ['content'], 'blocks' => true],
     ],
 ];

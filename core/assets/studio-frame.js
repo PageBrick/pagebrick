@@ -23,6 +23,7 @@
         }
         @supports not selector(::-webkit-scrollbar) { html, html.js { scrollbar-width: thin !important; scrollbar-color: #d24e2b rgb(128 128 128 / .18) !important; } }
         .scroll-line { display: none !important; }
+        iframe { pointer-events: none !important; } /* a video on the page must not swallow the pointer: the section under it is what is picked */
     `;
     document.head.append(bar);
 
@@ -149,6 +150,10 @@
         #pb-frame .chip svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
         #pb-frame .chip.fixed { padding-left: 10px; cursor: pointer; }
         #pb-frame .chip.fixed svg { display: none; }
+        #pb-frame .plus { position: absolute; display: none; place-items: center; width: 30px; height: 30px; margin: 0; padding: 0; border: 3px solid #fff; border-radius: 50%; background: #d24e2b; color: #fff;
+            box-shadow: 0 3px 10px rgb(0 0 0 / .3); cursor: pointer; pointer-events: auto; }
+        #pb-frame .plus:hover { background: #b53f20; }
+        #pb-frame .plus svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
         #pb-frame .line { position: absolute; display: none; left: 0; right: 0; height: 4px; margin-top: -2px; background: #d24e2b; border-radius: 2px; box-shadow: 0 0 0 3px rgb(210 78 43 / .25); }
         html.pb-dragging, html.pb-dragging * { cursor: grabbing !important; user-select: none !important; }
     `;
@@ -157,8 +162,16 @@
     layer.id = 'pb-frame';
     layer.innerHTML = '<div class="box hover"></div><div class="box chosen"></div><div class="box lifted"></div><div class="line"></div>'
         + '<div class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg><span></span></div>';
+    // "+" on the top and bottom edge of the section under the pointer: a new section goes there (the editor opens its gallery)
+    if (config.canAdd) {
+        const plus = '<button type="button" class="plus" title="' + String(config.texts.add || '').replace(/"/g, '&quot;') + '" aria-label="' + String(config.texts.add || '').replace(/"/g, '&quot;')
+            + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>';
+        layer.insertAdjacentHTML('beforeend', plus + plus);
+        layer.querySelectorAll('.plus').forEach((button) => button.addEventListener('click', () => send({type: 'insert', before: button.dataset.before || ''})));
+    }
     document.documentElement.append(layer);
     const [hoverBox, chosenBox, liftedBox, line, chip] = layer.children;
+    const pluses = [...layer.querySelectorAll('.plus')];
 
     measure = () => {
         const x = scrollX;
@@ -193,12 +206,25 @@
             if (!dragging) chip.style.display = 'none';
         }
         if (chosen?.visible) frame(chosenBox, chosen); else chosenBox.style.display = 'none';
+        if (pluses.length) {
+            const movable = sections.filter((section) => config.movable.includes(section.name));
+            const at = hovered?.visible && !dragging ? movable.indexOf(hovered) : -1;
+            const middle = at < 0 ? 0 : Math.min(Math.max((hovered.left + hovered.right) / 2, scrollX + 30), scrollX + innerWidth - 30);
+            [[hovered?.top, hovered?.name], [hovered?.bottom, movable[at + 1]?.name || '']].forEach(([edge, before], i) => {
+                const button = pluses[i];
+                button.style.display = at < 0 ? 'none' : 'grid';
+                if (at < 0) return;
+                button.dataset.before = before;
+                button.style.left = `${middle - 15}px`;
+                button.style.top = `${Math.max(edge - 15, 2)}px`;
+            });
+        }
     };
     const sectionAt = (x, y) => sections.find((section) => section.visible && y >= section.top && y <= section.bottom && x >= section.left && x <= section.right);
 
     addEventListener('pointermove', (event) => {
         if (dragging || !sections.length) return;
-        const found = sectionAt(event.pageX, event.pageY) || (event.target.closest?.('#pb-frame .chip') ? hovered : null);
+        const found = sectionAt(event.pageX, event.pageY) || (event.target.closest?.('#pb-frame .chip, #pb-frame .plus') ? hovered : null);
         if (found !== hovered) { hovered = found; draw(); }
     });
     document.documentElement.addEventListener('pointerleave', () => { if (!dragging) { hovered = null; draw(); } });

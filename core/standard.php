@@ -136,6 +136,7 @@ function pb_merge_theme_definitions(array $own): array
         $templates[$name] = isset($templates[$name])
             ? ['label' => $templates[$name]['label'], 'fields' => $templates[$name]['fields'] + ($def['fields'] ?? [])]
                 + (isset($def['sections']) ? ['sections' => $def['sections']] : []) // the sections the client may put in any order
+                + (isset($def['blocks']) ? ['blocks' => $def['blocks']] : []) // the pieces the client may add: true, or a list of kinds
             : $def + ['label' => $name, 'fields' => []];
     }
     return [

@@ -79,17 +79,24 @@
 .pb-sections-box { margin: 1.5rem 0 1rem; }
 .pb-sections-box h2 { margin: 0 0 .25rem; font-size: 1.05rem; }
 .pb-sections { display: grid; gap: .5rem; margin-top: .75rem; }
-.pb-section { position: relative; margin: 0; padding: 0 0 .25rem; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-.pb-section > summary { display: flex; align-items: center; gap: .4rem; padding: .5rem .75rem .5rem .4rem; cursor: pointer; list-style: none; }
-.pb-section > summary::-webkit-details-marker { display: none; }
-.pb-section > summary::after { content: ""; flex: none; width: .5rem; height: .5rem; margin-left: auto; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
-.pb-section[open] > summary::after { transform: rotate(-135deg); }
-.pb-section[open] > summary { margin-bottom: .25rem; border-bottom: 1px solid var(--line); }
+/* A row is a box (the <details>) with its tools beside it (the handle, copy, remove, "+"): a button inside a <summary> is not reachable for everyone. */
+.pb-section { position: relative; --row-right: 2.2rem; margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.pb-section[data-tools="1"] { --row-right: 4.3rem; }
+.pb-section[data-tools="2"] { --row-right: 6.4rem; }
+.pb-section-box { padding-bottom: .25rem; }
+.pb-section-box > summary { position: relative; display: flex; align-items: center; gap: .4rem; min-height: 3.1rem; padding: .5rem var(--row-right) .5rem 3rem; cursor: pointer; list-style: none; }
+.pb-section-box > summary::-webkit-details-marker { display: none; }
+.pb-section-box > summary::after { content: ""; position: absolute; top: 50%; right: 1rem; width: .5rem; height: .5rem; margin-top: -.4rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.pb-section-box[open] > summary::after { margin-top: -.15rem; transform: rotate(-135deg); }
+.pb-section-box[open] > summary { margin-bottom: .25rem; border-bottom: 1px solid var(--line); }
 .pb-section-name { font-weight: 700; font-size: 1rem; }
-.pb-section > :not(summary) { margin-right: 1rem; margin-left: 1rem; }
-.pb-section > .pb-list { margin-top: 1rem; }
-.pb-section-row { display: flex; align-items: center; gap: .4rem; padding: .5rem .75rem .5rem .4rem; margin: 0 !important; }
-.pb-section-fixed .help { margin-top: 0; padding-bottom: .5rem; }
+.pb-section-box > :not(summary) { margin-right: 1rem; margin-left: 1rem; }
+.pb-section-box > .pb-list { margin-top: 1rem; }
+.pb-row-tools { position: absolute; z-index: 2; top: 0; right: 0; left: 0; display: flex; align-items: center; height: 3.1rem; padding: 0 2.2rem 0 .5rem; pointer-events: none; }
+.pb-row-tools > * { pointer-events: auto; }
+.pb-section-row { display: flex; align-items: center; gap: .4rem; min-height: 3.1rem; padding: .5rem var(--row-right) .5rem 3rem; margin: 0 !important; }
+.pb-section-fixed { padding-bottom: .25rem; }
+.pb-section-fixed .help { margin: 0 1rem; padding-bottom: .5rem; }
 .pb-grip { display: grid; flex: none; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
 .pb-grip:hover { background: var(--soft); color: var(--text); filter: none; }
 .pb-grip .ico { width: 1.1rem; height: 1.1rem; }
@@ -97,7 +104,51 @@
 [data-sort].shifting { transition: transform .16s ease; }
 [data-sort].dragging { position: relative; z-index: 8; background: var(--card); box-shadow: var(--pop); cursor: grabbing; transition: none; }
 [data-sort].dragging .pb-grip { cursor: grabbing; color: var(--accent); }
-details.picked { box-shadow: 0 0 0 3px var(--accent); transition: box-shadow .4s; }
+details.picked, .pb-section.picked { box-shadow: 0 0 0 3px var(--accent); transition: box-shadow .4s; }
+
+/* Sections the client adds: a row says what it is (icon, kind, the title typed in it) and has a copy and a remove button; "+" on its top edge adds one before it. */
+.pb-section .badge[hidden] { display: none; }
+.pb-piece-icon { display: grid; flex: none; place-items: center; color: var(--accent); }
+.pb-piece-icon .ico { width: 1.15rem; height: 1.15rem; }
+.pb-piece-title { flex: 1 1 0; min-width: 0; overflow: hidden; color: var(--muted); font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.pb-row-actions { display: flex; flex: none; gap: .1rem; margin-left: auto; }
+.pb-row-btn { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); opacity: .6; cursor: pointer; }
+.pb-row-btn:hover, .pb-row-btn:focus-visible, .pb-section:hover .pb-row-btn { opacity: 1; }
+.pb-row-btn:hover { background: var(--soft); color: var(--text); filter: none; }
+.pb-row-btn.danger:hover { background: var(--err-bg); color: var(--err); }
+.pb-row-btn .ico { width: 1.05rem; height: 1.05rem; }
+.pb-plus { position: absolute; z-index: 4; top: -.85rem; left: 50%; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; margin: 0; padding: 0; border: 2px solid var(--card); border-radius: 50%;
+    background: var(--accent); color: var(--on-accent); opacity: 0; transform: translateX(-50%) scale(.85); transition: opacity .12s, transform .12s; cursor: pointer; }
+.pb-plus .ico { width: 1rem; height: 1rem; }
+.pb-section:hover .pb-plus, .pb-plus:focus-visible { opacity: 1; transform: translateX(-50%); }
+.pb-plus:hover { filter: brightness(1.1); }
+@media (hover: none) { .pb-plus { opacity: .9; transform: translateX(-50%); } .pb-row-btn { opacity: 1; } }
+[data-sort].dragging .pb-plus { display: none; }
+.pb-sections-empty { margin: .75rem 0 0; padding: 1.5rem 1rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--muted); text-align: center; }
+.pb-sections-empty[hidden] { display: none; }
+.pb-add { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin: .6rem 0 0; padding: .75rem 1rem; border: 2px dashed var(--line-strong); border-radius: var(--radius-sm);
+    background: transparent; color: var(--accent); font-size: 1rem; font-weight: 700; cursor: pointer; }
+.pb-add:hover, .pb-add:focus-visible { border-color: var(--accent); background: var(--soft); filter: none; }
+.pb-add .ico { width: 1.15rem; height: 1.15rem; }
+
+/* The gallery of kinds of section: a button for each, with a drawing of it and a line that says what it is. */
+.pb-gallery { width: min(46rem, 94vw); padding: 0; overflow: auto; }
+.pb-gallery-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.pb-gallery-head h2 { margin: 0; font-size: 1.2rem; }
+.pb-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .75rem; padding: 1.25rem; }
+.pb-pick { display: flex; flex-direction: column; align-items: stretch; gap: .35rem; margin: 0; padding: .75rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--text); text-align: left; cursor: pointer; }
+.pb-pick:hover, .pb-pick:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); filter: none; }
+.pb-pick-sketch { display: block; flex: none; padding: .5rem; border-radius: 8px; background: var(--soft); color: var(--accent); }
+.pb-pick-sketch svg { display: block; width: 100%; height: auto; aspect-ratio: 96 / 56; }
+.pb-pick-name { font-weight: 700; }
+.pb-pick-help { color: var(--muted); font-size: .85rem; font-weight: 400; line-height: 1.35; }
+
+/* What was just done to the list, and the way back. */
+.studio-toast { position: sticky; z-index: 6; bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: max-content; max-width: calc(100% - 1rem); margin: 1rem auto 0;
+    padding: .6rem .9rem; border-radius: var(--radius-sm); background: var(--text); color: var(--card); box-shadow: var(--pop); font-size: .92rem; }
+.studio-toast[hidden] { display: none; }
+.studio-toast.problem { background: var(--err); color: var(--err-bg); }
+.studio-toast button { margin: 0; padding: 0; border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 
 /* The page itself. */
 .studio-preview { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--soft); }
@@ -118,7 +169,7 @@ details.picked { box-shadow: 0 0 0 3px var(--accent); transition: box-shadow .4s
     .studio-meta { font-size: .85rem; }
 }
 @container (max-width: 24rem) {
-    .pb-section > :not(summary) { margin-right: .6rem; margin-left: .6rem; }
+    .pb-section-box > :not(summary) { margin-right: .6rem; margin-left: .6rem; }
     .studio-edit .card { padding-right: .85rem; padding-left: .85rem; }
 }
 .studio-preview-bar { display: flex; align-items: center; gap: .75rem; padding: .45rem .9rem; background: var(--card); border-bottom: 1px solid var(--line); }
@@ -142,4 +193,4 @@ details.picked { box-shadow: 0 0 0 3px var(--accent); transition: box-shadow .4s
     .studio-actions > button .ico { display: none; }
     .studio-actions > button { padding: .5rem .65rem; font-size: .88rem; white-space: nowrap; }
 }
-@media (prefers-reduced-motion: reduce) { .pb-section > summary::after, details.picked, .studio-split::after, [data-sort].shifting { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .pb-section-box > summary::after, details.picked, .pb-section.picked, .studio-split::after, [data-sort].shifting, .pb-plus { transition: none; } }

@@ -137,6 +137,16 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .guest-page main { max-width: 46rem; margin: 1.75rem auto 3rem; padding: 0 1rem; }
 /* Sign-in, "forgot my password" and new password: one card in the middle of the screen, on a soft background. */
 .auth-page { background: radial-gradient(64rem 30rem at 50% -9rem, rgb(210 78 43 / .13), transparent 70%), var(--bg); }
+/* A wall of bricks that fades into the background, in the colour of the text (so it is dark lines on the light theme and light lines on the dark one). */
+.auth-page::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: var(--text); opacity: .1;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 .5h120M0 30.5h120M.5 0v30M60.5 30v30' fill='none' stroke='%23000'/%3E%3C/svg%3E"), radial-gradient(ellipse 75% 85% at 50% 0, #000 10%, transparent 72%);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 .5h120M0 30.5h120M.5 0v30M60.5 30v30' fill='none' stroke='%23000'/%3E%3C/svg%3E"), radial-gradient(ellipse 75% 85% at 50% 0, #000 10%, transparent 72%);
+    -webkit-mask-size: 120px 60px, 100% 100%; mask-size: 120px 60px, 100% 100%; -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+:root[data-theme="dark"] .auth-page::before { opacity: .14; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .auth-page::before { opacity: .14; } }
+@media (forced-colors: active) { .auth-page::before { display: none; } }
+.auth-page .auth-wrap { position: relative; z-index: 1; }
 .auth-wrap { display: grid; align-content: center; justify-items: center; gap: 1.5rem; min-height: 100vh; min-height: 100dvh; padding: 2.5rem 1rem; }
 .auth-page .guest { padding: 0; }
 .auth-page .guest .brand { width: 220px; height: 46px; }
