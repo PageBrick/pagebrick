@@ -53,6 +53,7 @@ function pb_admin(string $method, string $path): void
         'GET /admin/users/edit' => ['admin', 'pb_admin_user_edit'],
         'POST /admin/users/edit' => ['admin', 'pb_admin_user_save'],
         'POST /admin/users/delete' => ['admin', 'pb_admin_users_delete'],
+        'POST /admin/users/invite' => ['admin', 'pb_admin_user_invite'],
         'GET /admin/plugins' => ['admin', 'pb_admin_plugins'],
         'POST /admin/plugins' => ['admin', 'pb_admin_plugins_action'],
         'GET /admin/plugins/settings' => ['editor', 'pb_admin_plugin_settings'],
@@ -151,7 +152,16 @@ function pb_admin_reset_form(): void
 {
     header('Referrer-Policy: no-referrer'); // the link's token stays on this page
     $token = pb_query('token');
-    pb_render('reset', ['title' => __('Criar uma senha nova'), 'narrow' => true, 'token' => $token, 'valid' => pb_password_reset_user($token) !== null]);
+    pb_render_reset($token);
+}
+
+/** The page of a password link: to choose a new password, or, for a person just invited, the first one. */
+function pb_render_reset(string $token, ?string $error = null): void
+{
+    $user = pb_password_reset_user($token);
+    $invite = !empty($user['invited_at']);
+    pb_render('reset', ['title' => $invite ? __('Criar a sua senha') : __('Criar uma senha nova'), 'narrow' => true, 'token' => $token,
+        'valid' => $user !== null, 'invite' => $invite, 'error' => $error]);
 }
 
 function pb_admin_reset(): void
@@ -159,12 +169,18 @@ function pb_admin_reset(): void
     header('Referrer-Policy: no-referrer');
     $token = pb_post('token');
     try {
-        pb_password_reset($token, pb_post('password'), pb_post('password_repeat'));
+        $user = pb_password_reset($token, pb_post('password'), pb_post('password_repeat'));
     } catch (InvalidArgumentException $e) {
         http_response_code(422);
-        pb_render('reset', ['title' => __('Criar uma senha nova'), 'narrow' => true, 'token' => $token,
-            'valid' => pb_password_reset_user($token) !== null, 'error' => $e->getMessage()]);
+        pb_render_reset($token, $e->getMessage());
         return;
+    }
+    if (!empty($user['invited_at'])) {
+        // An invited person just proved the e-mail is theirs by opening the link: no second step, straight into the panel.
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int) $user['id'];
+        pb_flash('ok', sprintf(__('Senha criada. Bem-vindo ao painel de %s!'), pb_option('site_title', 'PageBrick')));
+        pb_redirect('/admin');
     }
     pb_flash('ok', __('Senha nova salva. Entre com ela.'));
     pb_redirect('/admin/login');
@@ -1031,13 +1047,16 @@ function pb_admin_users(?string $error = null): void
         'current' => pb_current_user(),
         'error' => $error,
         'old' => $error ? ['name' => pb_post('name'), 'email' => pb_post('email'), 'role' => pb_post('role')] : [],
+        'inviteLink' => pb_take_invite_link(),
     ]);
 }
 
 function pb_admin_users_create(): void
 {
     try {
-        $id = pb_create_user(pb_post('name'), pb_post('email'), pb_post('password'), pb_post('role'));
+        // No password typed: the person gets an invitation and chooses their own.
+        $invite = pb_post('password') === '' ? pb_invite_user(pb_post('name'), pb_post('email'), pb_post('role'), (string) pb_current_user()['name']) : null;
+        $id = $invite ? (int) $invite['user']['id'] : pb_create_user(pb_post('name'), pb_post('email'), pb_post('password'), pb_post('role'));
         // A new person starts in the site's language, not in the panel language of whoever made the account.
         pb_set_user_locale($id, pb_site_locale());
     } catch (InvalidArgumentException $e) {
@@ -1045,7 +1064,37 @@ function pb_admin_users_create(): void
         pb_admin_users($e->getMessage());
         return;
     }
-    pb_flash('ok', __('Usuário criado.'));
+    $invite ? pb_invite_notice($invite) : pb_flash('ok', __('Usuário criado.'));
+    pb_redirect('/admin/users');
+}
+
+/** What the screen says after an invitation: that it left, or, when the e-mail could not go, the link to hand over some other way (shown once). */
+function pb_invite_notice(array $invite): void
+{
+    $email = $invite['user']['email'];
+    if ($invite['sent']) {
+        pb_flash('ok', sprintf(__('Convite enviado para %1$s. O link vale %2$d dias.'), $email, PB_INVITE_DAYS));
+        return;
+    }
+    pb_flash('error', sprintf(__('O e-mail com o convite não saiu. Copie o link abaixo e envie para %s por outro meio, como o WhatsApp.'), $email));
+    $_SESSION['invite_link'] = ['email' => $email, 'link' => $invite['link']];
+}
+
+/** The link of an invitation whose e-mail could not go, once. */
+function pb_take_invite_link(): ?array
+{
+    $link = $_SESSION['invite_link'] ?? null;
+    unset($_SESSION['invite_link']);
+    return $link;
+}
+
+function pb_admin_user_invite(): void
+{
+    try {
+        pb_invite_notice(pb_send_invite((int) pb_post('id'), (string) pb_current_user()['name']));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
     pb_redirect('/admin/users');
 }
 

@@ -120,7 +120,7 @@ Someone asked to choose a new password for your account on the %2$s dashboard. T
 %3$s
 
 If it wasn\'t you, ignore this e-mail: your password stays the same.',
-    'Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.' => 'This link no longer works: it lasts 1 hour and can only be used once. Ask for a new one.',
+    'Este link não vale mais: ele só pode ser usado uma vez e tem prazo (1 hora para trocar a senha, 7 dias para um convite). Peça um novo.' => 'This link no longer works: it can only be used once and has a deadline (1 hour to change the password, 7 days for an invitation). Ask for a new one.',
     'As duas senhas não são iguais.' => 'The two passwords are not the same.',
     'Página não encontrada.' => 'Page not found.',
     'Informe um título com até 200 caracteres.' => 'Enter a title with up to 200 characters.',
@@ -854,4 +854,35 @@ To choose how the site updates: %4$s',
     'Não consegui falar com o servidor SMTP. Confira o endereço do servidor, a porta e a segurança (587 com TLS, ou 465 com SSL).' => 'I could not reach the SMTP server. Check the server address, the port and the security (587 with TLS, or 465 with SSL).',
     'O servidor não aceitou o e-mail que envia. Use o mesmo endereço do usuário SMTP.' => 'The server did not accept the sender e-mail. Use the same address as the SMTP username.',
     'Se ele não chegar e o e-mail do seu domínio fica em outro serviço (Titan, Google, Zoho…), preencha nos campos abaixo o servidor SMTP desse serviço.' => 'If it does not arrive and your domain\'s e-mail is at another service (Titan, Google, Zoho…), fill in that service\'s SMTP server in the fields below.',
+    'Esta pessoa já criou a senha: não há convite para enviar.' => 'This person has already created a password: there is no invitation to send.',
+    'Convite para o painel de %s' => 'Invitation to the %s dashboard',
+    'Olá, %1$s.
+
+%2$s convidou você para o painel de %3$s, como %4$s. Para criar a sua senha e entrar, abra este link em até %5$d dias:
+
+%6$s
+
+Se você não esperava este convite, ignore este e-mail: nada acontece enquanto o link não for aberto.' => 'Hello, %1$s.
+
+%2$s invited you to the %3$s dashboard, as %4$s. To create your password and sign in, open this link within %5$d days:
+
+%6$s
+
+If you were not expecting this invitation, ignore this e-mail: nothing happens until the link is opened.',
+    'Convite enviado para %1$s. O link vale %2$d dias.' => 'Invitation sent to %1$s. The link works for %2$d days.',
+    'O e-mail com o convite não saiu. Copie o link abaixo e envie para %s por outro meio, como o WhatsApp.' => 'The invitation e-mail did not go out. Copy the link below and send it to %s some other way, such as WhatsApp.',
+    'Link do convite' => 'Invitation link',
+    'Para %1$s. Vale uma vez, por %2$d dias; um convite novo troca este link.' => 'For %1$s. It works once, for %2$d days; a new invitation replaces this link.',
+    'Copiado!' => 'Copied!',
+    'Copiar o link' => 'Copy the link',
+    'Convite pendente' => 'Invitation pending',
+    'Reenviar convite' => 'Resend invitation',
+    'Senha (opcional)' => 'Password (optional)',
+    'Em branco: a pessoa recebe um convite por e-mail e cria a própria senha.' => 'Empty: the person gets an invitation by e-mail and creates their own password.',
+    'Criar a sua senha' => 'Create your password',
+    'Bem-vindo ao painel de %s' => 'Welcome to the %s dashboard',
+    'Crie a sua senha para entrar. Pelo menos 8 caracteres.' => 'Create your password to sign in. At least 8 characters.',
+    'Repita a senha' => 'Repeat the password',
+    'Criar a senha e entrar' => 'Create the password and sign in',
+    'Senha criada. Bem-vindo ao painel de %s!' => 'Password created. Welcome to the %s dashboard!',
 ];

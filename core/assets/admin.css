@@ -158,6 +158,9 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .auth .error, .auth .flash { margin: 0 0 1rem; }
 .auth form > label:first-child { margin-top: 0; }
 .auth input { padding: .72rem .85rem; }
+.copy-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.copy-row input { flex: 1 1 18rem; min-width: 0; margin: 0; }
+.copy-row button { margin: 0; }
 .input-icon { position: relative; }
 .input-icon > .ico { position: absolute; z-index: 1; top: 50%; left: .9rem; transform: translateY(-50%); color: var(--muted); pointer-events: none; } /* above the field the script wraps a password in */
 .input-icon input { padding-left: 2.6rem; }

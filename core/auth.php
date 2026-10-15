@@ -60,8 +60,10 @@ function pb_update_user(int $id, string $name, string $email, string $role, stri
     }
     pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET name = ?, email = ?, role = ? WHERE id = ?')->execute([$name, $email, $role, $id]);
     if ($newPassword !== '') {
-        pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ? WHERE id = ?')
+        // a password given here also ends a pending invitation
+        pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ?, invited_at = NULL WHERE id = ?')
             ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $id]);
+        pb_db()->prepare('DELETE FROM ' . pb_table('password_resets') . ' WHERE user_id = ?')->execute([$id]);
     }
 }
 
@@ -113,6 +115,7 @@ function pb_delete_user(int $id, int $actingUserId): void
         throw new InvalidArgumentException(__('Você não pode excluir a sua própria conta.'));
     }
     pb_db()->prepare('DELETE FROM ' . pb_table('users') . ' WHERE id = ?')->execute([$id]);
+    pb_db()->prepare('DELETE FROM ' . pb_table('password_resets') . ' WHERE user_id = ?')->execute([$id]); // an invitation not used yet goes with the person
 }
 
 function pb_find_user(int $id): ?array
@@ -131,7 +134,7 @@ function pb_find_user_by_email(string $email): ?array
 
 function pb_list_users(): array
 {
-    return pb_db()->query('SELECT id, name, email, role FROM ' . pb_table('users') . ' ORDER BY name')->fetchAll();
+    return pb_db()->query('SELECT id, name, email, role, invited_at FROM ' . pb_table('users') . ' ORDER BY name')->fetchAll();
 }
 
 /** The logged-in user, or null. */
@@ -236,15 +239,63 @@ function pb_password_reset_user(string $token): ?array
 function pb_password_reset(string $token, string $password, string $repeat): array
 {
     $user = pb_password_reset_user($token)
-        ?? throw new InvalidArgumentException(__('Este link não vale mais: ele dura 1 hora e só pode ser usado uma vez. Peça um novo.'));
+        ?? throw new InvalidArgumentException(__('Este link não vale mais: ele só pode ser usado uma vez e tem prazo (1 hora para trocar a senha, 7 dias para um convite). Peça um novo.'));
     if (strlen($password) < 8) {
         throw new InvalidArgumentException(__('A senha precisa ter pelo menos 8 caracteres.'));
     }
     if ($password !== $repeat) {
         throw new InvalidArgumentException(__('As duas senhas não são iguais.'));
     }
-    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET password_hash = ?, invited_at = NULL WHERE id = ?')->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
     pb_db()->prepare('DELETE FROM ' . pb_table('password_resets') . ' WHERE user_id = ?')->execute([$user['id']]);
     pb_db()->prepare('DELETE FROM ' . pb_table('login_attempts') . ' WHERE email = ?')->execute([$user['email']]); // wrong guesses before don't count
-    return $user;
+    return $user; // as it was before the change: 'invited_at' tells whether the link was an invitation
+}
+
+// ------------------------------------------------------------------ invitations
+
+/** How long the link of an invitation works: a person may take days to open the e-mail. */
+const PB_INVITE_DAYS = 7;
+
+/**
+ * Makes the account of a person who will choose their own password. It starts with one nobody knows, and the link e-mailed to them (one use, a week,
+ * only its hash kept) is the way in. Returns what pb_send_invite() returns.
+ */
+function pb_invite_user(string $name, string $email, string $role, string $invitedBy): array
+{
+    $id = pb_create_user($name, $email, bin2hex(random_bytes(16)), $role);
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET invited_at = NOW() WHERE id = ?')->execute([$id]);
+    return pb_send_invite($id, $invitedBy);
+}
+
+/**
+ * Sends (again) the invitation of a person who has not chosen a password yet: a new link, and the old one stops working. Returns
+ * ['user' => the person, 'link' => the address, 'sent' => whether the e-mail left]; the link comes back either way, to hand over some other way.
+ */
+function pb_send_invite(int $userId, string $invitedBy): array
+{
+    $user = pb_find_user($userId);
+    if (!$user || empty($user['invited_at'])) {
+        throw new InvalidArgumentException(__('Esta pessoa já criou a senha: não há convite para enviar.'));
+    }
+    $token = bin2hex(random_bytes(32));
+    pb_db()->prepare('REPLACE INTO ' . pb_table('password_resets') . ' (user_id, token_hash, expires_at) VALUES (?, ?, NOW() + INTERVAL ' . PB_INVITE_DAYS . ' DAY)')
+        ->execute([$userId, hash('sha256', $token)]);
+    $link = pb_absolute_url('/admin/reset?token=' . $token);
+    $site = pb_option('site_title', 'PageBrick');
+    $sent = true;
+    $previous = pb_locale();
+    pb_set_locale(pb_site_locale()); // the e-mail speaks the language the person will find in the panel
+    try {
+        pb_mail($user['email'], sprintf(__('Convite para o painel de %s'), $site), sprintf(
+            __("Olá, %1\$s.\n\n%2\$s convidou você para o painel de %3\$s, como %4\$s. Para criar a sua senha e entrar, abra este link em até %5\$d dias:\n\n%6\$s\n\nSe você não esperava este convite, ignore este e-mail: nada acontece enquanto o link não for aberto."),
+            $user['name'], $invitedBy, $site, pb_role_labels()[$user['role']] ?? $user['role'], PB_INVITE_DAYS, $link
+        ));
+    } catch (RuntimeException $e) {
+        error_log("PageBrick: invitation e-mail not sent: {$e->getMessage()}");
+        $sent = false;
+    } finally {
+        pb_set_locale($previous);
+    }
+    return ['user' => $user, 'link' => $link, 'sent' => $sent];
 }

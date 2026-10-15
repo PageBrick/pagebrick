@@ -323,6 +323,18 @@
         }
     }));
 
+    // A button that copies the text of a field (the link of an invitation): data-copy = the field's id, data-done = what the button says after.
+    document.querySelectorAll('[data-copy]').forEach((button) => button.addEventListener('click', async () => {
+        const field = document.getElementById(button.dataset.copy);
+        field.select();
+        try {
+            await navigator.clipboard.writeText(field.value);
+        } catch (error) {
+            document.execCommand('copy'); // the page is not on https, or the browser asks for no clipboard: the text stays selected for Ctrl+C
+        }
+        button.textContent = button.dataset.done;
+    }));
+
     // The rich text editor doesn't take attachments: images go in image fields.
     document.addEventListener('trix-file-accept', (event) => event.preventDefault());
 })();
