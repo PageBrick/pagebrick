@@ -78,6 +78,30 @@ final class CoreTest extends TestCase
         $this->assertSame(['no-reply@empresa.example', 'contato@empresa.example'], array_column($GLOBALS['pb_sent_mail'], 'fromEmail'));
     }
 
+    public function test_a_refused_smtp_login_says_what_to_check_and_keeps_the_original_reason(): void
+    {
+        $text = pb_mail_explain('SMTP Error: Could not authenticate.');
+        $this->assertStringContainsString('recusou o usuário ou a senha', $text);
+        $this->assertStringContainsString('Titan', $text);
+        $this->assertStringEndsWith('(SMTP Error: Could not authenticate.)', $text, 'whoever helps still sees the original');
+        $this->assertStringContainsString('porta e a segurança', pb_mail_explain('SMTP Error: Could not connect to SMTP host.'));
+        $this->assertStringContainsString('porta e a segurança', pb_mail_explain('SMTP connect() failed. https://example.test'));
+        $this->assertStringContainsString('mesmo endereço do usuário', pb_mail_explain('SMTP Error: The following From address failed: a@b.test'));
+        $this->assertSame('Something else', pb_mail_explain('Something else'), 'a reason that is not known is shown as it is');
+    }
+
+    public function test_the_test_email_hints_at_smtp_when_it_goes_to_the_sites_own_domain_without_one(): void
+    {
+        pb_set_option('site_url', 'https://www.empresa.example');
+        $hint = 'preencha nos campos abaixo o servidor SMTP';
+        $this->assertStringContainsString($hint, pb_mail_test_notice('secretaria@empresa.example'), 'the site sends to its own domain, with no SMTP');
+        $this->assertStringContainsString('E-mail de teste enviado para secretaria@empresa.example', pb_mail_test_notice('secretaria@empresa.example'));
+        $this->assertStringNotContainsString($hint, pb_mail_test_notice('ana@gmail.example'), 'another domain: the message can arrive');
+
+        pb_set_option('mail', json_encode(['from_email' => 'contato@empresa.example', 'host' => 'smtp.servico.example']));
+        $this->assertStringNotContainsString($hint, pb_mail_test_notice('secretaria@empresa.example'), 'with an SMTP set there is nothing to hint');
+    }
+
     public function test_forgot_password_link_works_once(): void
     {
         $token = $this->resetLink(' ANA@example.com');
