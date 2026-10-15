@@ -6,7 +6,7 @@
 //   GET /api/v1/pages           the published pages, without their content
 //   GET /api/v1/pages/{slug}    one published page with its fields
 //
-// Field values: text as typed; rich text as clean HTML; images as {url, thumb, alt, width, height} or null;
+// Field values: text as typed; rich text as clean HTML (pictures with full addresses); images as {url, thumb, alt, width, height} or null;
 // links to pages of the site as paths ("/about"), other links as typed; a section the client hid is null.
 // The shape of these answers is part of the compatibility promise (tests/fixtures/sites/v1.0-output).
 // Plugins add their own endpoints under /api/v1/{plugin} with pb_add_route(), pb_content_json() and pb_content_send().
@@ -73,6 +73,8 @@ function pb_content_value(array $def, mixed $value): mixed
                 'width' => (int) $media['width'],
                 'height' => (int) $media['height'],
             ] : null;
+        case 'richtext':
+            return pb_richtext_html((string) ($value ?? ''), absolute: true);
         case 'link':
             return pb_content_link(pb_link_url((string) $value));
         default:

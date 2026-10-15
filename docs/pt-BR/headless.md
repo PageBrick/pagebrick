@@ -47,7 +47,7 @@ Os campos são os mesmos que o painel mostra: o [conteúdo padrão](temas.md#con
 | Tipo de campo | No JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | o texto como foi digitado (um `select` entrega a chave da opção) |
-| `richtext` | HTML, já limpo quando foi salvo |
+| `richtext` | HTML, já limpo quando foi salvo; as imagens vêm com endereço completo |
 | `image` | `{url, thumb, alt, width, height}` com endereços completos, ou `null` |
 | `link` | uma página do site como caminho (`"/sobre"`, `"/"` para a página inicial); qualquer outro link como foi digitado (`"https://…"`) |
 | `list` | um array de objetos |

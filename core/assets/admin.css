@@ -9,7 +9,6 @@
     --shadow: 0 1px 2px rgb(23 25 35 / .04);
     --pop: 0 14px 34px -10px rgb(23 25 35 / .22), 0 2px 6px rgb(23 25 35 / .06);
     --ring: 0 0 0 3px rgb(210 78 43 / .28);
-    --invert: 0; /* 1 turns the editor's dark toolbar icons light */
     --header-h: 3.5rem; --rail-w: 3.5rem; --side-w: 15rem;
     --mark: url(mark.svg); --logo: url(logo.svg);
     color-scheme: light;
@@ -22,7 +21,6 @@
     --ok: #86efac; --ok-bg: #12321f; --err: #fca5a5; --err-bg: #3a1414;
     --warn: #fcd34d; --warn-bg: #38290a; --info: #9db9ff; --info-bg: #17254a;
     --shadow: none; --pop: 0 14px 34px -10px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .04);
-    --invert: 1;
     --mark: url(mark-dark.svg); --logo: url(logo-dark.svg);
     color-scheme: dark;
 }
@@ -34,7 +32,6 @@
         --ok: #86efac; --ok-bg: #12321f; --err: #fca5a5; --err-bg: #3a1414;
         --warn: #fcd34d; --warn-bg: #38290a; --info: #9db9ff; --info-bg: #17254a;
         --shadow: none; --pop: 0 14px 34px -10px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .04);
-        --invert: 1;
         --mark: url(mark-dark.svg); --logo: url(logo-dark.svg);
         color-scheme: dark;
     }
@@ -277,16 +274,6 @@ td.actions > * { display: inline-block; margin-left: 1rem; }
 .pb-image:not(:has(img)) [data-clear] { display: none; }
 .pb-link { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 .pb-link input[hidden] { display: none; }
-trix-editor { min-height: 8rem; padding: .7rem .8rem; background: var(--field); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
-trix-editor:focus-visible { border-color: var(--accent); outline: none; box-shadow: var(--ring); }
-trix-toolbar .trix-button-group--file-tools, trix-toolbar [data-trix-attribute="code"] { display: none; }
-trix-toolbar .trix-button-row { flex-wrap: wrap; gap: .25rem 0; } /* the buttons wrap on a narrow screen instead of widening the page */
-trix-toolbar .trix-button-group { margin-bottom: .6rem; border-color: var(--line-strong); border-radius: 8px; overflow: hidden; }
-trix-toolbar .trix-button { border-bottom-color: var(--line); background: var(--card); color: var(--text); }
-trix-toolbar .trix-button::before { filter: invert(var(--invert)); }
-trix-toolbar .trix-button.trix-active { background: var(--soft); color: var(--text); }
-trix-toolbar .trix-dialog { background: var(--card); color: var(--text); border-top-color: var(--line-strong); border-radius: 8px; box-shadow: var(--pop); }
-trix-toolbar .trix-input--dialog { margin: 0 .6rem 0 0; border-color: var(--line-strong); background: var(--field); color: var(--text); }
 
 /* Plugins */
 .plugin-list { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }

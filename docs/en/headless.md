@@ -47,7 +47,7 @@ The fields are the same ones the panel shows: the [standard content](themes.md#c
 | Field type | In JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | the text as typed (a `select` gives the option's key) |
-| `richtext` | HTML, already cleaned when it was saved |
+| `richtext` | HTML, already cleaned when it was saved; pictures come with full addresses |
 | `image` | `{url, thumb, alt, width, height}` with full addresses, or `null` |
 | `link` | a page of the site as a path (`"/about"`, `"/"` for the home page); any other link as typed (`"https://…"`) |
 | `list` | an array of objects |

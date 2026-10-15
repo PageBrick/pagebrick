@@ -86,4 +86,4 @@ Para empezar de cero: borra `config.php` y ejecuta `docker compose down -v`.
 
 ## Licencia
 
-[MIT](LICENSE). Creado por [Alcateia Digital](https://alcateia.digital). Incluye el editor [Trix](https://github.com/basecamp/trix) (MIT), [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL 2.1), las fuentes Public Sans, Fraunces y Nunito (OFL) y fotos de ejemplo de dominio público (CC0).
+[MIT](LICENSE). Creado por [Alcateia Digital](https://alcateia.digital). Incluye el editor [TipTap](https://tiptap.dev) y [ProseMirror](https://prosemirror.net) (MIT), [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL 2.1), las fuentes Public Sans, Fraunces y Nunito (OFL) y fotos de ejemplo de dominio público (CC0).

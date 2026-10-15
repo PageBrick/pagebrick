@@ -106,7 +106,7 @@ Puedes agregar campos, tipos de página, ajustes y menús; no puedes quitar ni c
 
 Los ajustes que agregues aparecen en **Contacto**, la pantalla que abre cualquier persona que edita el sitio. Un grupo sobre el aspecto (colores, tipografía) puede pedir **Configuración → Apariencia**, que solo abren los administradores, con `'screen' => 'appearance'`.
 
-**Tipos de campo:** `text`, `textarea`, `richtext` (un editor pequeño; el HTML se limpia al guardar), `image`, `url`, `email`, `tel`, `color`, `select` (con `'options' => ['value' => 'Label']`), `link` (una página del sitio o cualquier dirección), `list` (elementos repetibles, con `fields`), `group` (con `fields`; `'toggle' => true` permite que el cliente lo oculte). Todo campo acepta `label`, `help` y `default`.
+**Tipos de campo:** `text`, `textarea`, `richtext` (un editor de texto: títulos, negrita, cursiva, listas, citas, enlaces, tablas, divisores e imágenes de la biblioteca de medios; el HTML se limpia al guardar), `image`, `url`, `email`, `tel`, `color`, `select` (con `'options' => ['value' => 'Label']`), `link` (una página del sitio o cualquier dirección), `list` (elementos repetibles, con `fields`), `group` (con `fields`; `'toggle' => true` permite que el cliente lo oculte). Todo campo acepta `label`, `help` y `default`.
 
 ¿Necesitas funciones auxiliares? Ponlas en un archivo y agrega `require_once __DIR__ . '/functions.php';` al inicio de `theme.php`.
 
@@ -168,6 +168,18 @@ Imprimir un campo con `<?= ?>` siempre es seguro: el texto se escapa, el texto e
 | una lista: `foreach`, `count()`, `->isEmpty()` | sus elementos, cada uno es un grupo |
 
 Con `'debug' => true` en `config.php`, leer un campo que no existe genera una advertencia, así los errores de tipeo aparecen mientras desarrollas.
+
+### Texto enriquecido: da estilo a lo que tu cliente puede escribir
+
+Un campo `richtext` puede tener párrafos, `h2`/`h3`, `strong`, `em`, `u`, `s`, `a`, listas, `blockquote`, `hr`, `table` (con `thead`/`tbody`, `tr`, `th`, `td`) e `img`. El núcleo no añade CSS: imprime el campo dentro de un contenedor tuyo y da estilo a esos elementos allí, tablas e imágenes incluidas:
+
+```css
+.prose img { max-width: 100%; height: auto; }
+.prose table { display: block; overflow-x: auto; border-collapse: collapse; } /* una tabla ancha se desplaza dentro del texto */
+.prose th, .prose td { padding: .5rem .75rem; border: 1px solid #ddd; }
+```
+
+Las imágenes vienen solo de la biblioteca de medios: PageBrick escribe el `<img>` (con `alt`, `width`, `height` y carga diferida), así que sigue funcionando si el sitio se mueve. Un texto escrito antes de PageBrick 1.3 (con `div` y `br`) se muestra exactamente como se guardó.
 
 ### Funciones auxiliares
 

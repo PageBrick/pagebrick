@@ -32,7 +32,9 @@ final class PanelLayoutTest extends TestCase
 
     public function test_the_rich_text_toolbar_wraps_instead_of_widening_the_page(): void
     {
-        $this->assertMatchesRegularExpression('~trix-toolbar \.trix-button-row \{[^}]*flex-wrap: wrap~', $this->css);
+        $editor = (string) file_get_contents(PB_ROOT . '/core/assets/editor.css');
+        $this->assertMatchesRegularExpression('~\.pb-rt-toolbar \{[^}]*flex-wrap: wrap~', $editor);
+        $this->assertMatchesRegularExpression('~\.pb-rt-tablebar \{[^}]*flex-wrap: wrap~', $editor);
     }
 
     public function test_dark_is_the_same_whether_it_was_chosen_or_comes_from_the_system(): void

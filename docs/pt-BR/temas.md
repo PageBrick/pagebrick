@@ -106,7 +106,7 @@ Você pode adicionar campos, tipos de página, configurações e menus; não pod
 
 As configurações que você adiciona aparecem em **Contato**, a tela que qualquer pessoa que edita o site abre. Um grupo sobre o visual (cores, tipografia) pode pedir **Configurações → Aparência**, que só administradores abrem, com `'screen' => 'appearance'`.
 
-**Tipos de campo:** `text`, `textarea`, `richtext` (um editor simples; o HTML é limpo ao salvar), `image`, `url`, `email`, `tel`, `color`, `select` (com `'options' => ['value' => 'Label']`), `link` (uma página do site ou qualquer endereço), `list` (itens repetíveis, com `fields`), `group` (com `fields`; `'toggle' => true` deixa o cliente esconder o grupo). Todo campo aceita `label`, `help` e `default`.
+**Tipos de campo:** `text`, `textarea`, `richtext` (um editor de texto: títulos, negrito, itálico, listas, citações, links, tabelas, divisores e imagens da biblioteca de mídia; o HTML é limpo ao salvar), `image`, `url`, `email`, `tel`, `color`, `select` (com `'options' => ['value' => 'Label']`), `link` (uma página do site ou qualquer endereço), `list` (itens repetíveis, com `fields`), `group` (com `fields`; `'toggle' => true` deixa o cliente esconder o grupo). Todo campo aceita `label`, `help` e `default`.
 
 Precisa de funções auxiliares? Coloque-as em um arquivo e use `require_once __DIR__ . '/functions.php';` no início do `theme.php`.
 
@@ -168,6 +168,18 @@ Imprimir um campo com `<?= ?>` é sempre seguro: o texto é escapado, o texto ri
 | uma lista: `foreach`, `count()`, `->isEmpty()` | os itens dela, cada um sendo um grupo |
 
 Com `'debug' => true` no `config.php`, ler um campo que não existe gera um aviso, então os erros de digitação aparecem enquanto você desenvolve.
+
+### Texto rico: estilize o que o cliente pode escrever
+
+Um campo `richtext` pode ter parágrafos, `h2`/`h3`, `strong`, `em`, `u`, `s`, `a`, listas, `blockquote`, `hr`, `table` (com `thead`/`tbody`, `tr`, `th`, `td`) e `img`. O núcleo não adiciona CSS: imprima o campo dentro de um contêiner seu e estilize esses elementos nele, inclusive tabelas e imagens:
+
+```css
+.prose img { max-width: 100%; height: auto; }
+.prose table { display: block; overflow-x: auto; border-collapse: collapse; } /* uma tabela larga rola dentro do texto */
+.prose th, .prose td { padding: .5rem .75rem; border: 1px solid #ddd; }
+```
+
+As imagens vêm só da biblioteca de mídia: o PageBrick escreve o `<img>` (com `alt`, `width`, `height` e carregamento sob demanda), então ele continua funcionando se o site mudar de lugar. Um texto escrito antes do PageBrick 1.3 (com `div` e `br`) aparece exatamente como foi salvo.
 
 ### Funções auxiliares
 

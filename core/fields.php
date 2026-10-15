@@ -80,7 +80,10 @@ function pb_clean_url(string $url): string
     return '';
 }
 
-/** Keeps only safe formatting from the rich text editor: no scripts, styles, attributes or event handlers. */
+/**
+ * Keeps only safe formatting from the rich text editor: no scripts, styles, attributes or event handlers.
+ * Tables, dividers and pictures of the media library stay; a picture is accepted only by its media id (data-media), and the tag is rebuilt from it.
+ */
 function pb_sanitize_html(string $html): string
 {
     if (trim($html) === '') {
@@ -97,6 +100,15 @@ function pb_sanitize_html(string $html): string
         return '';
     }
     pb_sanitize_children($body);
+    // blank lines at the end are what the editor keeps after a table or a picture, so there is somewhere to type
+    while ($last = $body->lastChild) {
+        $blank = $last instanceof DOMText ? trim($last->textContent) === ''
+            : $last instanceof DOMElement && in_array(strtolower($last->tagName), ['p', 'div'], true) && trim($last->textContent) === '' && !$last->getElementsByTagName('img')->length;
+        if (!$blank) {
+            break;
+        }
+        $body->removeChild($last);
+    }
     $out = '';
     foreach ($body->childNodes as $child) {
         $out .= $doc->saveHTML($child);
@@ -106,7 +118,8 @@ function pb_sanitize_html(string $html): string
 
 function pb_sanitize_children(DOMNode $node): void
 {
-    static $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 'a', 'ul', 'ol', 'li', 'h2', 'h3', 'blockquote', 'div'];
+    static $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 's', 'a', 'ul', 'ol', 'li', 'h2', 'h3', 'blockquote', 'div', 'hr',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
     static $rename = ['h1' => 'h2', 'pre' => 'p'];
     static $drop = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select',
         'template', 'svg', 'math', 'noscript', 'head', 'title', 'meta', 'link', 'base'];
@@ -117,6 +130,10 @@ function pb_sanitize_children(DOMNode $node): void
         }
         if (!$child instanceof DOMElement || in_array(strtolower($child->tagName), $drop, true)) {
             $node->removeChild($child); // comments, processing instructions, dangerous elements
+            continue;
+        }
+        if (strtolower($child->tagName) === 'img') {
+            pb_sanitize_image($node, $child);
             continue;
         }
         pb_sanitize_children($child);
@@ -144,8 +161,74 @@ function pb_sanitize_children(DOMNode $node): void
         if ($tag === 'a') {
             $href = pb_clean_url($child->getAttribute('href'));
             $href === '' ? $child->removeAttribute('href') : $child->setAttribute('href', $href);
+        } elseif (in_array($tag, ['li', 'td', 'th'], true)) {
+            pb_unwrap_single_paragraph($child);
         }
     }
+}
+
+/** A picture of the media library, rebuilt from its id: whatever else the submitted tag carried (address, handlers, sizes) is ignored. */
+function pb_sanitize_image(DOMNode $parent, DOMElement $img): void
+{
+    $id = $img->getAttribute('data-media');
+    $media = ctype_digit($id) ? pb_media_find((int) $id) : null;
+    if (!$media || !str_starts_with((string) $media['mime'], 'image/')) {
+        $parent->removeChild($img);
+        return;
+    }
+    $alt = trim($img->getAttribute('alt'));
+    foreach (iterator_to_array($img->attributes) as $attr) {
+        $img->removeAttribute($attr->name);
+    }
+    $img->setAttribute('src', pb_media_url($media));
+    $img->setAttribute('alt', pb_limit($alt !== '' ? $alt : (string) $media['alt'], 200));
+    $img->setAttribute('width', (string) (int) $media['width']);
+    $img->setAttribute('height', (string) (int) $media['height']);
+    $img->setAttribute('data-media', (string) (int) $media['id']);
+}
+
+/** A list item or table cell that holds a single paragraph keeps just its text: <li><p>Item</p></li> becomes <li>Item</li>. */
+function pb_unwrap_single_paragraph(DOMElement $cell): void
+{
+    $paragraph = null;
+    foreach ($cell->childNodes as $child) {
+        if ($child instanceof DOMText && trim($child->textContent) === '') {
+            continue;
+        }
+        if ($paragraph || !$child instanceof DOMElement || strtolower($child->tagName) !== 'p') {
+            return;
+        }
+        $paragraph = $child;
+    }
+    if (!$paragraph) {
+        return;
+    }
+    while ($paragraph->firstChild) {
+        $cell->insertBefore($paragraph->firstChild, $paragraph);
+    }
+    $cell->removeChild($paragraph);
+}
+
+/**
+ * Rich text as it is shown: the pictures of the media library get their address, size and loading attributes from the library,
+ * so they follow the site if it moves; a picture deleted from the library disappears. Text without pictures is returned as it is.
+ * $forEditor keeps the media id for the panel's editor; $absolute gives full addresses for the content API.
+ */
+function pb_richtext_html(string $html, bool $forEditor = false, bool $absolute = false): string
+{
+    if (!str_contains($html, 'data-media=')) {
+        return $html;
+    }
+    return (string) preg_replace_callback('~<img\b[^>]*\sdata-media="(\d+)"[^>]*>~', function (array $m) use ($forEditor, $absolute): string {
+        $media = pb_media_find((int) $m[1]);
+        if (!$media) {
+            return '';
+        }
+        $url = pb_media_url($media);
+        $alt = preg_match('~\salt="([^"]*)"~', $m[0], $a) ? $a[1] : e((string) $media['alt']);
+        return sprintf('<img src="%s" alt="%s" width="%d" height="%d"%s>', e($absolute ? pb_content_absolute($url) : $url), $alt,
+            $media['width'], $media['height'], $forEditor ? ' data-media="' . (int) $media['id'] . '"' : ' loading="lazy" decoding="async"');
+    }, $html);
 }
 
 // ------------------------------------------------------------------ reading (templates)
@@ -221,7 +304,7 @@ final class PbValue implements Stringable
     public function __toString(): string
     {
         return match ($this->def['type']) {
-            'richtext' => (string) $this->value,
+            'richtext' => pb_richtext_html((string) $this->value),
             'textarea' => nl2br(e((string) $this->value), false),
             'image' => $this->img(),
             'url', 'link', 'email', 'tel' => e($this->url()),
@@ -307,7 +390,8 @@ function pb_field_input(array $def, mixed $value, string $name): string
         'select' => "<select $attrs>" . implode('', array_map(
             fn($key, $label) => '<option value="' . e((string) $key) . '"' . ((string) $key === ($v !== '' ? $v : (string) ($def['default'] ?? '')) ? ' selected' : '') . '>' . e($label) . '</option>',
             array_keys($def['options']), $def['options'])) . '</select>',
-        'richtext' => "<input type=\"hidden\" $attrs value=\"" . e($v) . '"><trix-editor input="' . e($id) . '" class="trix-content" aria-labelledby="' . e($id) . '-label"></trix-editor>',
+        // The panel's editor (core/assets/editor.js) replaces this box; without JavaScript it stays as a box with the text's HTML.
+        'richtext' => "<textarea $attrs rows=\"8\" data-richtext>" . e(pb_richtext_html($v, true)) . '</textarea>',
         'image' => pb_image_input($id, $name, (int) $v),
         'link' => pb_link_input($id, $name, $v),
         default => throw new LogicException("Unknown field type '{$def['type']}'"),

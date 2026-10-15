@@ -72,7 +72,13 @@
     });
 
     const dialog = document.getElementById('pb-media');
-    let picking = null; // the image field waiting for a choice
+    let picking = null; // what is waiting for a choice: an image field, or {callback} from the text editor
+    // The text editor asks for a picture of the library through this: callback({id, thumb, alt}).
+    window.pbPickImage = (callback) => {
+        if (!dialog) return;
+        picking = {callback};
+        dialog.showModal();
+    };
 
     const setImage = (box, id, thumb) => {
         box.querySelector('input[type=hidden]').value = id;
@@ -110,6 +116,7 @@
             const items = list.querySelector(':scope > [data-items]');
             items.insertAdjacentHTML('beforeend', html);
             items.lastElementChild.querySelectorAll('[data-link]').forEach(syncLink);
+            items.lastElementChild.dispatchEvent(new CustomEvent('pb:added', {bubbles: true})); // the text editor mounts on its fields
             items.lastElementChild.querySelector('input, textarea, select')?.focus();
         } else if (button.matches('[data-remove]')) {
             item.remove();
@@ -123,7 +130,8 @@
         } else if (button.matches('[data-clear]')) {
             setImage(button.closest('[data-image]'), '', '');
         } else if (button.matches('[data-media-id]') && picking) {
-            setImage(picking, button.dataset.mediaId, button.dataset.thumb);
+            if (picking.callback) picking.callback({id: button.dataset.mediaId, thumb: button.dataset.thumb, alt: button.dataset.alt || ''});
+            else setImage(picking, button.dataset.mediaId, button.dataset.thumb);
             dialog.close();
         } else if (button.matches('[data-close]')) {
             dialog.close();

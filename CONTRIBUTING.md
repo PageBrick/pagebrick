@@ -62,6 +62,18 @@ The texts in the code are written in Portuguese, and each language file maps the
 - Don't worry about the code that registers a new language: send the files and a maintainer will wire it in, or do it with you in the pull request.
 - To fix a translation that is already there, edit the same files.
 
+## The text editor
+
+The panel's rich text editor is [TipTap](https://tiptap.dev) (on ProseMirror), built into a single file, `core/assets/editor.js`, that is committed like any other asset: running or contributing to PageBrick never needs Node. To change the editor, edit [tools/editor/src/editor.js](tools/editor/src/editor.js) and rebuild:
+
+```bash
+cd tools/editor
+npm install --ignore-scripts
+npm run build
+```
+
+The build also writes `core/assets/editor.LICENSE.txt` with the licences of everything inside the file. Commit both. What the editor may save is decided on the server by `pb_sanitize_html()` in [core/fields.php](core/fields.php), never by the browser.
+
 ## Reporting a security problem
 
 Please **don't open a public issue** for a security problem. Use **Security → Report a vulnerability** on the repository page, so it can be fixed before it is public.
