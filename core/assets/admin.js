@@ -303,6 +303,26 @@
         log.done();
     });
 
+    // Settings, Address and languages: before forcing https:// over plain http, the browser itself tries the https:// address of the site.
+    // A certificate that is not there would lock everybody out, so only a page that opened (any answer: it is a check of the connection) goes on.
+    document.querySelectorAll('form[data-https-check]').forEach((form) => form.addEventListener('submit', async (event) => {
+        if (form.dataset.checked) return;
+        event.preventDefault();
+        const note = form.querySelector('[data-https-note]');
+        note.hidden = false;
+        note.classList.remove('error');
+        note.textContent = form.dataset.checking;
+        try {
+            await fetch(form.dataset.httpsCheck, {mode: 'no-cors', cache: 'no-store'});
+            form.elements.https_ok.value = '1';
+            form.dataset.checked = '1';
+            form.requestSubmit(event.submitter);
+        } catch (error) {
+            note.classList.add('error');
+            note.textContent = form.dataset.failed;
+        }
+    }));
+
     // The rich text editor doesn't take attachments: images go in image fields.
     document.addEventListener('trix-file-accept', (event) => event.preventDefault());
 })();

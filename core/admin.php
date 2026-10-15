@@ -45,6 +45,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/preferences' => ['editor', 'pb_admin_preferences'],
         'GET /admin/general' => ['admin', 'pb_admin_general'],
         'POST /admin/general' => ['admin', 'pb_admin_general_save'],
+        'POST /admin/general/https' => ['admin', 'pb_admin_https'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
         'POST /admin/account' => ['editor', 'pb_admin_account_save'],
         'GET /admin/users' => ['admin', 'pb_admin_users'],
@@ -640,6 +641,17 @@ function pb_admin_general(?string $error = null): void
 {
     pb_render('general', ['title' => __('Endereço e idiomas'), 'error' => $error,
         'old' => $error ? ['site_url' => pb_post('site_url'), 'locale' => pb_post('locale'), 'locales' => (array) ($_POST['locales'] ?? [])] : []]);
+}
+
+/** The button "Force https://" of Settings → Address and languages (see core/https.php). */
+function pb_admin_https(): void
+{
+    try {
+        pb_flash('ok', pb_https_apply(pb_post('action') === 'on', pb_post('https_ok') === '1'));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    pb_redirect('/admin/general');
 }
 
 function pb_admin_general_save(): void

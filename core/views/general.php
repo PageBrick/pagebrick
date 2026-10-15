@@ -38,3 +38,34 @@ $extra = $old['locales'] ?? array_slice(pb_site_locales(), 1);
         <button type="submit"><?= e(__('Salvar')) ?></button>
     </div>
 </form>
+
+<?php
+// Forcing https://: see core/https.php. Over plain http the browser itself first tries the https:// address (a certificate that is not there would lock everybody out).
+$forced = pb_https_forced();
+$secure = pb_is_https();
+$check = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . pb_url('/admin/login');
+?>
+<form method="post" action="<?= e(pb_url('/admin/general/https')) ?>" id="https"<?= !$forced && !$secure ? ' data-https-check="' . e($check) . '" data-checking="' . e(__('Conferindo se o seu navegador abre o https:// deste endereço…')) . '" data-failed="' . e(__('O seu navegador não conseguiu abrir o https:// deste endereço. Provavelmente o certificado SSL ainda não foi instalado, ou vale para outro domínio. Instale o certificado (no cPanel: SSL/TLS Status, Run AutoSSL), espere o cadeado aparecer e tente de novo.')) . '"' : '' ?>>
+    <?= pb_csrf_field() ?>
+    <input type="hidden" name="action" value="<?= $forced ? 'off' : 'on' ?>">
+    <input type="hidden" name="https_ok" value="">
+    <div class="card">
+        <h2><?= e(__('Conexão segura (https)')) ?></h2>
+        <?php if ($forced): ?>
+            <p class="flash ok"><?= e(__('Ligado: quem abrir o site com http:// é levado, sozinho, para o https://.')) ?></p>
+            <button type="submit" class="secondary"><?= e(__('Desligar')) ?></button>
+        <?php else: ?>
+            <p><?= e($secure
+                ? __('Você está acessando por https://, com o cadeado. Falta obrigar: hoje, quem digitar http:// ainda abre a versão sem cadeado.')
+                : __('Você está acessando por http://, sem o cadeado. Se o seu domínio já tem certificado SSL, ligue abaixo.')) ?></p>
+            <p class="help"><?= e(__('Use depois de instalar o certificado SSL do domínio (no cPanel: SSL/TLS Status, Run AutoSSL). O botão acrescenta algumas linhas no começo do arquivo .htaccess; o PageBrick guarda uma cópia do arquivo antes, e você pode desligar aqui quando quiser.')) ?></p>
+            <?php if (!pb_https_writable()): ?>
+                <p class="error" role="alert"><?= e(__('O PageBrick não conseguiu escrever no arquivo .htaccess. Peça à hospedagem para liberar a escrita nele, ou cole as linhas abaixo no começo do arquivo, no gerenciador de arquivos.')) ?></p>
+                <textarea readonly rows="9" aria-label="<?= e(__('Linhas para o arquivo .htaccess')) ?>"><?= e(pb_https_block()) ?></textarea>
+            <?php else: ?>
+                <p class="help" data-https-note role="status" hidden></p>
+                <button type="submit"><?= e(__('Obrigar https://')) ?></button>
+            <?php endif ?>
+        <?php endif ?>
+    </div>
+</form>

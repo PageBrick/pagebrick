@@ -21,6 +21,7 @@ require __DIR__ . '/standard.php';
 require __DIR__ . '/content.php';
 require __DIR__ . '/theme.php';
 require __DIR__ . '/blocks.php';
+require __DIR__ . '/https.php';
 require __DIR__ . '/headless.php';
 require __DIR__ . '/plugins.php';
 require __DIR__ . '/packages.php';
