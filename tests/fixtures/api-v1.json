@@ -594,6 +594,51 @@
             ],
             "returns": "string"
         },
+        "pb_sections": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "PbGroup",
+                    "optional": false
+                },
+                {
+                    "name": "names",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "render",
+                    "type": "callable",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_block": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "PbGroup",
+                    "optional": false
+                },
+                {
+                    "name": "section",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_youtube_id": {
+            "params": [
+                {
+                    "name": "url",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
         "pb_theme_url": {
             "params": [
                 {
@@ -920,6 +965,20 @@
                     }
                 ],
                 "returns": "array"
+            },
+            "piece": {
+                "params": [
+                    {
+                        "name": "section",
+                        "type": "string",
+                        "optional": false
+                    }
+                ],
+                "returns": "?PbGroup"
+            },
+            "type": {
+                "params": [],
+                "returns": "string"
             },
             "visible": {
                 "params": [],

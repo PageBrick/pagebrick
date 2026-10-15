@@ -207,20 +207,54 @@ function pb_page_from_input(array $page, array $in): array
     $page['seo_title'] = pb_limit(trim(is_string($in['seo_title'] ?? null) ? $in['seo_title'] : ''), 200);
     $page['seo_description'] = pb_limit(trim(is_string($in['seo_description'] ?? null) ? $in['seo_description'] : ''), 300);
     // Fields the current theme doesn't know (left by another theme) are kept, so switching back brings them back.
-    $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $in['f'] ?? []) + ($page['data'] ?? []);
-    // The order of the sections, when the theme lets the client choose it (its template names them in 'sections').
-    if ($sections = pb_template_sections($page['template'])) {
-        $page['data']['_order'] = pb_clean_section_order($in['f']['_order'] ?? null, $sections);
-    }
+    $page['data'] = pb_page_collect_data($page['template'], $in['f'] ?? [], $page['data'] ?? []);
     return $page;
 }
 
-/** The sections a template lets the client put in any order (the theme says so with 'sections' in theme.php); [] when it doesn't. */
-function pb_template_sections(string $template): array
+/**
+ * The content of a page from the form's fields ($f), cleaned: the template's fields, the pieces the client added (when the theme allows them)
+ * and the order of all the sections (when the theme lets the client choose it). $old: what the page has that this theme does not know.
+ */
+function pb_page_collect_data(string $template, mixed $f, array $old = []): array
+{
+    $f = is_array($f) ? $f : [];
+    $data = pb_collect_fields(pb_template_fields($template), $f) + $old;
+    if ($allowed = pb_template_blocks($template)) {
+        if ($blocks = pb_collect_blocks($f['_blocks'] ?? [], $allowed)) {
+            $data['_blocks'] = $blocks;
+        } else {
+            unset($data['_blocks']);
+        }
+    }
+    $names = [...pb_template_sections($template), ...array_map(fn($id) => "block-$id", array_keys($allowed ? ($data['_blocks'] ?? []) : []))];
+    if ($names) {
+        // an order is saved only when the client chose one: a page left in the theme's own order stays as it always was (and a draft of it equals the page)
+        $order = pb_clean_section_order($f['_order'] ?? null, $names);
+        $order === $names ? $data = array_diff_key($data, ['_order' => 1]) : $data['_order'] = $order;
+    }
+    return $data;
+}
+
+/**
+ * The sections a template lets the client put in any order (the theme says so with 'sections' in theme.php); [] when it doesn't.
+ * Names with the piece they are the same as ('about' => 'image_text') say that "duplicate" is offered on them.
+ */
+function pb_template_section_types(string $template): array
 {
     $templates = pb_theme()['templates'];
     $sections = ($templates[$template] ?? $templates['page'] ?? [])['sections'] ?? [];
-    return is_array($sections) ? array_values(array_filter($sections, 'is_string')) : [];
+    $types = [];
+    foreach (is_array($sections) ? $sections : [] as $key => $value) {
+        if (is_string($value)) {
+            $types[is_int($key) ? $value : $key] = is_int($key) ? '' : $value;
+        }
+    }
+    return $types;
+}
+
+function pb_template_sections(string $template): array
+{
+    return array_keys(pb_template_section_types($template));
 }
 
 /** The order as the form sent it, cleaned: only the template's sections, none twice, the ones missing at the end in the theme's order. */
@@ -231,20 +265,31 @@ function pb_clean_section_order(mixed $order, array $sections): array
 }
 
 /**
- * What the panel lists to drag: [name => ['label' => ..., 'group' => the field's definition or null]] in the order the page has now.
+ * What the panel lists to drag: [name => ['label' => ..., 'group' => the field's definition or null, 'copy' => the piece it can be copied as or '',
+ * 'piece' => the piece the client added (id, type, data) or null, 'help' => what a row without fields says]] in the order the page has now.
  * A section is a group field of the template; 'plugins' is the place where plugins add their own sections (pb_slot('home')),
- * listed only when a plugin uses it.
+ * listed only when a plugin uses it; 'content' is the template's own fields (the title, the text…), edited at the top of the form;
+ * a "block-…" name is a piece the client added.
  */
 function pb_page_sections(array $page): array
 {
-    $names = pb_template_sections($page['template']);
-    $fields = pb_template_fields($page['template']);
+    $template = $page['template'];
+    $types = pb_template_section_types($template);
+    $fields = pb_template_fields($template);
+    $blocks = pb_page_blocks($page['data'], $template);
+    $names = [...array_keys($types), ...array_map(fn($id) => "block-$id", array_keys($blocks))];
     $sections = [];
     foreach (pb_clean_section_order($page['data']['_order'] ?? null, $names) as $name) {
-        if (($fields[$name]['type'] ?? '') === 'group') {
-            $sections[$name] = ['label' => (string) ($fields[$name]['label'] ?? $name), 'group' => $fields[$name]];
-        } elseif ($name === 'plugins' && pb_hook_callbacks('slot:' . $page['template']) !== []) {
-            $sections[$name] = ['label' => __('Conteúdo de plugins'), 'group' => null];
+        $row = ['label' => '', 'group' => null, 'copy' => $types[$name] ?? '', 'piece' => null, 'help' => ''];
+        if (str_starts_with($name, 'block-')) {
+            $block = $blocks[substr($name, 6)];
+            $sections[$name] = ['label' => pb_block_type($block['_type'])['label'], 'piece' => ['id' => substr($name, 6), 'type' => $block['_type'], 'data' => $block]] + $row;
+        } elseif (($fields[$name]['type'] ?? '') === 'group') {
+            $sections[$name] = ['label' => (string) ($fields[$name]['label'] ?? $name), 'group' => $fields[$name]] + $row;
+        } elseif ($name === 'plugins' && pb_hook_callbacks('slot:' . $template) !== []) {
+            $sections[$name] = ['label' => __('Conteúdo de plugins'), 'help' => __('Aqui entra o que os plugins instalados adicionam à página, como as últimas notícias.')] + $row;
+        } elseif ($name === 'content') {
+            $sections[$name] = ['label' => __('Conteúdo da página'), 'help' => __('O título, o texto e a foto da página, que você edita no começo do formulário.')] + $row;
         }
     }
     return $sections;

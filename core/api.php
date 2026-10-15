@@ -30,7 +30,7 @@ return [
         'pb_template_fields', 'pb_settings', 'pb_menu', 'pb_menu_html', 'pb_slugify', 'pb_validate_page_title', 'pb_slug_reserved',
         'pb_media_find', 'pb_media_url',
         // themes
-        'pb_head', 'pb_footer', 'pb_slot', 'pb_section', 'pb_theme_url', 'pb_render_in_theme', 'pb_render_not_found',
+        'pb_head', 'pb_footer', 'pb_slot', 'pb_section', 'pb_sections', 'pb_block', 'pb_youtube_id', 'pb_theme_url', 'pb_render_in_theme', 'pb_render_not_found',
         'pb_whatsapp_url', 'pb_map_url', 'pb_contrast', 'pb_text_color_on', 'pb_readable_color',
         // plugins
         'pb_add_action', 'pb_add_filter', 'pb_do_action', 'pb_apply_filters', 'pb_add_route', 'pb_add_admin_page',

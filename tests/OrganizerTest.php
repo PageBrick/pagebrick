@@ -61,11 +61,12 @@ final class OrganizerTest extends TestCase
 
     // ------------------------------------------------------------------ the order of the sections
 
-    public function test_the_default_theme_lets_the_client_order_the_home_sections_and_other_pages_have_none(): void
+    public function test_the_default_theme_lets_the_client_order_the_sections_of_its_pages(): void
     {
         $this->assertSame(self::HOME_SECTIONS, pb_template_sections('home'));
-        $this->assertSame([], pb_template_sections('page'));
-        $this->assertSame([], pb_template_sections('a-template-that-does-not-exist'));
+        $this->assertSame(['content'], pb_template_sections('page'), 'a simple page has its own content, and what the client adds around it');
+        $this->assertSame(['content', 'cta'], pb_template_sections('services'));
+        $this->assertSame(['content'], pb_template_sections('a-template-that-does-not-exist'), 'a type the theme lacks is a simple page');
     }
 
     public function test_an_order_is_cleaned_to_the_sections_of_the_template(): void
@@ -83,7 +84,7 @@ final class OrganizerTest extends TestCase
         $this->assertSame(['hero', 'about'], (new PbGroup([], []))->order(['hero', 'about']), 'no order saved: the theme\'s own');
     }
 
-    public function test_the_form_sends_the_order_and_a_template_without_sections_ignores_it(): void
+    public function test_the_form_sends_the_order_and_a_page_left_in_the_themes_order_stores_none(): void
     {
         $home = $this->home();
         $page = pb_page_from_input($home, $this->form($home, ['f' => ['_order' => ['cta', 'hero']]]));
@@ -91,7 +92,9 @@ final class OrganizerTest extends TestCase
 
         $about = $this->page('sobre');
         $page = pb_page_from_input($about, $this->form($about, ['f' => ['_order' => ['body', 'intro']]]));
-        $this->assertArrayNotHasKey('_order', $page['data'], 'a simple page has no sections to order');
+        $this->assertArrayNotHasKey('_order', $page['data'], 'a page left in the order of its theme keeps no order');
+        $page = pb_page_from_input($home, $this->form($home, ['f' => ['_order' => self::HOME_SECTIONS]]));
+        $this->assertArrayNotHasKey('_order', $page['data'], 'and the order of the theme itself is not an order the client chose');
     }
 
     public function test_the_home_page_is_printed_in_the_chosen_order_and_marked_only_for_the_editor(): void
@@ -162,12 +165,12 @@ final class OrganizerTest extends TestCase
             $this->assertStringContainsString($part, $html, $part);
         }
         $this->assertSame(1, substr_count($html, 'data-section="hero"'), 'every section once');
-        $this->assertDoesNotMatchRegularExpression('~<details class="pb-group pb-section"[^>]* open~', $html, 'the rows start closed');
+        $this->assertDoesNotMatchRegularExpression('~<details class="pb-section-box"[^>]* open~', $html, 'the rows start closed');
 
         $_GET = ['id' => (string) $this->page('sobre')['id']];
         $about = $this->admin('GET', '/admin/pages/edit');
         $this->assertStringContainsString('data-studio', $about, 'every page gets the page beside the form');
-        $this->assertStringNotContainsString('data-sections', $about, 'but a page whose theme lists no sections has nothing to drag');
+        $this->assertStringContainsString('data-sections', $about, 'and, in this theme, sections to add and move');
     }
 
     public function test_the_editor_opens_on_the_draft_and_says_so(): void

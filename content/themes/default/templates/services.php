@@ -1,18 +1,11 @@
 <?php
 /**
+ * The services page: its own content (title, introduction, the list), the closing call and the pieces the client added, in the order chosen in the panel.
+ *
  * @var PbGroup $page
  * @var PbValue $title
  */
 ?>
-<header class="page-head">
-    <div class="wrap narrow">
-        <h1><?= $title ?></h1>
-        <?php if (!$page->intro->isEmpty()): ?><p class="lead"><?= $page->intro ?></p><?php endif ?>
-    </div>
-</header>
-<?php if (!$page->items->isEmpty()): ?>
-    <section class="section-tight">
-        <div class="wrap"><?= pb_include(__DIR__ . '/parts/services.php', ['items' => $page->items]) ?></div>
-    </section>
-<?php endif ?>
-<?= pb_include(__DIR__ . '/parts/cta.php', ['cta' => $page->cta]) ?>
+<?= pb_sections($page, ['content', 'cta'], fn($section) => $section === 'cta'
+    ? pb_include(__DIR__ . '/parts/cta.php', ['cta' => $page->cta])
+    : pb_include(__DIR__ . '/parts/services-content.php', ['page' => $page, 'title' => $title])) ?>

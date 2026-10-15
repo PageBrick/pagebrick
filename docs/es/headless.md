@@ -55,6 +55,8 @@ Los campos son los mismos que muestra el panel: el [contenido estándar](temas.m
 
 Los campos de contraseña nunca se incluyen.
 
+**Orden y secciones añadidas.** Cuando el cliente eligió un orden para las secciones de una página, la página también trae `section_order` (los nombres, en ese orden). Las secciones que el cliente añadió en el panel vienen en `blocks`, solo las que están en el sitio, en orden: `{"id": "block-a1b2c3", "type": "cards", "fields": {…}}`. `type` es uno de `text`, `image_text`, `cards`, `faq`, `testimonials`, `cta`, `numbers`, `gallery` o `video`, y `fields` son valores como en la tabla de arriba. Una página sin nada de esto no tiene ninguna de las dos claves.
+
 ## Cómo usarla
 
 - **Rutas:** pide `/api/v1/pages` para armar tus rutas (cada página tiene su `path`) y luego `/api/v1/pages/{slug}` para cada una. La página con `"home": true` va en `/`.

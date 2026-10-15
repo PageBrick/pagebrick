@@ -55,6 +55,8 @@ Os campos são os mesmos que o painel mostra: o [conteúdo padrão](temas.md#con
 
 Campos de senha nunca são incluídos.
 
+**Ordem e seções adicionadas.** Quando o cliente escolheu uma ordem para as seções de uma página, a página também traz `section_order` (os nomes, nessa ordem). As seções que o cliente adicionou no painel vêm em `blocks`, só as que estão no site, em ordem: `{"id": "block-a1b2c3", "type": "cards", "fields": {…}}`. `type` é um entre `text`, `image_text`, `cards`, `faq`, `testimonials`, `cta`, `numbers`, `gallery` ou `video`, e `fields` são valores como na tabela acima. Uma página sem nada disso não tem nenhuma das duas chaves.
+
 ## Como usar
 
 - **Rotas:** busque `/api/v1/pages` para montar as suas rotas (cada página tem o seu `path`) e depois `/api/v1/pages/{slug}` para cada uma. A página com `"home": true` fica em `/`.

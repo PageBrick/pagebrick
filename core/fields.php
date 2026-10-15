@@ -248,7 +248,23 @@ final class PbGroup
     public function order(array $default): array
     {
         $saved = is_array($this->data['_order'] ?? null) ? $this->data['_order'] : [];
-        return array_values(array_unique([...array_intersect($saved, $default), ...$default]));
+        // the pieces the client added ("block-…") are sections too, when the theme draws them (see pb_sections())
+        $all = empty($this->data['_blocks']) ? $default : [...$default, ...array_map(fn($id) => "block-$id", array_keys(pb_page_blocks($this->data, pb_current_template())))];
+        return array_values(array_unique([...array_intersect($saved, $all), ...$all]));
+    }
+
+    /** A piece the client added, by its name in order() ("block-a1b2c3"): its fields, or null when it is gone or of a kind that does not exist. */
+    public function piece(string $section): ?PbGroup
+    {
+        $block = is_array($this->data['_blocks'] ?? null) ? ($this->data['_blocks'][substr($section, 6)] ?? null) : null;
+        $definition = is_array($block) ? pb_block_type((string) ($block['_type'] ?? '')) : null;
+        return $definition ? new PbGroup($definition['fields'], $block) : null;
+    }
+
+    /** The kind of a piece ('text', 'cards'…), as given by piece(). */
+    public function type(): string
+    {
+        return (string) ($this->data['_type'] ?? '');
     }
 
     /** False when the user switched this section off in the panel. */
@@ -419,10 +435,19 @@ function pb_section_grip(string $label): string
 }
 
 /**
- * A section: a collapsible box, optionally with a "show on the site" switch. With $section (its name) it is a row the client can move:
- * a handle, and its place in the order goes with the form (f[_order][]).
+ * The tools of a row of the page's list, beside its box (never inside the <summary>: a button in there is not reachable for everyone): the handle to
+ * move it, and $actions (copy, remove, the "+": pb_row_actions()).
  */
-function pb_group_input(array $def, array $data, string $name, string $section = ''): string
+function pb_row_tools(string $label, string $actions = ''): string
+{
+    return '<div class="pb-row-tools">' . pb_section_grip($label) . $actions . '</div>';
+}
+
+/**
+ * A section: a collapsible box, optionally with a "show on the site" switch. With $section (its name) it is a row the client can move: a handle
+ * beside it, and its place in the order goes with the form (f[_order][]). $actions: more tools for the row (copy, the "+": pb_row_actions()).
+ */
+function pb_group_input(array $def, array $data, string $name, string $section = '', string $actions = ''): string
 {
     $visible = ($data['_visible'] ?? true) !== false;
     $switch = empty($def['toggle']) ? '' : '<label class="switch"><input type="hidden" name="' . e($name) . '[_visible]" value="0">'
@@ -430,13 +455,17 @@ function pb_group_input(array $def, array $data, string $name, string $section =
         . e(__('Mostrar esta seção no site')) . '</label>';
     // a top-level group is known to the page editor by its name, so a click on that part of the page can open it
     $group = preg_match('/^f\[([a-z0-9_]+)\]$/i', $name, $m) ? ' data-group="' . e($m[1]) . '"' : '';
-    return '<details class="pb-group' . ($section !== '' ? ' pb-section' : '') . '"' . $group . ($section !== '' ? ' data-section="' . e($section) . '" data-sort="' . e($section) . '"' : '')
-        . ($section === '' && ($visible || empty($def['toggle'])) ? ' open' : '') . '>' // a section of the page starts closed: a short row to drag, opened to edit
-        . '<summary>' . ($section !== '' ? pb_section_grip((string) ($def['label'] ?? '')) : '') . '<span class="pb-section-name">' . e($def['label'] ?? '') . '</span>'
-        . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>'
-        . ($section !== '' ? '<input type="hidden" name="f[_order][]" value="' . e($section) . '">' : '')
+    $summary = '<summary><span class="pb-section-name">' . e($def['label'] ?? '') . '</span>'
+        . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>';
+    $body = ($section !== '' ? '<input type="hidden" name="f[_order][]" value="' . e($section) . '">' : '')
         . (isset($def['help']) ? '<p class="help">' . e($def['help']) . '</p>' : '')
-        . $switch . pb_field_inputs($def['fields'], $data, $name) . '</details>';
+        . $switch . pb_field_inputs($def['fields'], $data, $name);
+    if ($section === '') {
+        return '<details class="pb-group"' . $group . ($visible || empty($def['toggle']) ? ' open' : '') . '>' . $summary . $body . '</details>';
+    }
+    // a section of the page starts closed: a short row to drag, opened to edit
+    return '<div class="pb-section" data-section="' . e($section) . '" data-sort="' . e($section) . '"' . $group . ' data-tools="' . substr_count($actions, 'class="pb-row-btn') . '">'
+        . pb_row_tools((string) ($def['label'] ?? ''), $actions) . '<details class="pb-section-box">' . $summary . $body . '</details></div>';
 }
 
 function pb_list_input(array $def, mixed $items, string $name): string

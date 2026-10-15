@@ -30,6 +30,7 @@
     let controller = null;
     let lastHtml = '';
     let swaps = 0;
+    let pendingShow = ''; // a section just added: once the page has it, the page scrolls to it
     const toFrame = (message) => active.contentWindow?.postMessage({pb: true, ...message}, '*');
     const waiting = new Map(); // answers the page owes us: type => resolve
     const ask = (message, expect, wait = 600) => new Promise((resolve) => {
@@ -95,6 +96,7 @@
             const response = await fetch(form.dataset.previewUrl, {method: 'POST', body: data, signal: controller.signal});
             await apply(await response.text());
             previewStatus.textContent = '';
+            if (pendingShow && analyse(lastHtml).order.includes(pendingShow)) { toFrame({type: 'show', name: pendingShow}); pendingShow = ''; }
         } catch (error) {
             if (error.name !== 'AbortError') previewStatus.textContent = texts.offline;
         }
@@ -285,11 +287,127 @@
         }
     });
 
+    // ------------------------------------------------------------------ sections the client adds, copies and removes (when the theme lets them)
+    const gallery = form.querySelector('[data-gallery]');
+    const sectionList = form.querySelector('[data-sections]');
+    let openGallery = () => {};
+    if (gallery && sectionList) {
+        const empty = form.querySelector('[data-sections-empty]');
+        const rowOf = (name) => (name ? sectionList.querySelector(`:scope > [data-section="${CSS.escape(name)}"]`) : null);
+        const syncEmpty = () => { if (empty) empty.hidden = items(sectionList).length > 0; };
+        let target = ''; // the section a new one goes before; '' is the end of the list
+        let busy = false;
+
+        // what was just done, and the way back
+        const toast = document.createElement('div');
+        toast.className = 'studio-toast';
+        toast.setAttribute('role', 'status');
+        toast.hidden = true;
+        form.querySelector('.studio-edit').append(toast);
+        let toastTimer;
+        const tell = (text, undo = null, problem = false) => {
+            clearTimeout(toastTimer);
+            toast.replaceChildren(Object.assign(document.createElement('span'), {textContent: text}));
+            toast.classList.toggle('problem', problem);
+            if (undo) {
+                const button = Object.assign(document.createElement('button'), {type: 'button', textContent: texts.undo});
+                button.addEventListener('click', () => { toast.hidden = true; undo(); });
+                toast.append(button);
+            }
+            toast.hidden = false;
+            toastTimer = setTimeout(() => { toast.hidden = true; }, undo ? 9000 : 5000);
+        };
+
+        // the server draws the row (a copy is what the form holds now, so nothing typed is lost) and the form keeps it like any other section
+        const request = async (fields) => {
+            const data = new FormData(form);
+            data.delete('action');
+            Object.entries(fields).forEach(([key, value]) => data.set(key, value));
+            const response = await fetch(gallery.dataset.sectionUrl, {method: 'POST', body: data, headers: {Accept: 'application/json'}});
+            const answer = await response.json().catch(() => null);
+            if (!answer?.ok) throw new Error(answer?.error || texts.offline);
+            return answer;
+        };
+        const put = (html, before) => {
+            const holder = document.createElement('template');
+            holder.innerHTML = html.trim();
+            const row = holder.content.firstElementChild;
+            before ? before.before(row) : sectionList.append(row);
+            row.dispatchEvent(new CustomEvent('pb:added', {bubbles: true})); // the text editor and the links start in the new fields
+            return row;
+        };
+        const added = (row, message) => {
+            syncEmpty();
+            row.scrollIntoView({block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth'});
+            row.querySelector('.field input:not([type=hidden]), .field textarea')?.focus({preventScroll: true});
+            live.textContent = message;
+            tell(message);
+            pendingShow = row.dataset.section;
+            changed();
+        };
+        const run = async (work) => {
+            if (busy) return;
+            busy = true;
+            try { await work(); } catch (error) { tell(error.message, null, true); }
+            busy = false;
+        };
+
+        openGallery = (before = '') => {
+            target = rowOf(before) ? before : '';
+            gallery.showModal();
+            gallery.querySelector('[data-add-piece]')?.focus();
+        };
+        gallery.addEventListener('click', (event) => { if (event.target === gallery) gallery.close(); }); // the dark area around it
+        form.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button) return;
+            const row = button.closest('[data-section]');
+            if (button.matches('[data-open-gallery]')) {
+                openGallery('');
+            } else if (button.matches('[data-insert-before]')) {
+                openGallery(row.dataset.section);
+            } else if (button.matches('[data-gallery-close]')) {
+                gallery.close();
+            } else if (button.matches('[data-add-piece]')) {
+                gallery.close();
+                run(async () => {
+                    const answer = await request({op: 'add', type: button.dataset.addPiece});
+                    added(put(answer.html, rowOf(target)), fill(texts.pieceAdded, answer.label));
+                });
+            } else if (button.matches('[data-duplicate]') && row) {
+                run(async () => {
+                    const answer = await request({op: 'duplicate', section: row.dataset.section});
+                    added(put(answer.html, row.nextElementSibling), fill(texts.pieceCopied, answer.label));
+                });
+            } else if (button.matches('[data-remove-piece]') && row) {
+                const next = row.nextElementSibling;
+                const label = nameOf(row);
+                row.remove();
+                syncEmpty();
+                changed();
+                live.textContent = fill(texts.pieceRemoved, label);
+                tell(fill(texts.pieceRemoved, label), () => {
+                    next?.isConnected ? next.before(row) : sectionList.append(row);
+                    syncEmpty();
+                    changed();
+                    live.textContent = fill(texts.pieceBack, label);
+                });
+            }
+        });
+        // a piece's row shows the title being typed in it, and says when it is switched off
+        form.addEventListener('input', (event) => {
+            if (/^f\[_blocks\]\[[a-z0-9]+\]\[title\]$/.test(event.target.name || '')) event.target.closest('[data-piece]').querySelector('[data-piece-title]').textContent = event.target.value;
+        });
+        form.addEventListener('change', (event) => {
+            if (event.target.matches('[data-visible-switch]')) event.target.closest('[data-piece]').querySelector('[data-hidden-badge]').hidden = event.target.checked;
+        });
+    }
+
     // a group the client opens is the one shown on the page; one the pointer is over is outlined there (sections that move, and the others)
     const groupName = (node) => node.closest?.('details[data-group]')?.dataset.group || node.closest?.('[data-section]')?.dataset.section || '';
     const edit = form.querySelector('.studio-edit');
     edit.addEventListener('toggle', (event) => {
-        const name = event.target.matches?.('details[data-group], [data-section]') ? groupName(event.target) : '';
+        const name = event.target.matches?.('details') ? groupName(event.target) : '';
         if (name && event.target.open) toFrame({type: 'show', name});
     }, true);
     edit.addEventListener('pointerover', (event) => {
@@ -303,7 +421,9 @@
         const message = event.data;
         if (waiting.has(message.type)) { waiting.get(message.type)(message); return; }
         const list = form.querySelector('[data-sections]');
-        if (message.type === 'order' && list) {
+        if (message.type === 'insert') {
+            openGallery(message.before || ''); // the "+" between two sections of the page itself
+        } else if (message.type === 'order' && list) {
             // dragged on the page: it already shows the new order; the list follows
             const byName = Object.fromEntries(items(list).map((item) => [item.dataset.section, item]));
             message.order.filter((name) => byName[name]).forEach((name) => list.append(byName[name]));
@@ -314,7 +434,7 @@
             const item = form.querySelector(`[data-sections] > [data-section="${CSS.escape(message.name)}"], details[data-group="${CSS.escape(message.name)}"]`);
             if (!item) return;
             setView('edit');
-            item.open = true;
+            (item.matches('details') ? item : item.querySelector(':scope > details')).open = true;
             item.scrollIntoView({block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth'});
             item.classList.add('picked');
             setTimeout(() => item.classList.remove('picked'), 1400);

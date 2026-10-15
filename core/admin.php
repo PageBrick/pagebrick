@@ -24,6 +24,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/pages/edit' => ['editor', 'pb_admin_page_save'],
         'POST /admin/pages/preview' => ['editor', 'pb_admin_page_preview'],
         'POST /admin/pages/autosave' => ['editor', 'pb_admin_page_autosave'],
+        'POST /admin/pages/section' => ['editor', 'pb_admin_page_section'],
         'POST /admin/pages/delete' => ['editor', 'pb_admin_page_delete'],
         'POST /admin/pages/home' => ['editor', 'pb_admin_page_home'],
         'POST /admin/pages/translate' => ['editor', 'pb_admin_page_translate'],
@@ -264,6 +265,7 @@ function pb_admin_page_edit(?array $page = null, ?string $error = null): void
         'studio' => true,
         'page' => $page,
         'sections' => $sections,
+        'pieceTypes' => pb_template_blocks($page['template']),
         'fields' => array_diff_key(pb_template_fields($page['template']), $sections), // the sections are listed apart, in the order the page has
         'draftAt' => $page['has_draft'] && !empty($page['draft_at']) ? pb_date($page['draft_at'], true) : '',
         'templateLabel' => pb_theme()['templates'][$page['template']]['label'] ?? $page['template'],
@@ -307,7 +309,7 @@ function pb_admin_page_save(): void
         // Show what the user typed, not what is saved, so nothing is lost.
         $page = array_merge($page, ['title' => pb_post('title'), 'slug' => pb_post('slug'),
             'seo_title' => pb_post('seo_title'), 'seo_description' => pb_post('seo_description'),
-            'data' => pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? []) + ['_order' => (array) ($_POST['f']['_order'] ?? [])]]);
+            'data' => pb_page_collect_data($page['template'], $_POST['f'] ?? [])]);
         pb_admin_page_edit($page, $e->getMessage());
         return;
     }
@@ -334,6 +336,13 @@ function pb_admin_page_autosave(): void
     pb_json(['ok' => true, 'where' => $where, 'hasDraft' => $where === 'draft' && is_array($page['draft'] ?? null), 'at' => pb_locale() === 'en' ? date('g:i A') : date('H:i')]);
 }
 
+/** "Add a section" and "Duplicate this section": answers JSON with the row to put in the list (nothing is saved until the form is). */
+function pb_admin_page_section(): void
+{
+    $answer = pb_piece_response($_POST);
+    pb_json($answer, $answer['ok'] ? 200 : 422);
+}
+
 /** Shows the page with the form's current content, without saving. */
 function pb_admin_page_preview(): void
 {
@@ -345,7 +354,7 @@ function pb_admin_page_preview(): void
     try {
         $page = pb_page_from_input($page, $_POST);
     } catch (InvalidArgumentException) {
-        $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? []);
+        $page['data'] = pb_page_collect_data($page['template'], $_POST['f'] ?? []);
     }
     $_SERVER['REQUEST_URI'] = pb_page_url($page); // the page is the current one in its menu, as on the site
     $GLOBALS['pb_public_request'] = true; // rendered exactly like the site (the theme's copies of plugin templates too)
@@ -363,8 +372,9 @@ function pb_organizer_frame(string $html, array $page): string
     // every group of the page has a name to show; only the sections the theme lets move get the handle
     $labels = array_map(fn($def) => (string) ($def['label'] ?? ''), array_filter(pb_template_fields($page['template']), fn($def) => ($def['type'] ?? '') === 'group'));
     $labels = array_map(fn($s) => $s['label'], $sections) + $labels;
-    $texts = ['drag' => __('Arraste para mudar a posição'), 'edit' => __('Clique para editar')];
-    $script = '<script>window.PB_FRAME = ' . json_encode(['labels' => $labels, 'movable' => array_keys($sections), 'texts' => $texts], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';'
+    $texts = ['drag' => __('Arraste para mudar a posição'), 'edit' => __('Clique para editar'), 'add' => __('Adicionar uma seção aqui')];
+    $script = '<script>window.PB_FRAME = ' . json_encode(['labels' => $labels, 'movable' => array_keys($sections), 'canAdd' => pb_template_blocks($page['template']) !== [], 'texts' => $texts],
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';'
         . (string) file_get_contents(PB_ROOT . '/core/assets/studio-frame.js') . '</script>';
     $at = strripos($html, '</body>');
     return $at === false ? $html . $script : substr($html, 0, $at) . $script . substr($html, $at);
