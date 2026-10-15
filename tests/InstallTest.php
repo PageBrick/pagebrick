@@ -151,4 +151,73 @@ final class InstallTest extends TestCase
         pb_migrate();
         $this->assertSame(array_key_last(pb_migrations()), pb_installed_version());
     }
+
+    /** The folders of a fresh upload, with or without its dotfiles. */
+    private function site(): string
+    {
+        mkdir($this->root . '/content/uploads', 0777, true);
+        mkdir($this->root . '/content/backups', 0777, true);
+        return $this->root;
+    }
+
+    public function test_the_dotfiles_the_installer_makes_are_the_ones_in_the_zip(): void
+    {
+        foreach (pb_dotfile_rules() as $path => $rules) {
+            $this->assertSame(file_get_contents(PB_ROOT . "/$path"), $rules, "$path in the code and in the zip are the same file");
+        }
+    }
+
+    public function test_an_upload_that_left_the_dotfiles_out_gets_them_back(): void
+    {
+        $root = $this->site();
+        $this->assertTrue(pb_install_dotfiles($root));
+        foreach (pb_dotfile_rules() as $path => $rules) {
+            $this->assertSame($rules, file_get_contents("$root/$path"), $path);
+        }
+        pb_rmtree($root . '/content');
+        @unlink($root . '/.htaccess');
+    }
+
+    public function test_an_htaccess_the_host_made_gets_the_rules_on_top_and_keeps_its_own_lines(): void
+    {
+        $root = $this->site();
+        $host = "# php -- BEGIN cPanel-generated handler, do not edit
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php84___lsphp .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+";
+        file_put_contents($root . '/.htaccess', $host);
+        $this->assertTrue(pb_install_dotfiles($root));
+        $this->assertSame(pb_dotfile_rules()['.htaccess'] . "
+" . $host, file_get_contents($root . '/.htaccess'));
+
+        $again = file_get_contents($root . '/.htaccess');
+        $this->assertTrue(pb_install_dotfiles($root));
+        $this->assertSame($again, file_get_contents($root . '/.htaccess'), 'a second time changes nothing');
+        pb_rmtree($root . '/content');
+        @unlink($root . '/.htaccess');
+    }
+
+    public function test_an_htaccess_that_cannot_be_written_is_reported_so_the_screen_can_show_the_lines(): void
+    {
+        $this->assertFalse(pb_install_dotfiles($this->root . '/pasta-que-nao-existe'));
+    }
+
+    public function test_step_two_has_the_help_for_a_missing_htaccess_and_the_last_screen_checks_the_panel_before_opening_it(): void
+    {
+        $step = $this->installer('GET', 2)[1];
+        $this->assertStringContainsString('id="rewrite-help"', $step);
+        $this->assertStringContainsString('Conferir de novo', $step);
+
+        $done = pb_include(PB_ROOT . '/core/views/install-done.php', ['rulesIn' => false]);
+        $this->assertStringContainsString("redirect: 'manual'", $done, 'the check does not use up the welcome message');
+        $this->assertStringContainsString('RewriteRule ^ index.php [L]', $done, 'the lines are on the screen, ready to paste');
+        $this->assertStringContainsString('não conseguiu criar o arquivo .htaccess', $done);
+        $this->assertStringContainsString('sem apagar o que já estiver lá', $done, 'a file the host made is kept, the lines go on top');
+
+        $ignored = pb_include(PB_ROOT . '/core/views/install-done.php', ['rulesIn' => true]);
+        $this->assertStringContainsString('AllowOverride All', $ignored, 'a file that is there but not used is for the host to fix');
+        $this->assertStringNotContainsString('<textarea', $ignored);
+    }
 }
