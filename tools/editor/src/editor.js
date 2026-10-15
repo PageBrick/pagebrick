@@ -142,7 +142,10 @@ function mount(textarea) {
                 return false;
             },
         },
-        onUpdate: ({editor}) => { textarea.value = editor.isEmpty ? '' : editor.getHTML(); },
+        onUpdate: ({editor}) => {
+            textarea.value = editor.isEmpty ? '' : editor.getHTML();
+            textarea.dispatchEvent(new Event('input', {bubbles: true})); // a form that watches its fields (the page editor) hears it
+        },
         onTransaction: () => ui.refresh?.(),
         onSelectionUpdate: () => { ui.slash?.update(); ui.bubble?.update(); },
         onFocus: () => ui.bubble?.update(),

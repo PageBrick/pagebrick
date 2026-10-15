@@ -199,6 +199,33 @@ Pictures come only from the media library: PageBrick writes the `<img>` itself (
 
 The complete list of what themes and plugins may rely on is [core/api.php](../../core/api.php). Anything else, even if it starts with `pb_`, is internal and may change.
 
+## Letting the client reorder the sections
+
+In the page editor the client sees the page beside the form, changes it, drags sections to a new place (in the list or on the page itself) and only then clicks **Publish**; until then visitors keep seeing the published version. The ordering is up to your theme, in two steps, and a theme that does nothing keeps its own fixed order (nothing breaks):
+
+1. List the sections in `theme.php`, under the template's `'sections'`. Each one is the name of a `group` field of that template (the standard `hero`, `about`… of the home page, or your own groups), or `'plugins'`, the place where plugins add their sections with `pb_slot('home')`.
+2. Print them in the client's order in the template: `$page->order($names)` gives your names in that order (the ones the client has not placed yet come last), and `pb_section($name, $html)` returns your HTML exactly as it is for visitors, only marking the section while the client edits so it can be picked and dragged on the page.
+
+```php
+// theme.php: the sections of the home page the client may put in any order
+return [
+    'templates' => [
+        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+    ],
+];
+```
+
+```php
+<?php // templates/home.php
+foreach ($page->order(['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']) as $section) {
+    echo pb_section($section, pb_include(__DIR__ . "/parts/home-$section.php", ['page' => $page, 'title' => $title]));
+}
+```
+
+Fields that are not listed (a hero that always stays on top, say) are printed wherever you print them. The content API adds `section_order` to a page only when the client chose an order. While the client edits, the page in the preview has class `pb-editing` on `<html>`: use it to switch off what waits for a scroll to show itself (fade-ins, entrance animations), because sections are replaced there while they are being looked at.
+
+For a theme that must also run on a PageBrick older than 1.3, check `method_exists($page, 'order')` and `function_exists('pb_section')` first.
+
 ## Replacing a plugin's templates
 
 Plugins render their public pages inside your layout. When their markup isn't what you want, copy the file into your theme, under `plugins/{plugin}/` with the same path, and change it:

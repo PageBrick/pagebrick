@@ -240,6 +240,17 @@ final class PbGroup
     {
     }
 
+    /**
+     * The sections of the page in the order the client chose in the panel. $default is the theme's own order (the section names,
+     * as they are listed in 'sections' of theme.php): names the client has not placed yet come last, in that order.
+     * @return string[]
+     */
+    public function order(array $default): array
+    {
+        $saved = is_array($this->data['_order'] ?? null) ? $this->data['_order'] : [];
+        return array_values(array_unique([...array_intersect($saved, $default), ...$default]));
+    }
+
     /** False when the user switched this section off in the panel. */
     public function visible(): bool
     {
@@ -400,15 +411,30 @@ function pb_field_input(array $def, mixed $value, string $name): string
         . $input . (isset($def['help']) ? '<p class="help">' . e($def['help']) . '</p>' : '') . '</div>';
 }
 
-/** A section: a collapsible box, optionally with a "show on the site" switch. */
-function pb_group_input(array $def, array $data, string $name): string
+/** The handle of a section of the page: drag it, or focus it and use the arrow keys (core/assets/studio.js). */
+function pb_section_grip(string $label): string
+{
+    return '<button type="button" class="pb-grip" data-grip aria-label="' . e(sprintf(__('Mover a seção "%s"'), $label)) . '" title="'
+        . e(__('Arraste para mudar a posição. Com o teclado: setas para cima e para baixo.')) . '">' . pb_admin_icon('grip-vertical') . '</button>';
+}
+
+/**
+ * A section: a collapsible box, optionally with a "show on the site" switch. With $section (its name) it is a row the client can move:
+ * a handle, and its place in the order goes with the form (f[_order][]).
+ */
+function pb_group_input(array $def, array $data, string $name, string $section = ''): string
 {
     $visible = ($data['_visible'] ?? true) !== false;
     $switch = empty($def['toggle']) ? '' : '<label class="switch"><input type="hidden" name="' . e($name) . '[_visible]" value="0">'
         . '<input type="checkbox" name="' . e($name) . '[_visible]" value="1"' . ($visible ? ' checked' : '') . '> '
         . e(__('Mostrar esta seção no site')) . '</label>';
-    return '<details class="pb-group"' . ($visible || empty($def['toggle']) ? ' open' : '') . '>'
-        . '<summary>' . e($def['label'] ?? '') . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>'
+    // a top-level group is known to the page editor by its name, so a click on that part of the page can open it
+    $group = preg_match('/^f\[([a-z0-9_]+)\]$/i', $name, $m) ? ' data-group="' . e($m[1]) . '"' : '';
+    return '<details class="pb-group' . ($section !== '' ? ' pb-section' : '') . '"' . $group . ($section !== '' ? ' data-section="' . e($section) . '" data-sort="' . e($section) . '"' : '')
+        . ($section === '' && ($visible || empty($def['toggle'])) ? ' open' : '') . '>' // a section of the page starts closed: a short row to drag, opened to edit
+        . '<summary>' . ($section !== '' ? pb_section_grip((string) ($def['label'] ?? '')) : '') . '<span class="pb-section-name">' . e($def['label'] ?? '') . '</span>'
+        . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>'
+        . ($section !== '' ? '<input type="hidden" name="f[_order][]" value="' . e($section) . '">' : '')
         . (isset($def['help']) ? '<p class="help">' . e($def['help']) . '</p>' : '')
         . $switch . pb_field_inputs($def['fields'], $data, $name) . '</details>';
 }

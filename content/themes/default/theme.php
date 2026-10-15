@@ -10,4 +10,10 @@
 //   'settings' => ['extras' => ['type' => 'group', 'label' => 'Opções do tema', 'fields' => [...]]],
 // Content in extra fields stays saved if the site switches to another theme and comes back.
 
-return [];
+return [
+    'templates' => [
+        // The sections of the home page the client can put in any order (their fields are the standard ones; templates/home.php prints them
+        // with $page->order() and pb_section()). 'plugins' is where plugins add theirs. A theme that doesn't list 'sections' keeps its own order.
+        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+    ],
+];

@@ -30,6 +30,16 @@ final class PanelLayoutTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('~\.editor \{ grid-template-columns: 1fr; \}~', $this->css);
     }
 
+    public function test_the_thin_scrollbar_is_a_two_pixel_line_without_arrows(): void
+    {
+        $this->assertMatchesRegularExpression('~\.thin-scroll \*::-webkit-scrollbar \{ width: 2px; height: 2px; \}~', $this->css, 'a line of 2px, also inside what scrolls inside');
+        $this->assertMatchesRegularExpression('~\.thin-scroll \*::-webkit-scrollbar-button \{ display: none;~', $this->css, 'no arrow at either end');
+        $this->assertStringContainsString('scrollbar-width: thin', $this->css, 'and Firefox gets its thinnest bar in the same colours');
+        $frame = (string) file_get_contents(PB_ROOT . '/core/assets/studio-frame.js');
+        $this->assertStringContainsString('width: 2px !important', $frame, 'the page beside the form has it too, whatever its theme does');
+        $this->assertStringContainsString('.scroll-line { display: none !important; }', $frame);
+    }
+
     public function test_the_rich_text_toolbar_wraps_instead_of_widening_the_page(): void
     {
         $editor = (string) file_get_contents(PB_ROOT . '/core/assets/editor.css');

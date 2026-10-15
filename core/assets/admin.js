@@ -81,7 +81,9 @@
     };
 
     const setImage = (box, id, thumb) => {
-        box.querySelector('input[type=hidden]').value = id;
+        const field = box.querySelector('input[type=hidden]');
+        field.value = id;
+        field.dispatchEvent(new Event('input', {bubbles: true})); // the page editor refreshes its preview and saves its draft
         const preview = box.querySelector('[data-preview]');
         preview.replaceChildren();
         if (thumb) {
@@ -117,13 +119,18 @@
             items.insertAdjacentHTML('beforeend', html);
             items.lastElementChild.querySelectorAll('[data-link]').forEach(syncLink);
             items.lastElementChild.dispatchEvent(new CustomEvent('pb:added', {bubbles: true})); // the text editor mounts on its fields
+            items.dispatchEvent(new Event('input', {bubbles: true}));
             items.lastElementChild.querySelector('input, textarea, select')?.focus();
         } else if (button.matches('[data-remove]')) {
+            const items = item.parentElement;
             item.remove();
+            items.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-up]') && item.previousElementSibling) {
             item.previousElementSibling.before(item);
+            item.parentElement.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-down]') && item.nextElementSibling) {
             item.nextElementSibling.after(item);
+            item.parentElement.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-pick]') && dialog) {
             picking = button.closest('[data-image]');
             dialog.showModal();
@@ -170,7 +177,7 @@
     });
 
     document.addEventListener('submit', (event) => {
-        const message = event.target.dataset.confirm;
+        const message = event.submitter?.dataset.confirm ?? event.target.dataset.confirm;
         if (message && !confirm(message)) event.preventDefault();
     });
 

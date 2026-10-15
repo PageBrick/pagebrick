@@ -10,6 +10,7 @@
     --pop: 0 14px 34px -10px rgb(23 25 35 / .22), 0 2px 6px rgb(23 25 35 / .06);
     --ring: 0 0 0 3px rgb(210 78 43 / .28);
     --header-h: 3.5rem; --rail-w: 3.5rem; --side-w: 15rem;
+    --scroll-thumb: var(--brick); --scroll-track: rgb(128 128 128 / .18); /* the thin scrollbar below */
     --mark: url(mark.svg); --logo: url(logo.svg);
     color-scheme: light;
 }
@@ -37,6 +38,17 @@
     }
 }
 * { box-sizing: border-box; }
+/* The thin scrollbar of the design system: a line of 2px (the brick colour over a faint track), no arrows at the ends. It is the website's reading line
+   as a real scrollbar. Put class "thin-scroll" on what scrolls: it, and whatever scrolls inside it (a big text box), get the line. Firefox cannot go
+   below its "thin" bar, so it gets that, in the same colours. */
+@supports selector(::-webkit-scrollbar) {
+    .thin-scroll::-webkit-scrollbar, .thin-scroll *::-webkit-scrollbar { width: 2px; height: 2px; }
+    .thin-scroll::-webkit-scrollbar-button, .thin-scroll *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    .thin-scroll::-webkit-scrollbar-track, .thin-scroll *::-webkit-scrollbar-track { background: var(--scroll-track); }
+    .thin-scroll::-webkit-scrollbar-thumb, .thin-scroll *::-webkit-scrollbar-thumb { border-radius: 2px; background: var(--scroll-thumb); }
+    .thin-scroll::-webkit-scrollbar-corner, .thin-scroll *::-webkit-scrollbar-corner { background: transparent; }
+}
+@supports not selector(::-webkit-scrollbar) { .thin-scroll, .thin-scroll * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); } }
 html { scroll-padding-top: calc(var(--header-h) + 1rem); }
 body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 a { color: var(--accent); }
