@@ -9,7 +9,7 @@
 <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4" alt="PHP 8.2+">
 </p>
 
-<p align="center"><img src="docs/media/editing.gif" alt="Trocando o título de uma página no painel do PageBrick, salvando e vendo no site" width="860"></p>
+<p align="center"><img src="docs/media/editing.gif" alt="Editando a página inicial no painel do PageBrick: a página muda ao lado do formulário enquanto o título é digitado, uma seção é arrastada para outro lugar e Publicar coloca tudo no site" width="860"></p>
 
 Um CMS simples e de código aberto para qualquer tipo de site: uma página pessoal, um projeto, um clube, uma loja ou uma empresa. Qualquer pessoa instala, sem conhecimento técnico, e publica o site com um layout pronto; quem desenvolve cria os próprios temas sobre uma estrutura organizada, com liberdade total no front-end e a garantia de que as atualizações não vão quebrar os sites entregues.
 
