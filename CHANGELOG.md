@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.3.0
+
+- **A new text editor in the panel**, replacing the old one. It has a toolbar, a floating menu over the selected text and a "/" menu (type `/` at the start of a line to insert a heading, list, quote, divider, picture or table). New in it: **tables** (with a header row and tools to add and remove rows and columns), **dividers**, underline, strikethrough and **pictures from the media library**, which it asks you to describe for people who cannot see them. It works with the keyboard, on a phone and in light or dark. Text written with the old editor opens as it was and stays exactly as saved until someone edits it.
+- **HTML changes.** Rich text can now contain `table`, `thead`, `tbody`, `tr`, `th`, `td`, `hr`, `s` and `img`. A list item or table cell with a single paragraph holds just its text, without the `<p>`. A picture's `<img>` is written by PageBrick from the media library (`alt`, `width`, `height`, lazy loading) and follows the site if it moves. Text that uses none of this is printed exactly as before. A theme should style tables and pictures inside its text ([how](docs/en/themes.md#rich-text-style-what-your-client-can-write)); the default theme already does.
+- The content API gives the pictures inside rich text full addresses, so they work on another domain.
+- For developers: the editor is TipTap on ProseMirror (MIT), built from [tools/editor](tools/editor) into one file (`core/assets/editor.js`); nobody needs Node to run a site.
+
 ## 1.2.3
 
 - The front page of the repository now shows badges, a short film of the panel, the five pillars behind the update promise and a guide for contributors ([CONTRIBUTING.md](CONTRIBUTING.md)). Only texts and pictures changed; nothing in a site changes.

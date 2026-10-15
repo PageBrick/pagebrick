@@ -120,6 +120,11 @@ p { margin: 0 0 1em; }
 .prose h3 { margin-top: 1.5em; }
 .prose ul, .prose ol { padding-left: 1.25rem; }
 .prose blockquote { margin: 1.5em 0; padding-left: 1.25rem; border-left: 3px solid var(--brand); }
+.prose img { margin-block: 1.5em; border-radius: var(--radius); }
+.prose hr { margin-block: 2em; border: 0; border-top: 1px solid var(--rule); }
+.prose table { display: block; width: 100%; margin-block: 1.5em; overflow-x: auto; border-collapse: collapse; } /* a wide table scrolls inside the text instead of widening the page */
+.prose th, .prose td { padding: .6rem .85rem; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+.prose th { background: var(--tint); font-weight: 700; }
 
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 5rem); align-items: start; }
 @media (max-width: 800px) { .contact-grid { grid-template-columns: 1fr; } }

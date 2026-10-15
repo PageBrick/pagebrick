@@ -47,7 +47,7 @@ Los campos son los mismos que muestra el panel: el [contenido estándar](temas.m
 | Tipo de campo | En JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | el texto tal como se escribió (un `select` da la clave de la opción) |
-| `richtext` | HTML, ya limpio desde que se guardó |
+| `richtext` | HTML, ya limpio desde que se guardó; las imágenes llevan la dirección completa |
 | `image` | `{url, thumb, alt, width, height}` con direcciones completas, o `null` |
 | `link` | una página del sitio como ruta (`"/nosotros"`, `"/"` para la página de inicio); cualquier otro enlace tal como se escribió (`"https://…"`) |
 | `list` | un array de objetos |

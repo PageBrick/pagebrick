@@ -20,16 +20,22 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
     ? "root.hasAttribute('data-theme-saved') ? localStorage.setItem('pb-theme', root.dataset.theme) : localStorage.removeItem('pb-theme');"
     : "const t = localStorage.getItem('pb-theme'); if (t === 'light' || t === 'dark') root.dataset.theme = t;" ?> } catch (e) {} })();</script>
 <?php if (!empty($editor)): ?>
-<link rel="stylesheet" href="<?= e($asset('trix.css')) ?>">
-<script src="<?= e($asset('trix.js')) ?>"></script>
-<?php if (pb_locale() !== 'en'): // the editor's buttons come in English ?>
-<script>Object.assign(Trix.config.lang, <?= json_encode([
-    'bold' => __('Negrito'), 'italic' => __('Itálico'), 'strike' => __('Riscado'), 'link' => __('Link'), 'unlink' => __('Tirar link'),
-    'heading1' => __('Título'), 'quote' => __('Citação'), 'code' => __('Código'), 'bullets' => __('Lista'), 'numbers' => __('Lista numerada'),
-    'outdent' => __('Diminuir recuo'), 'indent' => __('Aumentar recuo'), 'undo' => __('Desfazer'), 'redo' => __('Refazer'),
-    'urlPlaceholder' => __('Digite um endereço…'), 'remove' => __('Remover'), 'attachFiles' => __('Anexar arquivos'), 'captionPlaceholder' => __('Legenda…'),
-], JSON_UNESCAPED_UNICODE) ?>);</script>
-<?php endif ?>
+<link rel="stylesheet" href="<?= e($asset('editor.css')) ?>">
+<script>window.PbEditorTexts = <?= json_encode([
+    'undo' => __('Desfazer'), 'redo' => __('Refazer'), 'h2' => __('Título'), 'h3' => __('Subtítulo'),
+    'bold' => __('Negrito'), 'italic' => __('Itálico'), 'underline' => __('Sublinhado'), 'strike' => __('Riscado'),
+    'bullets' => __('Lista'), 'numbers' => __('Lista numerada'), 'quote' => __('Citação'),
+    'link' => __('Link'), 'unlink' => __('Tirar link'), 'image' => __('Imagem'), 'table' => __('Tabela'), 'rule' => __('Divisor'),
+    'toolbar' => __('Barra de formatação'), 'insert' => __('Inserir'),
+    'leave' => __('Esc sai do texto e vai para o próximo campo.'),
+    'linkUrl' => __('Endereço do link'), 'linkBad' => __('Digite um endereço válido: https://…, e-mail ou telefone.'),
+    'apply' => __('Aplicar'), 'cancel' => __('Cancelar'), 'imageAlt' => __('Descreva a imagem'), 'imageRemove' => __('Tirar imagem'),
+    'tableTools' => __('Ferramentas da tabela'), 'rowAbove' => __('Linha acima'), 'rowBelow' => __('Linha abaixo'), 'rowDelete' => __('Excluir linha'),
+    'colLeft' => __('Coluna à esquerda'), 'colRight' => __('Coluna à direita'), 'colDelete' => __('Excluir coluna'),
+    'headerRow' => __('Linha de cabeçalho'), 'tableDelete' => __('Excluir tabela'),
+    'placeholder' => __('Escreva aqui. Digite / para inserir título, lista, imagem ou tabela.'),
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;</script>
+<script src="<?= e($asset('editor.js')) ?>" defer></script>
 <?php endif ?>
 <link rel="stylesheet" href="<?= e($asset('admin.css')) ?>">
 <script src="<?= e($asset('admin.js')) ?>" defer></script>
@@ -182,7 +188,7 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
     <p class="muted" data-status role="status"></p>
     <div class="media-grid" data-grid>
         <?php foreach (pb_media_list(true) as $m): ?>
-            <button type="button" data-media-id="<?= (int) $m['id'] ?>" data-thumb="<?= e(pb_media_url($m, 'thumb')) ?>">
+            <button type="button" data-media-id="<?= (int) $m['id'] ?>" data-thumb="<?= e(pb_media_url($m, 'thumb')) ?>" data-alt="<?= e($m['alt']) ?>">
                 <img src="<?= e(pb_media_url($m, 'thumb')) ?>" alt="<?= e($m['alt'] ?: $m['original_name']) ?>" loading="lazy">
             </button>
         <?php endforeach ?>

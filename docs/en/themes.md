@@ -106,7 +106,7 @@ You can add fields, page types, settings and menus; you can't remove or change t
 
 The settings you add show under **Contact**, the screen anyone who edits the site can open. A group about the look (colors, typography) can ask for **Settings → Appearance**, which only administrators open, with `'screen' => 'appearance'`.
 
-**Field types:** `text`, `textarea`, `richtext` (a small editor; HTML cleaned when saved), `image`, `url`, `email`, `tel`, `color`, `select` (with `'options' => ['value' => 'Label']`), `link` (a page of the site or any address), `list` (repeatable items, with `fields`), `group` (with `fields`; `'toggle' => true` lets the client hide it). Every field takes `label`, `help` and `default`.
+**Field types:** `text`, `textarea`, `richtext` (a text editor: headings, bold, italic, lists, quotes, links, tables, dividers and pictures from the media library; the HTML is cleaned when saved), `image`, `url`, `email`, `tel`, `color`, `select` (with `'options' => ['value' => 'Label']`), `link` (a page of the site or any address), `list` (repeatable items, with `fields`), `group` (with `fields`; `'toggle' => true` lets the client hide it). Every field takes `label`, `help` and `default`.
 
 Need helper functions? Put them in a file and `require_once __DIR__ . '/functions.php';` at the top of `theme.php`.
 
@@ -168,6 +168,18 @@ Printing a field with `<?= ?>` is always safe: text is escaped, rich text was cl
 | a list: `foreach`, `count()`, `->isEmpty()` | its items, each one a group |
 
 With `'debug' => true` in `config.php`, reading a field that doesn't exist raises a warning, so typos show up while you develop.
+
+### Rich text: style what your client can write
+
+A `richtext` field can hold paragraphs, `h2`/`h3`, `strong`, `em`, `u`, `s`, `a`, lists, `blockquote`, `hr`, `table` (with `thead`/`tbody`, `tr`, `th`, `td`) and `img`. The core adds no CSS, so print it inside a container of yours and style these elements there, tables and pictures included:
+
+```css
+.prose img { max-width: 100%; height: auto; }
+.prose table { display: block; overflow-x: auto; border-collapse: collapse; } /* a wide table scrolls inside the text */
+.prose th, .prose td { padding: .5rem .75rem; border: 1px solid #ddd; }
+```
+
+Pictures come only from the media library: PageBrick writes the `<img>` itself (with `alt`, `width`, `height` and lazy loading), so it keeps working if the site moves. Text written before PageBrick 1.3 (with `div` and `br`) is shown exactly as it was saved.
 
 ### Helpers
 
