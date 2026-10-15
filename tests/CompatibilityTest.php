@@ -267,6 +267,73 @@ final class CompatibilityTest extends TestCase
         $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"));
     }
 
+    /** The release as the build makes it: the default theme goes inside core/ too (core/default-theme), a little different from the one this site has. */
+    private function releaseWithNewDefaultTheme(): void
+    {
+        pb_test_copy_dir(PB_ROOT . '/content/themes/default', "$this->dir/site/core/default-theme");
+        file_put_contents("$this->dir/site/core/default-theme/novo.txt", 'só no tema novo');
+        file_put_contents("$this->dir/themes/default/meu.txt", 'só no tema velho');
+    }
+
+    private function backupHas(string $prefix, string $file): bool
+    {
+        $zip = new ZipArchive();
+        $zip->open(pb_backups($prefix)[0]['file']);
+        $found = $zip->locateName("default/$file") !== false;
+        $zip->close();
+        return $found;
+    }
+
+    public function test_an_update_renews_the_default_theme_and_keeps_the_old_one_in_the_backups(): void
+    {
+        $this->pretendUpdated();
+        $this->releaseWithNewDefaultTheme();
+
+        $this->assertNull($this->firstRequestAfterUpdate());
+        $this->assertFileExists("$this->dir/themes/default/novo.txt", 'the new default theme is in place');
+        $this->assertFileDoesNotExist("$this->dir/themes/default/meu.txt");
+        $this->assertTrue($this->backupHas('theme_default_', 'meu.txt'), 'what it replaced is in the backups');
+        $this->assertNull(pb_renew_default_theme(), 'the same theme again: nothing to do, and no new backup');
+        $this->assertCount(1, pb_backups('theme_default_'));
+    }
+
+    public function test_an_update_with_no_default_theme_inside_leaves_the_one_the_site_has(): void
+    {
+        $this->pretendUpdated();
+        file_put_contents("$this->dir/themes/default/meu.txt", 'meu');
+
+        $this->assertNull($this->firstRequestAfterUpdate());
+        $this->assertFileExists("$this->dir/themes/default/meu.txt");
+        $this->assertSame([], pb_backups('theme_default_'));
+    }
+
+    public function test_going_back_to_the_previous_version_puts_its_default_theme_back_too(): void
+    {
+        $this->pretendUpdated();
+        $this->releaseWithNewDefaultTheme();
+        $this->assertNull($this->firstRequestAfterUpdate());
+
+        pb_restore_core("$this->dir/site");
+        $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"));
+        $this->assertFileExists("$this->dir/themes/default/meu.txt", 'the theme that went with the previous version');
+        $this->assertFileDoesNotExist("$this->dir/themes/default/novo.txt");
+        $this->assertSame('null', pb_option('default_theme_renewed', 'null'));
+    }
+
+    public function test_an_update_that_is_undone_by_the_check_takes_the_old_default_theme_back(): void
+    {
+        pb_activate_plugin('breaks-pages');
+        $this->pretendUpdated();
+        $this->releaseWithNewDefaultTheme();
+        $GLOBALS['break_pages'] = true;
+
+        $this->assertStringContainsString('incompatível com a versão nova', $this->firstRequestAfterUpdate());
+        $this->assertSame('1.0.0', file_get_contents("$this->dir/site/core/versao.txt"));
+        $this->assertFileExists("$this->dir/themes/default/meu.txt");
+        $this->assertFileDoesNotExist("$this->dir/themes/default/novo.txt");
+        $this->assertSame('null', pb_option('default_theme_renewed', 'null'));
+    }
+
     // ---------------------------------------------------------------- 5. the safety net in index.php
 
     public function test_index_php_restores_the_backup_when_the_new_version_cannot_start(): void

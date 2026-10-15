@@ -25,7 +25,7 @@ Clicking **Update** must never break a site someone built. Every promise below i
 | 2 | **A frozen site** | A real site built on 1.0 must deliver the same HTML, byte for byte, on every new release. |
 | 3 | **Checked before** | If an active plugin or the theme isn't ready for the new version, the panel says which one and waits. |
 | 4 | **Checked after** | The first visit after an update renders every page. If one fails, the previous version comes back on its own. |
-| 5 | **Your files untouched** | Updates replace the core only. Themes, plugins, photos and settings stay exactly as they are. |
+| 5 | **Your files untouched** | Updates replace the core and PageBrick's own default theme. Your themes, plugins, photos and settings stay exactly as they are. |
 
 ## What it does
 

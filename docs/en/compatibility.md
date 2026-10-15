@@ -11,7 +11,7 @@ Within one API version (`"api": 1` in `theme.json` / `plugin.json`):
 1. **Nothing in the public API is removed or changed.** The public API is the list in [core/api.php](../../core/api.php): functions, the field classes (`PbGroup`, `PbList`, `PbValue`), constants and hooks. No function disappears, no parameter is renamed, reordered or made required, no return type changes, no hook stops being fired. New things may be added.
 2. **The standard content stays.** The page types, fields, settings and menus of [core/standard.php](../../core/standard.php) are part of the API: none is removed or changes type.
 3. **The HTML your site delivers doesn't change.** What the core prints for you (`pb_head()`, menus, images, rich text, escaping) stays byte for byte the same, and so do the answers of the content API (`/api/v1/`).
-4. **Your files are never touched.** An update replaces only `core/`, `vendor/` and `index.php`. Everything under `content/` (themes, plugins, uploads), `config.php` and `.htaccess` stay as they are.
+4. **Your files are never touched.** An update replaces `core/`, `vendor/`, `index.php` and PageBrick's own default theme (`content/themes/default/`: it is what a site falls back to, so it travels with the core; the old folder is kept in the backups, and going back to the previous version puts it back). Everything else under `content/` (your themes, plugins, uploads), `config.php` and `.htaccess` stay as they are. To change the default theme, copy it under another name.
 5. **The database only grows.** Migrations add tables and columns; they never drop or rename what an older version used.
 
 Anything not listed in `core/api.php`, even a function starting with `pb_`, is internal and may change. The panel's look and wording may change too.

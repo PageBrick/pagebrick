@@ -36,7 +36,7 @@ content/themes/my-theme/
 └── screenshot.webp     opcional: imagem mostrada na tela de Temas (800×500)
 ```
 
-O jeito mais rápido de começar é copiar `content/themes/default/` e mudar o nome no `theme.json`:
+O jeito mais rápido de começar é copiar `content/themes/default/` com outro nome e mudar o nome no `theme.json`. Não edite o tema padrão no lugar: ele é do próprio PageBrick (o site volta para ele quando o seu tema quebra), então uma atualização o renova (a pasta antiga fica guardada nos backups):
 
 ```json
 {
