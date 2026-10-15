@@ -94,11 +94,12 @@
             data.delete('action');
             data.set('organizer', '1');
             const response = await fetch(form.dataset.previewUrl, {method: 'POST', body: data, signal: controller.signal});
+            if (!response.ok) throw Object.assign(new Error('refused'), {status: response.status}); // the answer is an error page, not the site: keep the page that is showing
             await apply(await response.text());
             previewStatus.textContent = '';
             if (pendingShow && analyse(lastHtml).order.includes(pendingShow)) { toFrame({type: 'show', name: pendingShow}); pendingShow = ''; }
         } catch (error) {
-            if (error.name !== 'AbortError') previewStatus.textContent = texts.offline;
+            if (error.name !== 'AbortError') previewStatus.textContent = error.status ? fill(texts.refused, error.status) : texts.offline;
         }
         clearTimeout(slow);
         refreshing = false;
@@ -127,6 +128,7 @@
             data.delete('action');
             if (explicit === true) data.set('explicit', '1'); // the button, not the timer: a page never published keeps a version in its history
             const response = await fetch(form.dataset.autosaveUrl, {method: 'POST', body: data, headers: {Accept: 'application/json'}});
+            if (!response.ok) throw Object.assign(new Error('refused'), {status: response.status});
             const answer = await response.json();
             if (answer.ok) {
                 dirty = false;
@@ -136,7 +138,7 @@
                 say(fill(answer.error ? texts.failed : texts.offline, answer.error || ''), true);
             }
         } catch (error) {
-            say(texts.offline, true);
+            say(error.status ? fill(texts.refused, error.status) : texts.offline, true);
         }
         saving = false;
         if (saveAgain) { saveAgain = false; autosave(); }
@@ -325,7 +327,7 @@
             Object.entries(fields).forEach(([key, value]) => data.set(key, value));
             const response = await fetch(gallery.dataset.sectionUrl, {method: 'POST', body: data, headers: {Accept: 'application/json'}});
             const answer = await response.json().catch(() => null);
-            if (!answer?.ok) throw new Error(answer?.error || texts.offline);
+            if (!answer?.ok) throw new Error(answer?.error || (response.status >= 400 ? fill(texts.refused, response.status) : texts.offline));
             return answer;
         };
         const put = (html, before) => {

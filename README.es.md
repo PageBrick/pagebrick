@@ -25,7 +25,7 @@ Hacer clic en **Actualizar** nunca debe romper un sitio que alguien construyó. 
 | 2 | **Un sitio congelado** | Un sitio real hecho con la 1.0 debe entregar el mismo HTML, byte por byte, en cada versión nueva. |
 | 3 | **Revisado antes** | Si un plugin activo o el tema no está listo para la versión nueva, el panel dice cuál y espera. |
 | 4 | **Revisado después** | La primera visita tras la actualización abre todas las páginas. Si una falla, la versión anterior vuelve sola. |
-| 5 | **Tus archivos intactos** | La actualización reemplaza solo el núcleo. Temas, plugins, fotos y configuración quedan tal como están. |
+| 5 | **Tus archivos intactos** | La actualización reemplaza el núcleo y el tema estándar del propio PageBrick. Tus temas, plugins, fotos y configuración quedan tal como están. |
 
 ## Qué hace
 

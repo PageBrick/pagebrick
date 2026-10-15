@@ -767,10 +767,16 @@ function pb_verify_core_update(array $statesBefore): ?string
         return null;
     }
     pb_code_changed(); // the first request of a new version: the one that put it in place may be an older version, which did not note it
+    $renewed = null;
     if (!empty($pending['verifying'])) {
         $problem = __('a verificação foi interrompida por um erro grave');
     } else {
         pb_set_option('core_update', json_encode($pending + ['verifying' => true])); // if PHP dies during the check, the next request knows
+        try {
+            $renewed = pb_renew_default_theme(); // before the pages are checked: the check must see the theme the site will have
+        } catch (Throwable $e) {
+            error_log('PageBrick: the default theme was not renewed: ' . $e->getMessage()); // the old one still works; the check below says if it does not
+        }
         $problem = pb_check_site();
     }
     pb_delete_option('core_update');
@@ -780,9 +786,14 @@ function pb_verify_core_update(array $statesBefore): ?string
         pb_set_option('themes', $statesBefore['themes']);
         try {
             pb_apply_core_package($pending['backup'], pb_core_root(), $pending['to']);
+            if ($renewed !== null) {
+                pb_put_back_default_theme($renewed['backup']);
+            }
         } catch (Throwable $e) {
             $problem .= ' ' . sprintf(__('(A volta automática também falhou: %s. Use "Voltar para a versão anterior" em Atualizações.)'), $e->getMessage());
         }
+    } elseif ($renewed !== null) {
+        pb_set_option('default_theme_renewed', json_encode(['to' => PB_VERSION, 'backup' => $renewed['backup']]));
     }
     pb_set_option('core_update_result', json_encode(['ok' => $problem === null, 'from' => $pending['from'], 'to' => $pending['to'],
         'problem' => $problem, 'at' => date('Y-m-d H:i:s')], JSON_UNESCAPED_UNICODE));
@@ -823,7 +834,86 @@ function pb_restore_core(?string $root = null): string
     $backup = pb_backups('core_')[0] ?? throw new InvalidArgumentException(__('Não há versão anterior guardada.'));
     $result = pb_apply_core_package($backup['file'], $root ?? pb_core_root(), PB_VERSION);
     unlink($backup['file']);
+    // The default theme that came with the version being left may not run on the one that comes back (it can use what only the new core has).
+    $renewed = json_decode(pb_option('default_theme_renewed', 'null'), true);
+    if (is_array($renewed) && ($renewed['to'] ?? '') === PB_VERSION) {
+        pb_put_back_default_theme($renewed['backup'] ?? null);
+        pb_delete_option('default_theme_renewed');
+    }
     return $result;
+}
+
+/**
+ * The default theme belongs to PageBrick: it is what a site falls back to when its own theme breaks, so it has to be the one that goes with the core.
+ * Every release carries a copy of it in core/default-theme/ (the release build puts it there; an update brings it with the core, even one made by an
+ * older version), and the first request after an update puts it in content/themes/default before the pages are checked. What was there is kept in the
+ * backups (the Themes screen can put it back, and so does going back to the previous PageBrick). To change the default theme, copy its folder under
+ * another name: a theme with another name is never touched.
+ * Returns ['backup' => the file with the folder it replaced, or null] when the theme was replaced, or null when it was already the same.
+ */
+function pb_renew_default_theme(): ?array
+{
+    $copy = pb_core_root() . '/core/default-theme';
+    $target = pb_themes_dir() . '/' . PB_FALLBACK_THEME;
+    if (!is_file("$copy/theme.php") || (is_dir($target) && pb_folder_fingerprint($copy) === pb_folder_fingerprint($target))) {
+        return null;
+    }
+    return pb_with_lock(function () use ($copy, $target) {
+        $tmp = dirname($target) . '/.renew-' . bin2hex(random_bytes(4));
+        try {
+            pb_copy_tree($copy, "$tmp/" . PB_FALLBACK_THEME);
+            pb_stamp_new_files("$tmp/" . PB_FALLBACK_THEME);
+            $backup = null;
+            if (is_dir($target)) {
+                $old = json_decode((string) @file_get_contents("$target/theme.json"), true);
+                $backup = pb_backup_folder($target, PB_FALLBACK_THEME, 'theme_' . PB_FALLBACK_THEME . '_' . pb_slugify((string) ($old['version'] ?? 'antiga')));
+                rename($target, "$tmp/old");
+            }
+            rename("$tmp/" . PB_FALLBACK_THEME, $target);
+        } finally {
+            pb_rmtree($tmp);
+        }
+        pb_forget_compiled_code($target);
+        pb_code_changed();
+        pb_prune_backups('theme_' . PB_FALLBACK_THEME . '_');
+        return ['backup' => $backup];
+    });
+}
+
+/** The default theme as it was before an update renewed it (best effort: what could not be put back is said in the log). */
+function pb_put_back_default_theme(?string $backup): void
+{
+    if ($backup === null || !is_file($backup)) {
+        return;
+    }
+    try {
+        pb_install_package($backup, 'theme', PB_FALLBACK_THEME);
+    } catch (Throwable $e) {
+        error_log('PageBrick: the previous default theme was not put back: ' . $e->getMessage());
+    }
+}
+
+/** One short text that changes when any file of a folder, or its name, changes. */
+function pb_folder_fingerprint(string $dir): string
+{
+    $files = [];
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+        if ($file->isFile()) {
+            $files[str_replace('\\', '/', substr($file->getPathname(), strlen($dir) + 1))] = hash_file('sha256', $file->getPathname());
+        }
+    }
+    ksort($files);
+    return hash('sha256', json_encode($files));
+}
+
+/** A copy of a whole folder. */
+function pb_copy_tree(string $from, string $to): void
+{
+    @mkdir($to, 0755, true);
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $item) {
+        $target = $to . '/' . substr($item->getPathname(), strlen($from) + 1);
+        $item->isDir() ? @mkdir($target, 0755, true) : copy($item->getPathname(), $target);
+    }
 }
 
 // ------------------------------------------------------------------ helpers
