@@ -1,0 +1,54 @@
+/* The rich text editor of the panel (core/assets/editor.js; the source is in tools/editor). It uses the panel's own colours, so light and dark follow admin.css. */
+.pb-rt { position: relative; margin: .25rem 0 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--field); }
+.pb-rt:focus-within { border-color: var(--accent); box-shadow: var(--ring); }
+.pb-rt [hidden] { display: none !important; }
+
+/* Toolbar: stays under the header while a long text scrolls; the buttons wrap on a narrow screen instead of widening the page. */
+.pb-rt-toolbar { position: sticky; top: var(--header-h); z-index: 5; display: flex; flex-wrap: wrap; gap: .35rem; padding: .4rem .5rem; border-bottom: 1px solid var(--line); border-radius: calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0 0; background: var(--card); }
+.pb-rt-group { display: flex; gap: .1rem; padding: .15rem; border-radius: 10px; background: var(--soft); }
+.pb-rt .pb-rt-btn { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; }
+.pb-rt .pb-rt-btn:hover:not(:disabled) { background: var(--card); filter: none; }
+.pb-rt .pb-rt-btn[aria-pressed="true"] { background: var(--card); color: var(--accent); box-shadow: 0 0 0 1px var(--line-strong); }
+.pb-rt .pb-rt-btn:disabled { opacity: .35; cursor: default; }
+.pb-rt .pb-rt-btn .ico { width: 1.05rem; height: 1.05rem; }
+.pb-rt-tablebar { display: flex; flex-wrap: wrap; gap: .35rem; padding: .4rem .5rem; border-bottom: 1px solid var(--line); background: var(--soft); }
+.pb-rt .pb-rt-text-btn { margin: 0; padding: .25rem .65rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--text); font-size: .82rem; font-weight: 500; }
+.pb-rt .pb-rt-text-btn:hover { background: var(--soft); filter: none; }
+
+/* The text itself: the same plain look as the site's content, in the panel's colours. */
+.pb-rt-surface { padding: .8rem 1rem; }
+.pb-rt .pb-rt-content { min-height: 8rem; outline: none; overflow-wrap: anywhere; } /* the whole box already shows the focus */
+.pb-rt-content > :first-child { margin-top: 0; }
+.pb-rt-content > :last-child { margin-bottom: 0; }
+.pb-rt-content p { margin: .6rem 0; }
+.pb-rt-content h2 { margin: 1.2rem 0 .5rem; font-size: 1.3rem; }
+.pb-rt-content h3 { margin: 1rem 0 .4rem; font-size: 1.1rem; }
+.pb-rt-content ul, .pb-rt-content ol { margin: .6rem 0; padding-left: 1.6rem; }
+.pb-rt-content li p { margin: .2rem 0; }
+.pb-rt-content blockquote { margin: .8rem 0; padding: .1rem 0 .1rem 1rem; border-left: 3px solid var(--line-strong); color: var(--muted); }
+.pb-rt-content hr { margin: 1.2rem 0; border: 0; border-top: 1px solid var(--line-strong); }
+.pb-rt-content a { color: var(--accent); }
+.pb-rt-content img { display: block; max-width: 100%; height: auto; margin: .8rem 0; border-radius: 8px; }
+.pb-rt-content img.ProseMirror-selectednode { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pb-rt-content hr.ProseMirror-selectednode { border-top-color: var(--accent); }
+.pb-rt-content table { width: 100%; margin: .8rem 0; border-collapse: collapse; table-layout: fixed; }
+.pb-rt-content th, .pb-rt-content td { position: relative; min-width: 2rem; padding: .4rem .6rem; border: 1px solid var(--line-strong); vertical-align: top; text-align: left; }
+.pb-rt-content tbody tr:last-child td { border-bottom: 1px solid var(--line-strong); } /* the panel's own tables have no line under the last row */
+.pb-rt-content th { background: var(--soft); color: var(--text); font-size: inherit; font-weight: 700; letter-spacing: normal; text-transform: none; white-space: normal; }
+.pb-rt-content td > :first-child, .pb-rt-content th > :first-child { margin-top: 0; }
+.pb-rt-content td > :last-child, .pb-rt-content th > :last-child { margin-bottom: 0; }
+.pb-rt-content .selectedCell::after { content: ""; position: absolute; inset: 0; background: rgb(210 78 43 / .18); pointer-events: none; }
+.pb-rt-content p.is-empty::before { content: attr(data-placeholder); float: left; height: 0; color: var(--muted); pointer-events: none; }
+
+/* The floating menu (over the selected text or picture) and the "/" menu (under the line being typed). */
+.pb-rt-bubble, .pb-rt-slash { position: absolute; z-index: 20; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); box-shadow: var(--pop); }
+.pb-rt-bubble-row { display: flex; align-items: center; gap: .1rem; margin: 0; padding: .25rem; }
+.pb-rt-bubble input { width: 15rem; max-width: 60vw; padding: .35rem .5rem; font-size: .88rem; }
+.pb-rt-slash { min-width: 13rem; padding: .3rem; }
+.pb-rt-slash-item { display: flex; align-items: center; gap: .6rem; padding: .4rem .6rem; border-radius: 8px; cursor: pointer; }
+.pb-rt-slash-item .ico { width: 1.05rem; height: 1.05rem; color: var(--muted); }
+.pb-rt-slash-item[aria-selected="true"] { background: var(--soft); }
+.pb-rt-slash-item[aria-selected="true"] .ico { color: var(--accent); }
+
+/* Without JavaScript the field stays a plain box with the text's HTML. */
+textarea[data-richtext] { min-height: 8rem; font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }

@@ -106,7 +106,7 @@ Você pode adicionar campos, tipos de página, configurações e menus; não pod
 
 As configurações que você adiciona aparecem em **Contato**, a tela que qualquer pessoa que edita o site abre. Um grupo sobre o visual (cores, tipografia) pode pedir **Configurações → Aparência**, que só administradores abrem, com `'screen' => 'appearance'`.
 
-**Tipos de campo:** `text`, `textarea`, `richtext` (um editor simples; o HTML é limpo ao salvar), `image`, `url`, `email`, `tel`, `color`, `select` (com `'options' => ['value' => 'Label']`), `link` (uma página do site ou qualquer endereço), `list` (itens repetíveis, com `fields`), `group` (com `fields`; `'toggle' => true` deixa o cliente esconder o grupo). Todo campo aceita `label`, `help` e `default`.
+**Tipos de campo:** `text`, `textarea`, `richtext` (um editor de texto: títulos, negrito, itálico, listas, citações, links, tabelas, divisores e imagens da biblioteca de mídia; o HTML é limpo ao salvar), `image`, `url`, `email`, `tel`, `color`, `select` (com `'options' => ['value' => 'Label']`), `link` (uma página do site ou qualquer endereço), `list` (itens repetíveis, com `fields`), `group` (com `fields`; `'toggle' => true` deixa o cliente esconder o grupo). Todo campo aceita `label`, `help` e `default`.
 
 Precisa de funções auxiliares? Coloque-as em um arquivo e use `require_once __DIR__ . '/functions.php';` no início do `theme.php`.
 
@@ -169,6 +169,18 @@ Imprimir um campo com `<?= ?>` é sempre seguro: o texto é escapado, o texto ri
 
 Com `'debug' => true` no `config.php`, ler um campo que não existe gera um aviso, então os erros de digitação aparecem enquanto você desenvolve.
 
+### Texto rico: estilize o que o cliente pode escrever
+
+Um campo `richtext` pode ter parágrafos, `h2`/`h3`, `strong`, `em`, `u`, `s`, `a`, listas, `blockquote`, `hr`, `table` (com `thead`/`tbody`, `tr`, `th`, `td`) e `img`. O núcleo não adiciona CSS: imprima o campo dentro de um contêiner seu e estilize esses elementos nele, inclusive tabelas e imagens:
+
+```css
+.prose img { max-width: 100%; height: auto; }
+.prose table { display: block; overflow-x: auto; border-collapse: collapse; } /* uma tabela larga rola dentro do texto */
+.prose th, .prose td { padding: .5rem .75rem; border: 1px solid #ddd; }
+```
+
+As imagens vêm só da biblioteca de mídia: o PageBrick escreve o `<img>` (com `alt`, `width`, `height` e carregamento sob demanda), então ele continua funcionando se o site mudar de lugar. Um texto escrito antes do PageBrick 1.3 (com `div` e `br`) aparece exatamente como foi salvo.
+
 ### Funções auxiliares
 
 | Função | Uso |
@@ -186,6 +198,80 @@ Com `'debug' => true` no `config.php`, ler um campo que não existe gera um avis
 | `pb_locale()`, `pb_date($datetime)`, `__('text')` | idioma e datas do site |
 
 A lista completa do que temas e plugins podem usar com segurança está em [core/api.php](../../core/api.php). Todo o resto, mesmo que comece com `pb_`, é interno e pode mudar.
+
+## Deixando o cliente reordenar as seções
+
+No editor de páginas o cliente vê a página ao lado do formulário, muda o que quiser, arrasta as seções para outro lugar (na lista ou na própria página) e só depois clica em **Publicar**; até lá os visitantes continuam vendo a versão publicada. Quem faz a ordenação funcionar é o seu tema, em dois passos, e um tema que não faz nada mantém a ordem fixa dele (nada quebra):
+
+1. Liste as seções no `theme.php`, em `'sections'` do modelo. Cada uma é o nome de um campo `group` desse modelo (os padrões `hero`, `about`… da página inicial, ou grupos seus), ou `'plugins'`, o lugar onde os plugins colocam as seções deles com `pb_slot('home')`.
+2. Imprima as seções na ordem do cliente no template: `$page->order($nomes)` devolve os seus nomes nessa ordem (os que o cliente ainda não colocou vão por último), e `pb_section($nome, $html)` devolve o seu HTML exatamente como está para os visitantes, só marcando a seção enquanto o cliente edita, para ela poder ser escolhida e arrastada na página.
+
+```php
+// theme.php: the sections of the home page the client may put in any order
+return [
+    'templates' => [
+        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+    ],
+];
+```
+
+```php
+<?php // templates/home.php
+foreach ($page->order(['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']) as $section) {
+    echo pb_section($section, pb_include(__DIR__ . "/parts/home-$section.php", ['page' => $page, 'title' => $title]));
+}
+```
+
+Campos que não estão na lista (um destaque que sempre fica no topo, por exemplo) são impressos onde você os imprimir. A API de conteúdo acrescenta `section_order` a uma página só quando o cliente escolheu uma ordem. Enquanto o cliente edita, a página na pré-visualização tem a classe `pb-editing` no `<html>`: use-a para desligar o que espera uma rolagem para aparecer (entradas com fade, animações de chegada), porque as seções são trocadas ali enquanto são olhadas.
+
+Para um tema que também precise rodar num PageBrick anterior à 1.3, confira antes `method_exists($page, 'order')` e `function_exists('pb_section')`.
+
+## Deixando o cliente adicionar seções
+
+Além de mexer nas seções que você fez, o cliente pode **adicionar** outras: texto, foto com texto, cartões, perguntas e respostas, depoimentos, chamada para ação, números, galeria de fotos e vídeo do YouTube. No editor da página, um botão **Adicionar seção** e um "+" entre as seções (na lista e na própria página) abrem uma galeria com um desenho de cada tipo; o cliente também pode duplicar uma seção ou remover uma (com **Desfazer**). O núcleo guarda tudo junto com a página e imprime como **HTML simples, sem CSS e sem script**, com nomes de classe estáveis: o visual é trabalho seu, no seu tema.
+
+1. Ligue no `theme.php`, em cada tipo de página que deve ter: `'blocks' => true` para todos os tipos, ou uma lista como `'blocks' => ['text', 'cards']`. Um tema que não diz nada não ganha nenhuma, e nada muda.
+2. Imprima a página com `pb_sections($page, $names, $render)`. Ele percorre as seções na ordem que o cliente escolheu, chama o seu `$render($name)` para cada nome seu e imprime cada seção que o cliente adicionou, marcando todas enquanto o cliente edita.
+
+```php
+// theme.php
+return ['templates' => [
+    'page' => ['sections' => ['content'], 'blocks' => true], // 'content': o que os campos do próprio modelo imprimem (título, texto…)
+    'home' => [
+        'sections' => ['hero', 'about' => 'image_text', 'services' => 'cards', 'cta' => 'cta'],
+        'blocks' => true,
+    ],
+]];
+```
+
+```php
+<?php // templates/page.php
+echo pb_sections($page, ['content'], fn($name) => pb_include(__DIR__ . '/parts/page-content.php', ['page' => $page, 'title' => $title]));
+```
+
+Um nome com um tipo (`'about' => 'image_text'`) diz que a sua seção guarda a mesma coisa que aquele tipo de seção: o painel passa a oferecer **Duplicar** nela, e a cópia é uma seção que o cliente também pode remover. Um nome sem tipo (`'hero'`) não pode ser copiado. `'content'` é o nome para o que os campos do próprio modelo imprimem (o título, a introdução, o texto), para que o cliente possa pôr seções antes dele também.
+
+### O que cada tipo imprime
+
+Cada um é um `<section class="pb-block pb-block-{tipo}">` com um `h2` quando tem título; o que está vazio fica de fora.
+
+| Tipo | Campos | Dentro |
+|---|---|---|
+| `text` | `title`, `text` | `.pb-block-body` |
+| `image_text` | `title`, `text`, `image`, `side` (`left` ou `right`) | `.pb-block-image` e `.pb-block-words`, na ordem em que aparecem; classe `pb-side-left` ou `pb-side-right` |
+| `cards` | `title`, `intro`, `items` (`title`, `text`, `image`, `link`), `link_label`, `link` | `ul.pb-cards > li.pb-card` |
+| `faq` | `title`, `items` (`question`, `answer`) | `details.pb-faq-item`: o do próprio navegador, sem script |
+| `testimonials` | `title`, `items` (`quote`, `name`, `role`) | `figure.pb-quote` |
+| `cta` | `title`, `text`, `button_label`, `button_link` | `a.pb-button` |
+| `numbers` | `title`, `items` (`value`, `label`) | `ul.pb-numbers > li.pb-number` |
+| `gallery` | `title`, `items` (`image`, `caption`) | `ul.pb-gallery`, com um `figure` em cada |
+| `video` | `title`, `url`, `caption` | `figure.pb-video > iframe` de youtube-nocookie.com; de um endereço do YouTube só se usa o código do vídeo (`pb_youtube_id()`) |
+
+### Desenhando um do seu jeito
+
+Ponha um arquivo com o nome do tipo em `templates/blocks/` do seu tema (`templates/blocks/cards.php`). Ele roda com `$block` (os campos, lidos como `$page`: `$block->title`, `$block->items`), `$type`, `$id` e `$page`. Um tipo sem arquivo seu é desenhado pelo núcleo; copie um de `core/blocks/` para começar.
+
+As seções ficam nos dados da página, então um tema que não as liga as esconde, e voltar ao tema as traz de volta. A API de conteúdo lista as que estão no site em `blocks` (cada uma `{id, type, fields}`), e `section_order` as chama de `block-{id}`. Para um tema que também precise rodar num PageBrick anterior à 1.3, confira antes `function_exists('pb_sections')`.
 
 ## Substituindo os templates de um plugin
 

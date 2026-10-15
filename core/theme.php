@@ -270,6 +270,16 @@ function pb_render_in_theme(string $file, array $vars, array $seo): string
     return pb_theme_render_file($file, $vars + ['title' => new PbValue(['type' => 'text'], $seo['title'])]);
 }
 
+/**
+ * A section of a page, in a template that lets the client reorder them: <?= pb_section('about', $html) ?>. Visitors get $html exactly
+ * as it is; while the client edits the page in the panel, the section is marked (with comments) so it can be picked and dragged on the page itself.
+ */
+function pb_section(string $name, string $html): string
+{
+    $name = preg_replace('/[^a-z0-9_-]/i', '', $name);
+    return empty($GLOBALS['pb_organizer']) ? $html : "<!--pb-section:$name-->$html<!--/pb-section:$name-->";
+}
+
 /** A place in a template where plugins can add HTML: <?= pb_slot('contact') ?>. */
 function pb_slot(string $name, array $context = []): string
 {

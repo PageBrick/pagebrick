@@ -1,0 +1,29 @@
+{
+    "name": "pagebrick-editor",
+    "private": true,
+    "description": "Builds core/assets/editor.js, the rich text editor of the panel. Only needed to rebuild it: sites never run this.",
+    "type": "module",
+    "scripts": {
+        "build": "node build.mjs"
+    },
+    "devDependencies": {
+        "@tiptap/core": "3.32.0",
+        "@tiptap/extension-blockquote": "3.32.0",
+        "@tiptap/extension-bold": "3.32.0",
+        "@tiptap/extension-document": "3.32.0",
+        "@tiptap/extension-hard-break": "3.32.0",
+        "@tiptap/extension-heading": "3.32.0",
+        "@tiptap/extension-horizontal-rule": "3.32.0",
+        "@tiptap/extension-image": "3.32.0",
+        "@tiptap/extension-italic": "3.32.0",
+        "@tiptap/extension-list": "3.32.0",
+        "@tiptap/extension-paragraph": "3.32.0",
+        "@tiptap/extension-strike": "3.32.0",
+        "@tiptap/extension-table": "3.32.0",
+        "@tiptap/extension-text": "3.32.0",
+        "@tiptap/extension-underline": "3.32.0",
+        "@tiptap/extensions": "3.32.0",
+        "esbuild": "0.25.12",
+        "lucide-static": "1.57.0"
+    }
+}

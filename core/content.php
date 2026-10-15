@@ -50,6 +50,20 @@ function pb_page_decode(?array $page): ?array
         $page['id'] = (int) $page['id'];
         $page['data'] = json_decode($page['data'], true) ?: [];
         $page['translation_of'] = isset($page['translation_of']) ? (int) $page['translation_of'] : null;
+        $page['draft'] = isset($page['draft']) ? (json_decode($page['draft'], true) ?: null) : null;
+    }
+    return $page;
+}
+
+/**
+ * The page as the editor works on it: the draft (changes not published yet) over the live content, when the page is
+ * published and has one. 'has_draft' says which. A page that was never published has no separate draft: what is saved is what it is.
+ */
+function pb_page_working_copy(array $page): array
+{
+    $page['has_draft'] = ($page['status'] ?? '') === 'published' && is_array($page['draft'] ?? null);
+    if ($page['has_draft']) {
+        $page = array_merge($page, array_intersect_key($page['draft'], array_flip(['title', 'slug', 'seo_title', 'seo_description', 'data'])));
     }
     return $page;
 }
@@ -57,7 +71,7 @@ function pb_page_decode(?array $page): ?array
 /** All pages, without their content (translations included: see 'locale' and 'translation_of'). */
 function pb_page_list(): array
 {
-    return pb_db()->query('SELECT id, title, slug, locale, translation_of, template, status, updated_at FROM ' . pb_table('pages') . ' ORDER BY title')->fetchAll();
+    return pb_db()->query('SELECT id, title, slug, locale, translation_of, template, status, updated_at, (draft IS NOT NULL) AS has_draft FROM ' . pb_table('pages') . ' ORDER BY title')->fetchAll();
 }
 
 function pb_home_page_id(): int
@@ -193,11 +207,95 @@ function pb_page_from_input(array $page, array $in): array
     $page['seo_title'] = pb_limit(trim(is_string($in['seo_title'] ?? null) ? $in['seo_title'] : ''), 200);
     $page['seo_description'] = pb_limit(trim(is_string($in['seo_description'] ?? null) ? $in['seo_description'] : ''), 300);
     // Fields the current theme doesn't know (left by another theme) are kept, so switching back brings them back.
-    $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $in['f'] ?? []) + ($page['data'] ?? []);
+    $page['data'] = pb_page_collect_data($page['template'], $in['f'] ?? [], $page['data'] ?? []);
     return $page;
 }
 
-function pb_page_save(int $id, array $in, ?int $userId): void
+/**
+ * The content of a page from the form's fields ($f), cleaned: the template's fields, the pieces the client added (when the theme allows them)
+ * and the order of all the sections (when the theme lets the client choose it). $old: what the page has that this theme does not know.
+ */
+function pb_page_collect_data(string $template, mixed $f, array $old = []): array
+{
+    $f = is_array($f) ? $f : [];
+    $data = pb_collect_fields(pb_template_fields($template), $f) + $old;
+    if ($allowed = pb_template_blocks($template)) {
+        if ($blocks = pb_collect_blocks($f['_blocks'] ?? [], $allowed)) {
+            $data['_blocks'] = $blocks;
+        } else {
+            unset($data['_blocks']);
+        }
+    }
+    $names = [...pb_template_sections($template), ...array_map(fn($id) => "block-$id", array_keys($allowed ? ($data['_blocks'] ?? []) : []))];
+    if ($names) {
+        // an order is saved only when the client chose one: a page left in the theme's own order stays as it always was (and a draft of it equals the page)
+        $order = pb_clean_section_order($f['_order'] ?? null, $names);
+        $order === $names ? $data = array_diff_key($data, ['_order' => 1]) : $data['_order'] = $order;
+    }
+    return $data;
+}
+
+/**
+ * The sections a template lets the client put in any order (the theme says so with 'sections' in theme.php); [] when it doesn't.
+ * Names with the piece they are the same as ('about' => 'image_text') say that "duplicate" is offered on them.
+ */
+function pb_template_section_types(string $template): array
+{
+    $templates = pb_theme()['templates'];
+    $sections = ($templates[$template] ?? $templates['page'] ?? [])['sections'] ?? [];
+    $types = [];
+    foreach (is_array($sections) ? $sections : [] as $key => $value) {
+        if (is_string($value)) {
+            $types[is_int($key) ? $value : $key] = is_int($key) ? '' : $value;
+        }
+    }
+    return $types;
+}
+
+function pb_template_sections(string $template): array
+{
+    return array_keys(pb_template_section_types($template));
+}
+
+/** The order as the form sent it, cleaned: only the template's sections, none twice, the ones missing at the end in the theme's order. */
+function pb_clean_section_order(mixed $order, array $sections): array
+{
+    $order = is_array($order) ? array_filter($order, 'is_string') : [];
+    return array_values(array_unique([...array_intersect($order, $sections), ...$sections]));
+}
+
+/**
+ * What the panel lists to drag: [name => ['label' => ..., 'group' => the field's definition or null, 'copy' => the piece it can be copied as or '',
+ * 'piece' => the piece the client added (id, type, data) or null, 'help' => what a row without fields says]] in the order the page has now.
+ * A section is a group field of the template; 'plugins' is the place where plugins add their own sections (pb_slot('home')),
+ * listed only when a plugin uses it; 'content' is the template's own fields (the title, the text…), edited at the top of the form;
+ * a "block-…" name is a piece the client added.
+ */
+function pb_page_sections(array $page): array
+{
+    $template = $page['template'];
+    $types = pb_template_section_types($template);
+    $fields = pb_template_fields($template);
+    $blocks = pb_page_blocks($page['data'], $template);
+    $names = [...array_keys($types), ...array_map(fn($id) => "block-$id", array_keys($blocks))];
+    $sections = [];
+    foreach (pb_clean_section_order($page['data']['_order'] ?? null, $names) as $name) {
+        $row = ['label' => '', 'group' => null, 'copy' => $types[$name] ?? '', 'piece' => null, 'help' => ''];
+        if (str_starts_with($name, 'block-')) {
+            $block = $blocks[substr($name, 6)];
+            $sections[$name] = ['label' => pb_block_type($block['_type'])['label'], 'piece' => ['id' => substr($name, 6), 'type' => $block['_type'], 'data' => $block]] + $row;
+        } elseif (($fields[$name]['type'] ?? '') === 'group') {
+            $sections[$name] = ['label' => (string) ($fields[$name]['label'] ?? $name), 'group' => $fields[$name]] + $row;
+        } elseif ($name === 'plugins' && pb_hook_callbacks('slot:' . $template) !== []) {
+            $sections[$name] = ['label' => __('Conteúdo de plugins'), 'help' => __('Aqui entra o que os plugins instalados adicionam à página, como as últimas notícias.')] + $row;
+        } elseif ($name === 'content') {
+            $sections[$name] = ['label' => __('Conteúdo da página'), 'help' => __('O título, o texto e a foto da página, que você edita no começo do formulário.')] + $row;
+        }
+    }
+    return $sections;
+}
+
+function pb_page_save(int $id, array $in, ?int $userId, bool $snapshot = true): void
 {
     $old = pb_page_find($id) ?? throw new InvalidArgumentException(__('Página não encontrada.'));
     $page = pb_page_from_input($old, $in);
@@ -210,8 +308,56 @@ function pb_page_save(int $id, array $in, ?int $userId): void
     if ($id === pb_home_page_id() && $page['status'] !== 'published') {
         throw new InvalidArgumentException(__('A página inicial precisa ficar publicada.'));
     }
-    pb_page_snapshot($old, $userId);
+    if ($snapshot) {
+        pb_page_snapshot($old, $userId);
+    }
     pb_page_write($page);
+}
+
+/**
+ * "Save draft". A published page keeps what visitors see and the changes wait in its draft until someone publishes; a page that
+ * was never published is simply saved (there is nothing public to protect). $quiet is the automatic save while typing: no
+ * revision is kept. Returns where it went: 'draft' or 'page'. Throws InvalidArgumentException (a title that can't be saved yet, an address in use).
+ */
+function pb_page_save_draft(int $id, array $in, ?int $userId, bool $quiet = false): string
+{
+    $old = pb_page_find($id) ?? throw new InvalidArgumentException(__('Página não encontrada.'));
+    if ($old['status'] !== 'published') {
+        pb_page_save($id, ['status' => 'draft'] + $in, $userId, !$quiet);
+        return 'page';
+    }
+    $page = pb_page_from_input($old, ['status' => 'published'] + $in);
+    $draft = array_intersect_key($page, array_flip(['title', 'slug', 'seo_title', 'seo_description', 'data']));
+    $live = array_intersect_key($old, $draft);
+    $same = $draft == $live; // the same content, whatever the order its keys were stored in
+    pb_db()->prepare('UPDATE ' . pb_table('pages') . ' SET draft = ?, draft_at = ' . ($same ? 'NULL' : 'CURRENT_TIMESTAMP') . ' WHERE id = ?')
+        ->execute([$same ? null : json_encode($draft, JSON_UNESCAPED_UNICODE), $id]);
+    return 'draft';
+}
+
+/** "Publish": the form's content becomes what visitors see (the previous version goes to the history) and the draft is gone. */
+function pb_page_publish(int $id, array $in, ?int $userId): void
+{
+    pb_page_save($id, ['status' => 'published'] + $in, $userId);
+    pb_page_discard_draft($id);
+}
+
+/** Throws the page's unpublished changes away. */
+function pb_page_discard_draft(int $id): void
+{
+    pb_db()->prepare('UPDATE ' . pb_table('pages') . ' SET draft = NULL, draft_at = NULL WHERE id = ?')->execute([$id]);
+}
+
+/** Takes a page off the site. What it has in its draft stays with it: from then on the page is what was being edited. */
+function pb_page_unpublish(int $id, ?int $userId): void
+{
+    $page = pb_page_find($id) ?? throw new InvalidArgumentException(__('Página não encontrada.'));
+    if ($id === pb_home_page_id()) {
+        throw new InvalidArgumentException(__('A página inicial precisa ficar publicada.'));
+    }
+    pb_page_snapshot($page, $userId);
+    pb_page_write(['status' => 'draft'] + pb_page_working_copy($page));
+    pb_page_discard_draft($id);
 }
 
 function pb_page_write(array $page): void
@@ -281,6 +427,7 @@ function pb_page_restore(int $revisionId, ?int $userId): int
     $snapshot = json_decode($revision['snapshot'], true) ?: [];
     $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $snapshot['data'] ?? []) + ($snapshot['data'] ?? []);
     pb_page_write(array_merge($page, array_intersect_key($snapshot, array_flip(['title', 'seo_title', 'seo_description']))));
+    pb_page_discard_draft($page['id']);
     return $page['id'];
 }
 
@@ -397,9 +544,74 @@ function pb_save_menu(string $location, mixed $items): void
     pb_set_option("menu_$location", json_encode(pb_collect_value(pb_menu_def(''), $items), JSON_UNESCAPED_UNICODE));
 }
 
+/** The items of a menu as the site shows them: the published ones, unless a preview in the panel puts the menus as typed in their place. */
 function pb_menu_items_raw(string $location): array
 {
-    return json_decode(pb_option("menu_$location", '[]'), true) ?: [];
+    return $GLOBALS['pb_menu_preview'][$location] ?? json_decode(pb_option("menu_$location", '[]'), true) ?: [];
+}
+
+/** The menus the client is working on, as they are in the form: {location: items}. Null when the draft is the published menus. */
+function pb_menus_draft(): ?array
+{
+    $draft = json_decode(pb_option('menu_draft', ''), true);
+    return is_array($draft) && $draft ? $draft : null;
+}
+
+/** The items of a menu in the editor: the draft's when there is one, the published ones otherwise. */
+function pb_menu_items_working(string $location): array
+{
+    return pb_menus_draft()[$location] ?? json_decode(pb_option("menu_$location", '[]'), true) ?: [];
+}
+
+/** The menus of a form ({location: items}), cleaned: only the theme's menus, each item with a text and a link. */
+function pb_menus_collect(mixed $input): array
+{
+    $input = is_array($input) ? $input : [];
+    $menus = [];
+    foreach (array_keys(pb_theme()['menus']) as $location) {
+        $menus[$location] = pb_collect_value(pb_menu_def(''), $input[$location] ?? []);
+    }
+    return $menus;
+}
+
+/** "Save draft": what is typed waits (the site keeps the published menus); a draft equal to the published menus is no draft. Returns whether one is left. */
+function pb_menus_save_draft(mixed $input): bool
+{
+    $draft = pb_menus_collect($input);
+    $published = [];
+    foreach (array_keys($draft) as $location) {
+        $published[$location] = json_decode(pb_option("menu_$location", '[]'), true) ?: [];
+    }
+    if ($draft == $published) {
+        pb_delete_option('menu_draft');
+        return false;
+    }
+    pb_set_option('menu_draft', json_encode($draft, JSON_UNESCAPED_UNICODE));
+    return true;
+}
+
+/** "Publish": the menus of the form are the site's menus, and the draft is gone. */
+function pb_menus_publish(mixed $input): void
+{
+    foreach (pb_menus_collect($input) as $location => $items) {
+        pb_set_option("menu_$location", json_encode($items, JSON_UNESCAPED_UNICODE));
+    }
+    pb_delete_option('menu_draft');
+}
+
+function pb_menus_discard_draft(): void
+{
+    pb_delete_option('menu_draft');
+}
+
+/** What the client should know about an item: its page is not on the site (a draft, or gone). '' when nothing. */
+function pb_menu_item_note(array $item): string
+{
+    if (!preg_match('/^page:(\d+)$/', (string) ($item['link'] ?? ''), $m)) {
+        return '';
+    }
+    $page = pb_page_find((int) $m[1]);
+    return !$page ? __('A página não existe mais: o item não aparece no site.') : ($page['status'] !== 'published' ? __('Página em rascunho: o item não aparece no site.') : '');
 }
 
 /**

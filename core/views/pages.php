@@ -29,7 +29,7 @@ $short = fn(string $locale) => strtoupper(substr($locale, 0, 2));
                     <?php if ($id === $homeId): ?><span class="pill info"><?= e(__('Página inicial')) ?></span><?php endif ?>
                 </td>
                 <td><?= e($templates[$p['template']] ?? $p['template']) ?></td>
-                <td><span class="pill<?= $p['status'] === 'published' ? ' ok' : '' ?>"><?= e($statuses[$p['status']] ?? $p['status']) ?></span></td>
+                <td><span class="pill<?= $p['status'] === 'published' ? ' ok' : '' ?>"><?= e($statuses[$p['status']] ?? $p['status']) ?></span><?php if ($p['status'] === 'published' && !empty($p['has_draft'])): ?> <span class="pill warn"><?= e(__('Alterações não publicadas')) ?></span><?php endif ?></td>
                 <?php if ($locales): ?>
                     <td class="translations">
                         <?php foreach ($locales as $locale): $t = $translations[$id][$locale] ?? null; ?>

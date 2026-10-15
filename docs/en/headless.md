@@ -47,13 +47,15 @@ The fields are the same ones the panel shows: the [standard content](themes.md#c
 | Field type | In JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | the text as typed (a `select` gives the option's key) |
-| `richtext` | HTML, already cleaned when it was saved |
+| `richtext` | HTML, already cleaned when it was saved; pictures come with full addresses |
 | `image` | `{url, thumb, alt, width, height}` with full addresses, or `null` |
 | `link` | a page of the site as a path (`"/about"`, `"/"` for the home page); any other link as typed (`"https://…"`) |
 | `list` | an array of objects |
 | `group` | an object, or `null` when the client hid that section |
 
 Password fields are never included.
+
+**Order and added sections.** When the client chose an order for the sections of a page, the page also has `section_order` (the names, in that order). The sections the client added in the panel come in `blocks`, only the ones that are on the site, in order: `{"id": "block-a1b2c3", "type": "cards", "fields": {…}}`. `type` is one of `text`, `image_text`, `cards`, `faq`, `testimonials`, `cta`, `numbers`, `gallery` or `video`, and `fields` are values as in the table above. A page without any of this has neither key.
 
 ## How to use it
 

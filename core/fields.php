@@ -80,7 +80,10 @@ function pb_clean_url(string $url): string
     return '';
 }
 
-/** Keeps only safe formatting from the rich text editor: no scripts, styles, attributes or event handlers. */
+/**
+ * Keeps only safe formatting from the rich text editor: no scripts, styles, attributes or event handlers.
+ * Tables, dividers and pictures of the media library stay; a picture is accepted only by its media id (data-media), and the tag is rebuilt from it.
+ */
 function pb_sanitize_html(string $html): string
 {
     if (trim($html) === '') {
@@ -97,6 +100,15 @@ function pb_sanitize_html(string $html): string
         return '';
     }
     pb_sanitize_children($body);
+    // blank lines at the end are what the editor keeps after a table or a picture, so there is somewhere to type
+    while ($last = $body->lastChild) {
+        $blank = $last instanceof DOMText ? trim($last->textContent) === ''
+            : $last instanceof DOMElement && in_array(strtolower($last->tagName), ['p', 'div'], true) && trim($last->textContent) === '' && !$last->getElementsByTagName('img')->length;
+        if (!$blank) {
+            break;
+        }
+        $body->removeChild($last);
+    }
     $out = '';
     foreach ($body->childNodes as $child) {
         $out .= $doc->saveHTML($child);
@@ -106,7 +118,8 @@ function pb_sanitize_html(string $html): string
 
 function pb_sanitize_children(DOMNode $node): void
 {
-    static $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 'a', 'ul', 'ol', 'li', 'h2', 'h3', 'blockquote', 'div'];
+    static $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'del', 's', 'a', 'ul', 'ol', 'li', 'h2', 'h3', 'blockquote', 'div', 'hr',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
     static $rename = ['h1' => 'h2', 'pre' => 'p'];
     static $drop = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select',
         'template', 'svg', 'math', 'noscript', 'head', 'title', 'meta', 'link', 'base'];
@@ -117,6 +130,10 @@ function pb_sanitize_children(DOMNode $node): void
         }
         if (!$child instanceof DOMElement || in_array(strtolower($child->tagName), $drop, true)) {
             $node->removeChild($child); // comments, processing instructions, dangerous elements
+            continue;
+        }
+        if (strtolower($child->tagName) === 'img') {
+            pb_sanitize_image($node, $child);
             continue;
         }
         pb_sanitize_children($child);
@@ -144,8 +161,74 @@ function pb_sanitize_children(DOMNode $node): void
         if ($tag === 'a') {
             $href = pb_clean_url($child->getAttribute('href'));
             $href === '' ? $child->removeAttribute('href') : $child->setAttribute('href', $href);
+        } elseif (in_array($tag, ['li', 'td', 'th'], true)) {
+            pb_unwrap_single_paragraph($child);
         }
     }
+}
+
+/** A picture of the media library, rebuilt from its id: whatever else the submitted tag carried (address, handlers, sizes) is ignored. */
+function pb_sanitize_image(DOMNode $parent, DOMElement $img): void
+{
+    $id = $img->getAttribute('data-media');
+    $media = ctype_digit($id) ? pb_media_find((int) $id) : null;
+    if (!$media || !str_starts_with((string) $media['mime'], 'image/')) {
+        $parent->removeChild($img);
+        return;
+    }
+    $alt = trim($img->getAttribute('alt'));
+    foreach (iterator_to_array($img->attributes) as $attr) {
+        $img->removeAttribute($attr->name);
+    }
+    $img->setAttribute('src', pb_media_url($media));
+    $img->setAttribute('alt', pb_limit($alt !== '' ? $alt : (string) $media['alt'], 200));
+    $img->setAttribute('width', (string) (int) $media['width']);
+    $img->setAttribute('height', (string) (int) $media['height']);
+    $img->setAttribute('data-media', (string) (int) $media['id']);
+}
+
+/** A list item or table cell that holds a single paragraph keeps just its text: <li><p>Item</p></li> becomes <li>Item</li>. */
+function pb_unwrap_single_paragraph(DOMElement $cell): void
+{
+    $paragraph = null;
+    foreach ($cell->childNodes as $child) {
+        if ($child instanceof DOMText && trim($child->textContent) === '') {
+            continue;
+        }
+        if ($paragraph || !$child instanceof DOMElement || strtolower($child->tagName) !== 'p') {
+            return;
+        }
+        $paragraph = $child;
+    }
+    if (!$paragraph) {
+        return;
+    }
+    while ($paragraph->firstChild) {
+        $cell->insertBefore($paragraph->firstChild, $paragraph);
+    }
+    $cell->removeChild($paragraph);
+}
+
+/**
+ * Rich text as it is shown: the pictures of the media library get their address, size and loading attributes from the library,
+ * so they follow the site if it moves; a picture deleted from the library disappears. Text without pictures is returned as it is.
+ * $forEditor keeps the media id for the panel's editor; $absolute gives full addresses for the content API.
+ */
+function pb_richtext_html(string $html, bool $forEditor = false, bool $absolute = false): string
+{
+    if (!str_contains($html, 'data-media=')) {
+        return $html;
+    }
+    return (string) preg_replace_callback('~<img\b[^>]*\sdata-media="(\d+)"[^>]*>~', function (array $m) use ($forEditor, $absolute): string {
+        $media = pb_media_find((int) $m[1]);
+        if (!$media) {
+            return '';
+        }
+        $url = pb_media_url($media);
+        $alt = preg_match('~\salt="([^"]*)"~', $m[0], $a) ? $a[1] : e((string) $media['alt']);
+        return sprintf('<img src="%s" alt="%s" width="%d" height="%d"%s>', e($absolute ? pb_content_absolute($url) : $url), $alt,
+            $media['width'], $media['height'], $forEditor ? ' data-media="' . (int) $media['id'] . '"' : ' loading="lazy" decoding="async"');
+    }, $html);
 }
 
 // ------------------------------------------------------------------ reading (templates)
@@ -155,6 +238,33 @@ final class PbGroup
 {
     public function __construct(private array $defs, private array $data)
     {
+    }
+
+    /**
+     * The sections of the page in the order the client chose in the panel. $default is the theme's own order (the section names,
+     * as they are listed in 'sections' of theme.php): names the client has not placed yet come last, in that order.
+     * @return string[]
+     */
+    public function order(array $default): array
+    {
+        $saved = is_array($this->data['_order'] ?? null) ? $this->data['_order'] : [];
+        // the pieces the client added ("block-…") are sections too, when the theme draws them (see pb_sections())
+        $all = empty($this->data['_blocks']) ? $default : [...$default, ...array_map(fn($id) => "block-$id", array_keys(pb_page_blocks($this->data, pb_current_template())))];
+        return array_values(array_unique([...array_intersect($saved, $all), ...$all]));
+    }
+
+    /** A piece the client added, by its name in order() ("block-a1b2c3"): its fields, or null when it is gone or of a kind that does not exist. */
+    public function piece(string $section): ?PbGroup
+    {
+        $block = is_array($this->data['_blocks'] ?? null) ? ($this->data['_blocks'][substr($section, 6)] ?? null) : null;
+        $definition = is_array($block) ? pb_block_type((string) ($block['_type'] ?? '')) : null;
+        return $definition ? new PbGroup($definition['fields'], $block) : null;
+    }
+
+    /** The kind of a piece ('text', 'cards'…), as given by piece(). */
+    public function type(): string
+    {
+        return (string) ($this->data['_type'] ?? '');
     }
 
     /** False when the user switched this section off in the panel. */
@@ -221,7 +331,7 @@ final class PbValue implements Stringable
     public function __toString(): string
     {
         return match ($this->def['type']) {
-            'richtext' => (string) $this->value,
+            'richtext' => pb_richtext_html((string) $this->value),
             'textarea' => nl2br(e((string) $this->value), false),
             'image' => $this->img(),
             'url', 'link', 'email', 'tel' => e($this->url()),
@@ -307,7 +417,8 @@ function pb_field_input(array $def, mixed $value, string $name): string
         'select' => "<select $attrs>" . implode('', array_map(
             fn($key, $label) => '<option value="' . e((string) $key) . '"' . ((string) $key === ($v !== '' ? $v : (string) ($def['default'] ?? '')) ? ' selected' : '') . '>' . e($label) . '</option>',
             array_keys($def['options']), $def['options'])) . '</select>',
-        'richtext' => "<input type=\"hidden\" $attrs value=\"" . e($v) . '"><trix-editor input="' . e($id) . '" class="trix-content" aria-labelledby="' . e($id) . '-label"></trix-editor>',
+        // The panel's editor (core/assets/editor.js) replaces this box; without JavaScript it stays as a box with the text's HTML.
+        'richtext' => "<textarea $attrs rows=\"8\" data-richtext>" . e(pb_richtext_html($v, true)) . '</textarea>',
         'image' => pb_image_input($id, $name, (int) $v),
         'link' => pb_link_input($id, $name, $v),
         default => throw new LogicException("Unknown field type '{$def['type']}'"),
@@ -316,17 +427,45 @@ function pb_field_input(array $def, mixed $value, string $name): string
         . $input . (isset($def['help']) ? '<p class="help">' . e($def['help']) . '</p>' : '') . '</div>';
 }
 
-/** A section: a collapsible box, optionally with a "show on the site" switch. */
-function pb_group_input(array $def, array $data, string $name): string
+/** The handle of a section of the page: drag it, or focus it and use the arrow keys (core/assets/studio.js). */
+function pb_section_grip(string $label): string
+{
+    return '<button type="button" class="pb-grip" data-grip aria-label="' . e(sprintf(__('Mover a seção "%s"'), $label)) . '" title="'
+        . e(__('Arraste para mudar a posição. Com o teclado: setas para cima e para baixo.')) . '">' . pb_admin_icon('grip-vertical') . '</button>';
+}
+
+/**
+ * The tools of a row of the page's list, beside its box (never inside the <summary>: a button in there is not reachable for everyone): the handle to
+ * move it, and $actions (copy, remove, the "+": pb_row_actions()).
+ */
+function pb_row_tools(string $label, string $actions = ''): string
+{
+    return '<div class="pb-row-tools">' . pb_section_grip($label) . $actions . '</div>';
+}
+
+/**
+ * A section: a collapsible box, optionally with a "show on the site" switch. With $section (its name) it is a row the client can move: a handle
+ * beside it, and its place in the order goes with the form (f[_order][]). $actions: more tools for the row (copy, the "+": pb_row_actions()).
+ */
+function pb_group_input(array $def, array $data, string $name, string $section = '', string $actions = ''): string
 {
     $visible = ($data['_visible'] ?? true) !== false;
     $switch = empty($def['toggle']) ? '' : '<label class="switch"><input type="hidden" name="' . e($name) . '[_visible]" value="0">'
         . '<input type="checkbox" name="' . e($name) . '[_visible]" value="1"' . ($visible ? ' checked' : '') . '> '
         . e(__('Mostrar esta seção no site')) . '</label>';
-    return '<details class="pb-group"' . ($visible || empty($def['toggle']) ? ' open' : '') . '>'
-        . '<summary>' . e($def['label'] ?? '') . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>'
+    // a top-level group is known to the page editor by its name, so a click on that part of the page can open it
+    $group = preg_match('/^f\[([a-z0-9_]+)\]$/i', $name, $m) ? ' data-group="' . e($m[1]) . '"' : '';
+    $summary = '<summary><span class="pb-section-name">' . e($def['label'] ?? '') . '</span>'
+        . (empty($def['toggle']) || $visible ? '' : ' <span class="badge muted">' . e(__('oculta')) . '</span>') . '</summary>';
+    $body = ($section !== '' ? '<input type="hidden" name="f[_order][]" value="' . e($section) . '">' : '')
         . (isset($def['help']) ? '<p class="help">' . e($def['help']) . '</p>' : '')
-        . $switch . pb_field_inputs($def['fields'], $data, $name) . '</details>';
+        . $switch . pb_field_inputs($def['fields'], $data, $name);
+    if ($section === '') {
+        return '<details class="pb-group"' . $group . ($visible || empty($def['toggle']) ? ' open' : '') . '>' . $summary . $body . '</details>';
+    }
+    // a section of the page starts closed: a short row to drag, opened to edit
+    return '<div class="pb-section" data-section="' . e($section) . '" data-sort="' . e($section) . '"' . $group . ' data-tools="' . substr_count($actions, 'class="pb-row-btn') . '">'
+        . pb_row_tools((string) ($def['label'] ?? ''), $actions) . '<details class="pb-section-box">' . $summary . $body . '</details></div>';
 }
 
 function pb_list_input(array $def, mixed $items, string $name): string

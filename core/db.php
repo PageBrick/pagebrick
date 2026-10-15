@@ -114,6 +114,10 @@ function pb_migrations(): array
         7 => [
             'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN prefs TEXT NULL',
         ],
+        // The changes of a published page that are not published yet wait in its draft (see pb_page_save_draft).
+        8 => [
+            'ALTER TABLE ' . pb_table('pages') . ' ADD COLUMN draft MEDIUMTEXT NULL, ADD COLUMN draft_at DATETIME NULL',
+        ],
     ];
 }
 

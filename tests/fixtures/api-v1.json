@@ -579,6 +579,66 @@
             ],
             "returns": "string"
         },
+        "pb_section": {
+            "params": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "html",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_sections": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "PbGroup",
+                    "optional": false
+                },
+                {
+                    "name": "names",
+                    "type": "array",
+                    "optional": false
+                },
+                {
+                    "name": "render",
+                    "type": "callable",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_block": {
+            "params": [
+                {
+                    "name": "page",
+                    "type": "PbGroup",
+                    "optional": false
+                },
+                {
+                    "name": "section",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
+        "pb_youtube_id": {
+            "params": [
+                {
+                    "name": "url",
+                    "type": "string",
+                    "optional": false
+                }
+            ],
+            "returns": "string"
+        },
         "pb_theme_url": {
             "params": [
                 {
@@ -896,6 +956,30 @@
     },
     "classes": {
         "PbGroup": {
+            "order": {
+                "params": [
+                    {
+                        "name": "default",
+                        "type": "array",
+                        "optional": false
+                    }
+                ],
+                "returns": "array"
+            },
+            "piece": {
+                "params": [
+                    {
+                        "name": "section",
+                        "type": "string",
+                        "optional": false
+                    }
+                ],
+                "returns": "?PbGroup"
+            },
+            "type": {
+                "params": [],
+                "returns": "string"
+            },
             "visible": {
                 "params": [],
                 "returns": "bool"
@@ -989,7 +1073,9 @@
         "head_html",
         "footer_html",
         "sitemap_urls",
-        "link_targets"
+        "link_targets",
+        "admin_bar",
+        "live_stamp"
     ],
     "standard": {
         "menus.footer": "menu",

@@ -7,3 +7,4 @@
 !/content/backups/.htaccess
 /.dev/
 /tools/readme-film/frames/
+/tools/editor/node_modules/

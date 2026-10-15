@@ -47,13 +47,15 @@ Los campos son los mismos que muestra el panel: el [contenido estándar](temas.m
 | Tipo de campo | En JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | el texto tal como se escribió (un `select` da la clave de la opción) |
-| `richtext` | HTML, ya limpio desde que se guardó |
+| `richtext` | HTML, ya limpio desde que se guardó; las imágenes llevan la dirección completa |
 | `image` | `{url, thumb, alt, width, height}` con direcciones completas, o `null` |
 | `link` | una página del sitio como ruta (`"/nosotros"`, `"/"` para la página de inicio); cualquier otro enlace tal como se escribió (`"https://…"`) |
 | `list` | un array de objetos |
 | `group` | un objeto, o `null` cuando el cliente ocultó esa sección |
 
 Los campos de contraseña nunca se incluyen.
+
+**Orden y secciones añadidas.** Cuando el cliente eligió un orden para las secciones de una página, la página también trae `section_order` (los nombres, en ese orden). Las secciones que el cliente añadió en el panel vienen en `blocks`, solo las que están en el sitio, en orden: `{"id": "block-a1b2c3", "type": "cards", "fields": {…}}`. `type` es uno de `text`, `image_text`, `cards`, `faq`, `testimonials`, `cta`, `numbers`, `gallery` o `video`, y `fields` son valores como en la tabla de arriba. Una página sin nada de esto no tiene ninguna de las dos claves.
 
 ## Cómo usarla
 

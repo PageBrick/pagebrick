@@ -47,13 +47,15 @@ Os campos são os mesmos que o painel mostra: o [conteúdo padrão](temas.md#con
 | Tipo de campo | No JSON |
 |---|---|
 | `text`, `textarea`, `email`, `tel`, `url`, `color`, `select` | o texto como foi digitado (um `select` entrega a chave da opção) |
-| `richtext` | HTML, já limpo quando foi salvo |
+| `richtext` | HTML, já limpo quando foi salvo; as imagens vêm com endereço completo |
 | `image` | `{url, thumb, alt, width, height}` com endereços completos, ou `null` |
 | `link` | uma página do site como caminho (`"/sobre"`, `"/"` para a página inicial); qualquer outro link como foi digitado (`"https://…"`) |
 | `list` | um array de objetos |
 | `group` | um objeto, ou `null` quando o cliente escondeu aquela seção |
 
 Campos de senha nunca são incluídos.
+
+**Ordem e seções adicionadas.** Quando o cliente escolheu uma ordem para as seções de uma página, a página também traz `section_order` (os nomes, nessa ordem). As seções que o cliente adicionou no painel vêm em `blocks`, só as que estão no site, em ordem: `{"id": "block-a1b2c3", "type": "cards", "fields": {…}}`. `type` é um entre `text`, `image_text`, `cards`, `faq`, `testimonials`, `cta`, `numbers`, `gallery` ou `video`, e `fields` são valores como na tabela acima. Uma página sem nada disso não tem nenhuma das duas chaves.
 
 ## Como usar
 

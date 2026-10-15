@@ -72,10 +72,18 @@
     });
 
     const dialog = document.getElementById('pb-media');
-    let picking = null; // the image field waiting for a choice
+    let picking = null; // what is waiting for a choice: an image field, or {callback} from the text editor
+    // The text editor asks for a picture of the library through this: callback({id, thumb, alt}).
+    window.pbPickImage = (callback) => {
+        if (!dialog) return;
+        picking = {callback};
+        dialog.showModal();
+    };
 
     const setImage = (box, id, thumb) => {
-        box.querySelector('input[type=hidden]').value = id;
+        const field = box.querySelector('input[type=hidden]');
+        field.value = id;
+        field.dispatchEvent(new Event('input', {bubbles: true})); // the page editor refreshes its preview and saves its draft
         const preview = box.querySelector('[data-preview]');
         preview.replaceChildren();
         if (thumb) {
@@ -95,6 +103,7 @@
         const box = event.target.closest('[data-link]');
         if (box) syncLink(box);
     });
+    document.addEventListener('pb:added', (event) => event.target.querySelectorAll?.('[data-link]').forEach(syncLink)); // fields that came with a new section
 
     document.addEventListener('click', (event) => {
         // The menus of the header (notices, account) close when clicking anywhere else.
@@ -110,20 +119,27 @@
             const items = list.querySelector(':scope > [data-items]');
             items.insertAdjacentHTML('beforeend', html);
             items.lastElementChild.querySelectorAll('[data-link]').forEach(syncLink);
+            items.lastElementChild.dispatchEvent(new CustomEvent('pb:added', {bubbles: true})); // the text editor mounts on its fields
+            items.dispatchEvent(new Event('input', {bubbles: true}));
             items.lastElementChild.querySelector('input, textarea, select')?.focus();
         } else if (button.matches('[data-remove]')) {
+            const items = item.parentElement;
             item.remove();
+            items.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-up]') && item.previousElementSibling) {
             item.previousElementSibling.before(item);
+            item.parentElement.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-down]') && item.nextElementSibling) {
             item.nextElementSibling.after(item);
+            item.parentElement.dispatchEvent(new Event('input', {bubbles: true}));
         } else if (button.matches('[data-pick]') && dialog) {
             picking = button.closest('[data-image]');
             dialog.showModal();
         } else if (button.matches('[data-clear]')) {
             setImage(button.closest('[data-image]'), '', '');
         } else if (button.matches('[data-media-id]') && picking) {
-            setImage(picking, button.dataset.mediaId, button.dataset.thumb);
+            if (picking.callback) picking.callback({id: button.dataset.mediaId, thumb: button.dataset.thumb, alt: button.dataset.alt || ''});
+            else setImage(picking, button.dataset.mediaId, button.dataset.thumb);
             dialog.close();
         } else if (button.matches('[data-close]')) {
             dialog.close();
@@ -162,7 +178,7 @@
     });
 
     document.addEventListener('submit', (event) => {
-        const message = event.target.dataset.confirm;
+        const message = event.submitter?.dataset.confirm ?? event.target.dataset.confirm;
         if (message && !confirm(message)) event.preventDefault();
     });
 

@@ -106,7 +106,7 @@ You can add fields, page types, settings and menus; you can't remove or change t
 
 The settings you add show under **Contact**, the screen anyone who edits the site can open. A group about the look (colors, typography) can ask for **Settings → Appearance**, which only administrators open, with `'screen' => 'appearance'`.
 
-**Field types:** `text`, `textarea`, `richtext` (a small editor; HTML cleaned when saved), `image`, `url`, `email`, `tel`, `color`, `select` (with `'options' => ['value' => 'Label']`), `link` (a page of the site or any address), `list` (repeatable items, with `fields`), `group` (with `fields`; `'toggle' => true` lets the client hide it). Every field takes `label`, `help` and `default`.
+**Field types:** `text`, `textarea`, `richtext` (a text editor: headings, bold, italic, lists, quotes, links, tables, dividers and pictures from the media library; the HTML is cleaned when saved), `image`, `url`, `email`, `tel`, `color`, `select` (with `'options' => ['value' => 'Label']`), `link` (a page of the site or any address), `list` (repeatable items, with `fields`), `group` (with `fields`; `'toggle' => true` lets the client hide it). Every field takes `label`, `help` and `default`.
 
 Need helper functions? Put them in a file and `require_once __DIR__ . '/functions.php';` at the top of `theme.php`.
 
@@ -169,6 +169,18 @@ Printing a field with `<?= ?>` is always safe: text is escaped, rich text was cl
 
 With `'debug' => true` in `config.php`, reading a field that doesn't exist raises a warning, so typos show up while you develop.
 
+### Rich text: style what your client can write
+
+A `richtext` field can hold paragraphs, `h2`/`h3`, `strong`, `em`, `u`, `s`, `a`, lists, `blockquote`, `hr`, `table` (with `thead`/`tbody`, `tr`, `th`, `td`) and `img`. The core adds no CSS, so print it inside a container of yours and style these elements there, tables and pictures included:
+
+```css
+.prose img { max-width: 100%; height: auto; }
+.prose table { display: block; overflow-x: auto; border-collapse: collapse; } /* a wide table scrolls inside the text */
+.prose th, .prose td { padding: .5rem .75rem; border: 1px solid #ddd; }
+```
+
+Pictures come only from the media library: PageBrick writes the `<img>` itself (with `alt`, `width`, `height` and lazy loading), so it keeps working if the site moves. Text written before PageBrick 1.3 (with `div` and `br`) is shown exactly as it was saved.
+
 ### Helpers
 
 | Function | Use |
@@ -186,6 +198,80 @@ With `'debug' => true` in `config.php`, reading a field that doesn't exist raise
 | `pb_locale()`, `pb_date($datetime)`, `__('text')` | language and dates of the site |
 
 The complete list of what themes and plugins may rely on is [core/api.php](../../core/api.php). Anything else, even if it starts with `pb_`, is internal and may change.
+
+## Letting the client reorder the sections
+
+In the page editor the client sees the page beside the form, changes it, drags sections to a new place (in the list or on the page itself) and only then clicks **Publish**; until then visitors keep seeing the published version. The ordering is up to your theme, in two steps, and a theme that does nothing keeps its own fixed order (nothing breaks):
+
+1. List the sections in `theme.php`, under the template's `'sections'`. Each one is the name of a `group` field of that template (the standard `hero`, `about`… of the home page, or your own groups), or `'plugins'`, the place where plugins add their sections with `pb_slot('home')`.
+2. Print them in the client's order in the template: `$page->order($names)` gives your names in that order (the ones the client has not placed yet come last), and `pb_section($name, $html)` returns your HTML exactly as it is for visitors, only marking the section while the client edits so it can be picked and dragged on the page.
+
+```php
+// theme.php: the sections of the home page the client may put in any order
+return [
+    'templates' => [
+        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+    ],
+];
+```
+
+```php
+<?php // templates/home.php
+foreach ($page->order(['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']) as $section) {
+    echo pb_section($section, pb_include(__DIR__ . "/parts/home-$section.php", ['page' => $page, 'title' => $title]));
+}
+```
+
+Fields that are not listed (a hero that always stays on top, say) are printed wherever you print them. The content API adds `section_order` to a page only when the client chose an order. While the client edits, the page in the preview has class `pb-editing` on `<html>`: use it to switch off what waits for a scroll to show itself (fade-ins, entrance animations), because sections are replaced there while they are being looked at.
+
+For a theme that must also run on a PageBrick older than 1.3, check `method_exists($page, 'order')` and `function_exists('pb_section')` first.
+
+## Letting the client add sections
+
+Besides moving the sections you made, the client can **add** more: text, photo with text, cards, questions and answers, testimonials, call to action, numbers, photo gallery and YouTube video. In the page editor an **Add section** button, and a "+" between the sections (in the list and on the page itself), open a gallery with a drawing of each kind; the client can also duplicate a section or remove one (with **Undo**). The core keeps them with the page and prints them as **plain HTML with no CSS and no script**, with stable class names: the look is your job, in your theme.
+
+1. Turn them on in `theme.php`, for each page type that should have them: `'blocks' => true` for every kind, or a list such as `'blocks' => ['text', 'cards']`. A theme that does not say it gets none, and nothing changes.
+2. Print the page with `pb_sections($page, $names, $render)`. It goes through the sections in the order the client chose, calls your `$render($name)` for each name of yours and prints each section the client added, marking all of them while the client edits.
+
+```php
+// theme.php
+return ['templates' => [
+    'page' => ['sections' => ['content'], 'blocks' => true], // 'content': what the template's own fields print (title, text…)
+    'home' => [
+        'sections' => ['hero', 'about' => 'image_text', 'services' => 'cards', 'cta' => 'cta'],
+        'blocks' => true,
+    ],
+]];
+```
+
+```php
+<?php // templates/page.php
+echo pb_sections($page, ['content'], fn($name) => pb_include(__DIR__ . '/parts/page-content.php', ['page' => $page, 'title' => $title]));
+```
+
+A name with a kind (`'about' => 'image_text'`) says that your section holds the same thing as that kind of section: the panel then offers **Duplicate** on it, and the copy is a section the client can also remove. A name without a kind (`'hero'`) cannot be copied. `'content'` is the name to give to what the template's own fields print (the title, the introduction, the text), so the client can put sections before it too.
+
+### What each kind prints
+
+Each one is a `<section class="pb-block pb-block-{kind}">` with an `h2` when it has a title; what is empty is left out.
+
+| Kind | Fields | Inside |
+|---|---|---|
+| `text` | `title`, `text` | `.pb-block-body` |
+| `image_text` | `title`, `text`, `image`, `side` (`left` or `right`) | `.pb-block-image` and `.pb-block-words`, in the order seen; class `pb-side-left` or `pb-side-right` |
+| `cards` | `title`, `intro`, `items` (`title`, `text`, `image`, `link`), `link_label`, `link` | `ul.pb-cards > li.pb-card` |
+| `faq` | `title`, `items` (`question`, `answer`) | `details.pb-faq-item`: the browser's own, no script |
+| `testimonials` | `title`, `items` (`quote`, `name`, `role`) | `figure.pb-quote` |
+| `cta` | `title`, `text`, `button_label`, `button_link` | `a.pb-button` |
+| `numbers` | `title`, `items` (`value`, `label`) | `ul.pb-numbers > li.pb-number` |
+| `gallery` | `title`, `items` (`image`, `caption`) | `ul.pb-gallery` with a `figure` each |
+| `video` | `title`, `url`, `caption` | `figure.pb-video > iframe` from youtube-nocookie.com; only the video's id is ever taken from a YouTube address (`pb_youtube_id()`) |
+
+### Drawing one your own way
+
+Put a file named after the kind in `templates/blocks/` of your theme (`templates/blocks/cards.php`). It runs with `$block` (its fields, read like `$page`: `$block->title`, `$block->items`), `$type`, `$id` and `$page`. A kind without a file of yours is drawn by the core; copy one from `core/blocks/` to start.
+
+The sections live in the page's data, so a theme that does not turn them on hides them, and switching back brings them back. The content API lists the ones on the site in `blocks` (each one `{id, type, fields}`), and `section_order` names them `block-{id}`. For a theme that must also run on a PageBrick older than 1.3, check `function_exists('pb_sections')` first.
 
 ## Replacing a plugin's templates
 

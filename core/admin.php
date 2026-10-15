@@ -23,6 +23,8 @@ function pb_admin(string $method, string $path): void
         'GET /admin/pages/edit' => ['editor', 'pb_admin_page_edit'],
         'POST /admin/pages/edit' => ['editor', 'pb_admin_page_save'],
         'POST /admin/pages/preview' => ['editor', 'pb_admin_page_preview'],
+        'POST /admin/pages/autosave' => ['editor', 'pb_admin_page_autosave'],
+        'POST /admin/pages/section' => ['editor', 'pb_admin_page_section'],
         'POST /admin/pages/delete' => ['editor', 'pb_admin_page_delete'],
         'POST /admin/pages/home' => ['editor', 'pb_admin_page_home'],
         'POST /admin/pages/translate' => ['editor', 'pb_admin_page_translate'],
@@ -33,6 +35,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/media/delete' => ['editor', 'pb_admin_media_delete'],
         'GET /admin/menus' => ['editor', 'pb_admin_menus'],
         'POST /admin/menus' => ['editor', 'pb_admin_menus_save'],
+        'POST /admin/menus/autosave' => ['editor', 'pb_admin_menus_autosave'],
+        'POST /admin/menus/preview' => ['editor', 'pb_admin_menus_preview'],
         'GET /admin/settings' => ['editor', 'pb_admin_settings'],
         'POST /admin/settings' => ['editor', 'pb_admin_settings_save'],
         'GET /admin/appearance' => ['admin', 'pb_admin_appearance'],
@@ -250,11 +254,20 @@ function pb_admin_page_edit(?array $page = null, ?string $error = null): void
         pb_admin_not_found();
         return;
     }
+    if (!isset($page['has_draft'])) {
+        // what is edited is the draft over the live content; after an error, what was typed (which already carries it)
+        $page = $error === null ? pb_page_working_copy($page) : $page + ['has_draft' => ($page['status'] ?? '') === 'published' && is_array($page['draft'] ?? null)];
+    }
+    $sections = pb_page_sections($page);
     pb_render('page-edit', [
         'title' => $page['title'],
         'editor' => true,
+        'studio' => true,
         'page' => $page,
-        'fields' => pb_template_fields($page['template']),
+        'sections' => $sections,
+        'pieceTypes' => pb_template_blocks($page['template']),
+        'fields' => array_diff_key(pb_template_fields($page['template']), $sections), // the sections are listed apart, in the order the page has
+        'draftAt' => $page['has_draft'] && !empty($page['draft_at']) ? pb_date($page['draft_at'], true) : '',
         'templateLabel' => pb_theme()['templates'][$page['template']]['label'] ?? $page['template'],
         'isHome' => $page['id'] === pb_home_page_id(),
         'fixedAddress' => pb_page_is_home($page),
@@ -266,11 +279,26 @@ function pb_admin_page_edit(?array $page = null, ?string $error = null): void
     ]);
 }
 
+/** The editor's buttons: save the draft (the default), publish, throw the draft away, take the page off the site. */
 function pb_admin_page_save(): void
 {
     $id = (int) pb_post('id');
+    $action = pb_post('action');
+    $saved = '';
     try {
-        pb_page_save($id, $_POST, pb_current_user_id());
+        switch ($action) {
+            case 'publish':
+                pb_page_publish($id, $_POST, pb_current_user_id());
+                break;
+            case 'discard':
+                pb_page_discard_draft($id);
+                break;
+            case 'unpublish':
+                pb_page_unpublish($id, pb_current_user_id());
+                break;
+            default:
+                $saved = pb_page_save_draft($id, $_POST, pb_current_user_id());
+        }
     } catch (InvalidArgumentException $e) {
         $page = pb_page_find($id);
         if (!$page) {
@@ -279,14 +307,40 @@ function pb_admin_page_save(): void
         }
         http_response_code(422);
         // Show what the user typed, not what is saved, so nothing is lost.
-        $page = array_merge($page, ['title' => pb_post('title'), 'slug' => pb_post('slug'), 'status' => pb_post('status'),
+        $page = array_merge($page, ['title' => pb_post('title'), 'slug' => pb_post('slug'),
             'seo_title' => pb_post('seo_title'), 'seo_description' => pb_post('seo_description'),
-            'data' => pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? [])]);
+            'data' => pb_page_collect_data($page['template'], $_POST['f'] ?? [])]);
         pb_admin_page_edit($page, $e->getMessage());
         return;
     }
-    pb_flash('ok', __('Página salva.'));
+    pb_flash('ok', match (true) {
+        $action === 'publish' => __('Página publicada. Os visitantes já veem esta versão.'),
+        $action === 'discard' => __('Alterações descartadas. A página voltou à versão publicada.'),
+        $action === 'unpublish' => __('A página saiu do ar e virou rascunho.'),
+        $saved === 'draft' => __('Rascunho salvo. O site continua como está até você publicar.'),
+        default => __('Rascunho salvo.'),
+    });
     pb_redirect("/admin/pages/edit?id=$id");
+}
+
+/** The editor saves the draft by itself a moment after each change: answers JSON for the screen to show "saved at…". */
+function pb_admin_page_autosave(): void
+{
+    $id = (int) pb_post('id');
+    try {
+        $where = pb_page_save_draft($id, $_POST, pb_current_user_id(), pb_post('explicit') !== '1'); // the timer is quiet; the button keeps a version
+    } catch (InvalidArgumentException $e) {
+        pb_json(['ok' => false, 'error' => $e->getMessage()]);
+    }
+    $page = pb_page_find($id);
+    pb_json(['ok' => true, 'where' => $where, 'hasDraft' => $where === 'draft' && is_array($page['draft'] ?? null), 'at' => pb_locale() === 'en' ? date('g:i A') : date('H:i')]);
+}
+
+/** "Add a section" and "Duplicate this section": answers JSON with the row to put in the list (nothing is saved until the form is). */
+function pb_admin_page_section(): void
+{
+    $answer = pb_piece_response($_POST);
+    pb_json($answer, $answer['ok'] ? 200 : 422);
 }
 
 /** Shows the page with the form's current content, without saving. */
@@ -300,10 +354,30 @@ function pb_admin_page_preview(): void
     try {
         $page = pb_page_from_input($page, $_POST);
     } catch (InvalidArgumentException) {
-        $page['data'] = pb_collect_fields(pb_template_fields($page['template']), $_POST['f'] ?? []);
+        $page['data'] = pb_page_collect_data($page['template'], $_POST['f'] ?? []);
     }
+    $_SERVER['REQUEST_URI'] = pb_page_url($page); // the page is the current one in its menu, as on the site
     $GLOBALS['pb_public_request'] = true; // rendered exactly like the site (the theme's copies of plugin templates too)
-    echo pb_render_page($page, true);
+    // The split screen asks for the sections to be marked, and gets the script that lets them be picked and dragged on the page.
+    $organizing = pb_post('organizer') === '1';
+    $GLOBALS['pb_organizer'] = $organizing;
+    $html = pb_render_page($page, true);
+    echo $organizing ? pb_organizer_frame($html, $page) : $html;
+}
+
+/** The preview page with the organizer's script before </body> (the script only runs inside the editor's frame). */
+function pb_organizer_frame(string $html, array $page): string
+{
+    $sections = pb_page_sections($page);
+    // every group of the page has a name to show; only the sections the theme lets move get the handle
+    $labels = array_map(fn($def) => (string) ($def['label'] ?? ''), array_filter(pb_template_fields($page['template']), fn($def) => ($def['type'] ?? '') === 'group'));
+    $labels = array_map(fn($s) => $s['label'], $sections) + $labels;
+    $texts = ['drag' => __('Arraste para mudar a posição'), 'edit' => __('Clique para editar'), 'add' => __('Adicionar uma seção aqui')];
+    $script = '<script>window.PB_FRAME = ' . json_encode(['labels' => $labels, 'movable' => array_keys($sections), 'canAdd' => pb_template_blocks($page['template']) !== [], 'texts' => $texts],
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';'
+        . (string) file_get_contents(PB_ROOT . '/core/assets/studio-frame.js') . '</script>';
+    $at = strripos($html, '</body>');
+    return $at === false ? $html . $script : substr($html, 0, $at) . $script . substr($html, $at);
 }
 
 /** Starts (or opens) the translation of a page into an extra language. */
@@ -414,17 +488,59 @@ function pb_admin_media_delete(): void
 
 function pb_admin_menus(): void
 {
-    pb_render('menus', ['title' => __('Menus'), 'editor' => true, 'locations' => pb_theme()['menus']]);
+    $home = pb_home_page_id();
+    pb_render('menus', [
+        'title' => __('Menus'),
+        'studio' => true,
+        'locations' => pb_theme()['menus'],
+        'hasDraft' => pb_menus_draft() !== null,
+        // the pages the site can be looked at on (the menu is on all of them; which one is current changes)
+        'previewPages' => array_values(array_filter(pb_page_list(), fn($p) => $p['status'] === 'published' && $p['translation_of'] === null && $p['locale'] === pb_site_locale())),
+        'homeId' => $home,
+    ]);
 }
 
+/** The buttons of the menus screen: publish, throw the draft away, or (the default) save it. */
 function pb_admin_menus_save(): void
 {
     $input = is_array($_POST['menu'] ?? null) ? $_POST['menu'] : [];
-    foreach (array_keys(pb_theme()['menus']) as $location) {
-        pb_save_menu($location, $input[$location] ?? []);
+    $action = pb_post('action');
+    if ($action === 'publish') {
+        pb_menus_publish($input);
+        pb_flash('ok', __('Menus publicados. Os visitantes já veem esta versão.'));
+    } elseif ($action === 'discard') {
+        pb_menus_discard_draft();
+        pb_flash('ok', __('Alterações descartadas. Os menus voltaram à versão publicada.'));
+    } else {
+        pb_menus_save_draft($input);
+        pb_flash('ok', __('Rascunho salvo. O site continua como está até você publicar.'));
     }
-    pb_flash('ok', __('Menus salvos.'));
     pb_redirect('/admin/menus');
+}
+
+/** The menus save their draft by themselves a moment after each change (JSON for the screen to show "saved at…"). */
+function pb_admin_menus_autosave(): void
+{
+    $hasDraft = pb_menus_save_draft(is_array($_POST['menu'] ?? null) ? $_POST['menu'] : []);
+    pb_json(['ok' => true, 'where' => 'draft', 'hasDraft' => $hasDraft, 'at' => pb_locale() === 'en' ? date('g:i A') : date('H:i')]);
+}
+
+/** A page of the site drawn with the menus as typed in the form (nothing is saved): the page beside the menus. */
+function pb_admin_menus_preview(): void
+{
+    $page = pb_page_find((int) pb_post('page')) ?? pb_page_find(pb_home_page_id());
+    if (!$page || $page['status'] !== 'published') {
+        $page = pb_page_find(pb_home_page_id());
+    }
+    if (!$page) {
+        pb_admin_not_found();
+        return;
+    }
+    $_SERVER['REQUEST_URI'] = pb_page_url($page); // so the page that is looked at is the current one in its menu
+    $GLOBALS['pb_menu_preview'] = pb_menus_collect(is_array($_POST['menu'] ?? null) ? $_POST['menu'] : []);
+    $GLOBALS['pb_public_request'] = true;
+    $GLOBALS['pb_organizer'] = false; // here the menus are what is edited: the page's sections are not marked, so the preview offers nothing to drag
+    echo pb_organizer_frame(pb_render_page($page, true), $page);
 }
 
 // The site settings are two screens: "Contato" (whoever edits the site) and "Aparência" (administrators, under Configurações).

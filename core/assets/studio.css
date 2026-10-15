@@ -1,0 +1,196 @@
+/* The page editor: the form on the left, the page as visitors will see it on the right (core/views/page-edit.php, core/assets/studio.js). */
+
+/* The page takes the room of the list of screens (it comes back on a narrow screen, where the header's button opens it). */
+@media (min-width: 861px) { .studio .side { display: none; } }
+.app main.studio-main { max-width: none; padding: 0; }
+.studio-form { display: flex; flex-direction: column; height: calc(100vh - var(--header-h)); height: calc(100dvh - var(--header-h)); }
+
+/* The bar: where you are, what state the page is in, and the two buttons that matter. */
+.studio-bar { position: relative; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; padding: .6rem 1rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.studio-crumb { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; min-width: 0; }
+.studio-back { display: inline-flex; align-items: center; gap: .35rem; color: var(--muted); font-weight: 500; text-decoration: none; }
+.studio-back:hover { color: var(--text); }
+.studio-back .ico { width: 1rem; height: 1rem; }
+.studio-title { max-width: 26ch; margin: 0; overflow: hidden; font-size: 1.05rem; text-overflow: ellipsis; white-space: nowrap; }
+.studio-note { flex: 1; margin: 0; color: var(--muted); font-size: .85rem; text-align: right; }
+.studio-note.problem { color: var(--err); }
+.studio-actions { display: flex; align-items: center; gap: .5rem; }
+.studio-actions > button { margin: 0; padding: .5rem 1rem; }
+.studio-actions > button .ico { width: 1rem; height: 1rem; }
+.studio-more { position: relative; }
+.studio-more > div { right: 0; }
+.studio-more [hidden] { display: none !important; }
+
+/* Narrow screens: one thing at a time, with tabs to go from the form to the page. */
+.studio-tabs { display: none; gap: .25rem; padding: .4rem 1rem 0; background: var(--card); border-bottom: 1px solid var(--line); }
+.studio-tabs button { margin: 0 0 -1px; padding: .5rem 1rem; border: 1px solid transparent; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: transparent; color: var(--muted); font-weight: 600; }
+.studio-tabs button[aria-selected="true"] { border-color: var(--line); border-bottom-color: var(--bg); background: var(--bg); color: var(--text); }
+
+/* The form, the divider and the page. The form's share is a percentage (--studio-left, moved by the divider), never smaller than 20rem nor leaving the page less than 20rem. */
+.studio-body { --studio-left: 40%; display: grid; flex: 1; grid-template-columns: clamp(20rem, var(--studio-left), calc(100% - 20rem - 10px)) 10px minmax(0, 1fr); min-height: 0; }
+.studio-edit { min-width: 0; padding: 1rem 1.25rem 4rem; overflow-y: auto; container-type: inline-size; }
+.studio-edit > .card:first-of-type { margin-top: 0; }
+.studio-intro { margin: 0 0 .9rem; }
+.studio-meta { margin: 0 0 .75rem; }
+.studio-edit .pb-rt-toolbar { top: 0; } /* the toolbar of the text editor stays under the bar, inside this column */
+
+/* The menus: a card for each, with rows that are dragged to a new place. */
+.menu-card { margin: 0 0 1rem; padding: 1rem 1rem 1.1rem; }
+.menu-card-head h2 { margin: 0; font-size: 1.05rem; }
+.menu-card-head .help { margin: .15rem 0 0; }
+.menu-list { margin: .8rem 0 0; padding: 0; border: 0; min-width: 0; }
+.menu-items { display: grid; gap: .4rem; }
+.menu-cols { margin-bottom: .35rem; }
+/* One line for each item: handle, text, where it leads, remove. The columns are named once, above (the labels are still there for a screen reader). */
+.menu-cols, .menu-row { display: grid; grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1.3fr) 2.25rem; align-items: start; gap: .5rem; }
+.menu-cols { padding: 0 .5rem; color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .02em; }
+.menu-cols span { padding-left: .1rem; }
+.menu-row { padding: .45rem .5rem; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: border-color .15s; }
+.menu-row:focus-within, .menu-row:hover { border-color: var(--line-strong); }
+.menu-row .pb-grip { margin-top: .15rem; }
+.menu-field { min-width: 0; }
+.menu-field input, .menu-field select { padding: .5rem .65rem; }
+.menu-field .pb-link { grid-template-columns: minmax(0, 1fr); gap: .35rem; }
+.menu-note { grid-column: 2 / -1; display: flex; align-items: center; gap: .4rem; margin: 0; color: var(--warn); font-size: .82rem; }
+.menu-note .ico { width: 1rem; height: 1rem; flex: none; }
+.icon-btn.menu-remove { margin: .1rem 0 0; color: var(--muted); }
+.icon-btn.menu-remove:hover { background: var(--err-bg); color: var(--err); }
+.menu-empty { display: none; margin: .25rem 0 0; font-size: .9rem; }
+.menu-list:not(:has([data-menu-item])) .menu-empty { display: block; }
+.menu-add { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-top: .75rem; }
+.menu-add > button { margin: 0; padding: .45rem .9rem; }
+.menu-add .ico { width: 1rem; height: 1rem; }
+.menu-quick { margin: 0; }
+.menu-quick select { width: auto; max-width: 100%; padding: .45rem .65rem; color: var(--muted); }
+/* A narrow form: the text and the destination go on two lines, and the column names go (the placeholders say what each box is). */
+@container (max-width: 26rem) {
+    .menu-cols { display: none; }
+    .menu-row { grid-template-columns: 2rem minmax(0, 1fr) 2.25rem; }
+    .menu-row .pb-grip { grid-row: 1 / span 2; }
+    .menu-field-text { grid-column: 2; }
+    .menu-field-link { grid-column: 2; grid-row: 2; }
+    .menu-remove { grid-column: 3; grid-row: 1 / span 2; }
+    .menu-note { grid-column: 2 / -1; }
+}
+.studio-preview-page { margin: 0; }
+.studio-preview-page select { width: auto; max-width: 14rem; padding: .3rem .5rem; font-size: .85rem; }
+
+/* The sections of the page: rows that open to show their fields, and move. */
+.pb-sections-box { margin: 1.5rem 0 1rem; }
+.pb-sections-box h2 { margin: 0 0 .25rem; font-size: 1.05rem; }
+.pb-sections { display: grid; gap: .5rem; margin-top: .75rem; }
+/* A row is a box (the <details>) with its tools beside it (the handle, copy, remove, "+"): a button inside a <summary> is not reachable for everyone. */
+.pb-section { position: relative; --row-right: 2.2rem; margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.pb-section[data-tools="1"] { --row-right: 4.3rem; }
+.pb-section[data-tools="2"] { --row-right: 6.4rem; }
+.pb-section-box { padding-bottom: .25rem; }
+.pb-section-box > summary { position: relative; display: flex; align-items: center; gap: .4rem; min-height: 3.1rem; padding: .5rem var(--row-right) .5rem 3rem; cursor: pointer; list-style: none; }
+.pb-section-box > summary::-webkit-details-marker { display: none; }
+.pb-section-box > summary::after { content: ""; position: absolute; top: 50%; right: 1rem; width: .5rem; height: .5rem; margin-top: -.4rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.pb-section-box[open] > summary::after { margin-top: -.15rem; transform: rotate(-135deg); }
+.pb-section-box[open] > summary { margin-bottom: .25rem; border-bottom: 1px solid var(--line); }
+.pb-section-name { font-weight: 700; font-size: 1rem; }
+.pb-section-box > :not(summary) { margin-right: 1rem; margin-left: 1rem; }
+.pb-section-box > .pb-list { margin-top: 1rem; }
+.pb-row-tools { position: absolute; z-index: 2; top: 0; right: 0; left: 0; display: flex; align-items: center; height: 3.1rem; padding: 0 2.2rem 0 .5rem; pointer-events: none; }
+.pb-row-tools > * { pointer-events: auto; }
+.pb-section-row { display: flex; align-items: center; gap: .4rem; min-height: 3.1rem; padding: .5rem var(--row-right) .5rem 3rem; margin: 0 !important; }
+.pb-section-fixed { padding-bottom: .25rem; }
+.pb-section-fixed .help { margin: 0 1rem; padding-bottom: .5rem; }
+.pb-grip { display: grid; flex: none; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
+.pb-grip:hover { background: var(--soft); color: var(--text); filter: none; }
+.pb-grip .ico { width: 1.1rem; height: 1.1rem; }
+/* A row being dragged follows the pointer; the others slide aside to leave it room (the DOM changes once, when it is let go). */
+[data-sort].shifting { transition: transform .16s ease; }
+[data-sort].dragging { position: relative; z-index: 8; background: var(--card); box-shadow: var(--pop); cursor: grabbing; transition: none; }
+[data-sort].dragging .pb-grip { cursor: grabbing; color: var(--accent); }
+details.picked, .pb-section.picked { box-shadow: 0 0 0 3px var(--accent); transition: box-shadow .4s; }
+
+/* Sections the client adds: a row says what it is (icon, kind, the title typed in it) and has a copy and a remove button; "+" on its top edge adds one before it. */
+.pb-section .badge[hidden] { display: none; }
+.pb-piece-icon { display: grid; flex: none; place-items: center; color: var(--accent); }
+.pb-piece-icon .ico { width: 1.15rem; height: 1.15rem; }
+.pb-piece-title { flex: 1 1 0; min-width: 0; overflow: hidden; color: var(--muted); font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.pb-row-actions { display: flex; flex: none; gap: .1rem; margin-left: auto; }
+.pb-row-btn { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); opacity: .6; cursor: pointer; }
+.pb-row-btn:hover, .pb-row-btn:focus-visible, .pb-section:hover .pb-row-btn { opacity: 1; }
+.pb-row-btn:hover { background: var(--soft); color: var(--text); filter: none; }
+.pb-row-btn.danger:hover { background: var(--err-bg); color: var(--err); }
+.pb-row-btn .ico { width: 1.05rem; height: 1.05rem; }
+.pb-plus { position: absolute; z-index: 4; top: -.85rem; left: 50%; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; margin: 0; padding: 0; border: 2px solid var(--card); border-radius: 50%;
+    background: var(--accent); color: var(--on-accent); opacity: 0; transform: translateX(-50%) scale(.85); transition: opacity .12s, transform .12s; cursor: pointer; }
+.pb-plus .ico { width: 1rem; height: 1rem; }
+.pb-section:hover .pb-plus, .pb-plus:focus-visible { opacity: 1; transform: translateX(-50%); }
+.pb-plus:hover { filter: brightness(1.1); }
+@media (hover: none) { .pb-plus { opacity: .9; transform: translateX(-50%); } .pb-row-btn { opacity: 1; } }
+[data-sort].dragging .pb-plus { display: none; }
+.pb-sections-empty { margin: .75rem 0 0; padding: 1.5rem 1rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--muted); text-align: center; }
+.pb-sections-empty[hidden] { display: none; }
+.pb-add { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin: .6rem 0 0; padding: .75rem 1rem; border: 2px dashed var(--line-strong); border-radius: var(--radius-sm);
+    background: transparent; color: var(--accent); font-size: 1rem; font-weight: 700; cursor: pointer; }
+.pb-add:hover, .pb-add:focus-visible { border-color: var(--accent); background: var(--soft); filter: none; }
+.pb-add .ico { width: 1.15rem; height: 1.15rem; }
+
+/* The gallery of kinds of section: a button for each, with a drawing of it and a line that says what it is. */
+.pb-gallery { width: min(46rem, 94vw); padding: 0; overflow: auto; }
+.pb-gallery-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.pb-gallery-head h2 { margin: 0; font-size: 1.2rem; }
+.pb-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .75rem; padding: 1.25rem; }
+.pb-pick { display: flex; flex-direction: column; align-items: stretch; gap: .35rem; margin: 0; padding: .75rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--text); text-align: left; cursor: pointer; }
+.pb-pick:hover, .pb-pick:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); filter: none; }
+.pb-pick-sketch { display: block; flex: none; padding: .5rem; border-radius: 8px; background: var(--soft); color: var(--accent); }
+.pb-pick-sketch svg { display: block; width: 100%; height: auto; aspect-ratio: 96 / 56; }
+.pb-pick-name { font-weight: 700; }
+.pb-pick-help { color: var(--muted); font-size: .85rem; font-weight: 400; line-height: 1.35; }
+
+/* What was just done to the list, and the way back. */
+.studio-toast { position: sticky; z-index: 6; bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: max-content; max-width: calc(100% - 1rem); margin: 1rem auto 0;
+    padding: .6rem .9rem; border-radius: var(--radius-sm); background: var(--text); color: var(--card); box-shadow: var(--pop); font-size: .92rem; }
+.studio-toast[hidden] { display: none; }
+.studio-toast.problem { background: var(--err); color: var(--err-bg); }
+.studio-toast button { margin: 0; padding: 0; border: 0; background: none; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+
+/* The page itself. */
+.studio-preview { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--soft); }
+
+/* The divider: a thin line with room to grab; it turns into the brand colour when it is hovered, focused or moving. */
+.studio-split { position: relative; z-index: 3; background: var(--line); cursor: col-resize; touch-action: none; outline-offset: -2px; }
+.studio-split::before { content: ""; position: absolute; inset: 0 -7px; } /* a wider target than the line */
+.studio-split::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4px; height: 2.5rem; border-radius: 4px; background: var(--line-strong); transform: translate(-50%, -50%); transition: background .15s; }
+.studio-split:hover, .studio-split:focus-visible, .studio-body.resizing .studio-split { background: var(--accent); }
+.studio-split:hover::after, .studio-split:focus-visible::after, .studio-body.resizing .studio-split::after { background: #fff; }
+.studio-body.resizing { cursor: col-resize; user-select: none; }
+.studio-body.resizing .studio-frame { pointer-events: none; } /* the page must not swallow the pointer while the divider moves */
+
+/* What is inside the form follows its width, not the screen's. */
+@container (max-width: 30rem) {
+    .pb-link { grid-template-columns: 1fr; }
+    .pb-image button { margin-right: .5rem; }
+    .studio-meta { font-size: .85rem; }
+}
+@container (max-width: 24rem) {
+    .pb-section-box > :not(summary) { margin-right: .6rem; margin-left: .6rem; }
+    .studio-edit .card { padding-right: .85rem; padding-left: .85rem; }
+}
+.studio-preview-bar { display: flex; align-items: center; gap: .75rem; padding: .45rem .9rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.studio-preview-title { font-weight: 700; }
+.studio-preview-status { margin-right: auto; color: var(--muted); font-size: .82rem; }
+.studio-frames { position: relative; flex: 1; min-height: 0; }
+.studio-frame { position: absolute; top: 0; left: 50%; width: 100%; height: 100%; border: 0; background: #fff; transform: translateX(-50%); }
+.studio-frame:not([data-active]) { visibility: hidden; pointer-events: none; }
+.studio-frames[data-device="phone"] .studio-frame { top: 1rem; height: calc(100% - 2rem); width: min(390px, calc(100% - 2rem)); border-radius: 18px; box-shadow: var(--pop); }
+
+@media (max-width: 1000px) {
+    .studio-tabs { display: flex; }
+    .studio-body { grid-template-columns: minmax(0, 1fr); }
+    .studio-split { display: none; } /* one thing at a time here: the tabs choose */
+    .studio-body[data-view="edit"] .studio-preview, .studio-body[data-view="preview"] .studio-edit { display: none; }
+    .studio-note { flex-basis: 100%; text-align: left; order: 3; }
+    .studio-title { max-width: 14ch; }
+    .studio-back span { display: none; }
+}
+@media (max-width: 520px) {
+    .studio-actions > button .ico { display: none; }
+    .studio-actions > button { padding: .5rem .65rem; font-size: .88rem; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .pb-section-box > summary::after, details.picked, .pb-section.picked, .studio-split::after, [data-sort].shifting, .pb-plus { transition: none; } }

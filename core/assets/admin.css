@@ -9,8 +9,8 @@
     --shadow: 0 1px 2px rgb(23 25 35 / .04);
     --pop: 0 14px 34px -10px rgb(23 25 35 / .22), 0 2px 6px rgb(23 25 35 / .06);
     --ring: 0 0 0 3px rgb(210 78 43 / .28);
-    --invert: 0; /* 1 turns the editor's dark toolbar icons light */
     --header-h: 3.5rem; --rail-w: 3.5rem; --side-w: 15rem;
+    --scroll-thumb: var(--brick); --scroll-track: rgb(128 128 128 / .18); /* the thin scrollbar below */
     --mark: url(mark.svg); --logo: url(logo.svg);
     color-scheme: light;
 }
@@ -22,7 +22,6 @@
     --ok: #86efac; --ok-bg: #12321f; --err: #fca5a5; --err-bg: #3a1414;
     --warn: #fcd34d; --warn-bg: #38290a; --info: #9db9ff; --info-bg: #17254a;
     --shadow: none; --pop: 0 14px 34px -10px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .04);
-    --invert: 1;
     --mark: url(mark-dark.svg); --logo: url(logo-dark.svg);
     color-scheme: dark;
 }
@@ -34,12 +33,22 @@
         --ok: #86efac; --ok-bg: #12321f; --err: #fca5a5; --err-bg: #3a1414;
         --warn: #fcd34d; --warn-bg: #38290a; --info: #9db9ff; --info-bg: #17254a;
         --shadow: none; --pop: 0 14px 34px -10px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .04);
-        --invert: 1;
         --mark: url(mark-dark.svg); --logo: url(logo-dark.svg);
         color-scheme: dark;
     }
 }
 * { box-sizing: border-box; }
+/* The thin scrollbar of the design system: a line of 2px (the brick colour over a faint track), no arrows at the ends. It is the website's reading line
+   as a real scrollbar. Put class "thin-scroll" on what scrolls: it, and whatever scrolls inside it (a big text box), get the line. Firefox cannot go
+   below its "thin" bar, so it gets that, in the same colours. */
+@supports selector(::-webkit-scrollbar) {
+    .thin-scroll::-webkit-scrollbar, .thin-scroll *::-webkit-scrollbar { width: 2px; height: 2px; }
+    .thin-scroll::-webkit-scrollbar-button, .thin-scroll *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    .thin-scroll::-webkit-scrollbar-track, .thin-scroll *::-webkit-scrollbar-track { background: var(--scroll-track); }
+    .thin-scroll::-webkit-scrollbar-thumb, .thin-scroll *::-webkit-scrollbar-thumb { border-radius: 2px; background: var(--scroll-thumb); }
+    .thin-scroll::-webkit-scrollbar-corner, .thin-scroll *::-webkit-scrollbar-corner { background: transparent; }
+}
+@supports not selector(::-webkit-scrollbar) { .thin-scroll, .thin-scroll * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); } }
 html { scroll-padding-top: calc(var(--header-h) + 1rem); }
 body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 a { color: var(--accent); }
@@ -128,6 +137,16 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .guest-page main { max-width: 46rem; margin: 1.75rem auto 3rem; padding: 0 1rem; }
 /* Sign-in, "forgot my password" and new password: one card in the middle of the screen, on a soft background. */
 .auth-page { background: radial-gradient(64rem 30rem at 50% -9rem, rgb(210 78 43 / .13), transparent 70%), var(--bg); }
+/* A wall of bricks that fades into the background, in the colour of the text (so it is dark lines on the light theme and light lines on the dark one). */
+.auth-page::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: var(--text); opacity: .1;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 .5h120M0 30.5h120M.5 0v30M60.5 30v30' fill='none' stroke='%23000'/%3E%3C/svg%3E"), radial-gradient(ellipse 75% 85% at 50% 0, #000 10%, transparent 72%);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 .5h120M0 30.5h120M.5 0v30M60.5 30v30' fill='none' stroke='%23000'/%3E%3C/svg%3E"), radial-gradient(ellipse 75% 85% at 50% 0, #000 10%, transparent 72%);
+    -webkit-mask-size: 120px 60px, 100% 100%; mask-size: 120px 60px, 100% 100%; -webkit-mask-repeat: repeat, no-repeat; mask-repeat: repeat, no-repeat;
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+:root[data-theme="dark"] .auth-page::before { opacity: .14; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .auth-page::before { opacity: .14; } }
+@media (forced-colors: active) { .auth-page::before { display: none; } }
+.auth-page .auth-wrap { position: relative; z-index: 1; }
 .auth-wrap { display: grid; align-content: center; justify-items: center; gap: 1.5rem; min-height: 100vh; min-height: 100dvh; padding: 2.5rem 1rem; }
 .auth-page .guest { padding: 0; }
 .auth-page .guest .brand { width: 220px; height: 46px; }
@@ -277,16 +296,6 @@ td.actions > * { display: inline-block; margin-left: 1rem; }
 .pb-image:not(:has(img)) [data-clear] { display: none; }
 .pb-link { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 .pb-link input[hidden] { display: none; }
-trix-editor { min-height: 8rem; padding: .7rem .8rem; background: var(--field); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
-trix-editor:focus-visible { border-color: var(--accent); outline: none; box-shadow: var(--ring); }
-trix-toolbar .trix-button-group--file-tools, trix-toolbar [data-trix-attribute="code"] { display: none; }
-trix-toolbar .trix-button-row { flex-wrap: wrap; gap: .25rem 0; } /* the buttons wrap on a narrow screen instead of widening the page */
-trix-toolbar .trix-button-group { margin-bottom: .6rem; border-color: var(--line-strong); border-radius: 8px; overflow: hidden; }
-trix-toolbar .trix-button { border-bottom-color: var(--line); background: var(--card); color: var(--text); }
-trix-toolbar .trix-button::before { filter: invert(var(--invert)); }
-trix-toolbar .trix-button.trix-active { background: var(--soft); color: var(--text); }
-trix-toolbar .trix-dialog { background: var(--card); color: var(--text); border-top-color: var(--line-strong); border-radius: 8px; box-shadow: var(--pop); }
-trix-toolbar .trix-input--dialog { margin: 0 .6rem 0 0; border-color: var(--line-strong); background: var(--field); color: var(--text); }
 
 /* Plugins */
 .plugin-list { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }

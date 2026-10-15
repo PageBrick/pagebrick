@@ -9,7 +9,7 @@
 <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4" alt="PHP 8.2+">
 </p>
 
-<p align="center"><img src="docs/media/editing.gif" alt="Changing the headline of a page in the PageBrick panel, saving it, and seeing it on the site" width="860"></p>
+<p align="center"><img src="docs/media/editing.gif" alt="Editing the home page in the PageBrick panel: the page changes beside the form while the headline is typed, a section is dragged to a new place, and Publish puts it on the site" width="860"></p>
 
 A simple, open-source CMS for any kind of website: a personal page, a project, a club, a shop or a business. Anyone can install it, without technical knowledge, and publish a site with a ready-made layout; developers build their own themes on an organized structure, with complete freedom on the front end and the guarantee that updates won't break the sites they deliver.
 
@@ -86,4 +86,4 @@ To start over: delete `config.php` and run `docker compose down -v`.
 
 ## License
 
-[MIT](LICENSE). Created by [Alcateia Digital](https://alcateia.digital). Includes the [Trix](https://github.com/basecamp/trix) editor (MIT), [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL 2.1), the Public Sans, Fraunces and Nunito fonts (OFL) and public-domain example photos (CC0).
+[MIT](LICENSE). Created by [Alcateia Digital](https://alcateia.digital). Includes the [TipTap](https://tiptap.dev) and [ProseMirror](https://prosemirror.net) editor (MIT), [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL 2.1), the Public Sans, Fraunces and Nunito fonts (OFL) and public-domain example photos (CC0).

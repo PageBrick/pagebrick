@@ -120,6 +120,11 @@ p { margin: 0 0 1em; }
 .prose h3 { margin-top: 1.5em; }
 .prose ul, .prose ol { padding-left: 1.25rem; }
 .prose blockquote { margin: 1.5em 0; padding-left: 1.25rem; border-left: 3px solid var(--brand); }
+.prose img { margin-block: 1.5em; border-radius: var(--radius); }
+.prose hr { margin-block: 2em; border: 0; border-top: 1px solid var(--rule); }
+.prose table { display: block; width: 100%; margin-block: 1.5em; overflow-x: auto; border-collapse: collapse; } /* a wide table scrolls inside the text instead of widening the page */
+.prose th, .prose td { padding: .6rem .85rem; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+.prose th { background: var(--tint); font-weight: 700; }
 
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 5rem); align-items: start; }
 @media (max-width: 800px) { .contact-grid { grid-template-columns: 1fr; } }
@@ -140,3 +145,20 @@ p { margin: 0 0 1em; }
 .footer-bottom { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 2rem; padding-block: 1.25rem; font-size: .85rem; }
 .footer-bottom::before { content: ""; position: absolute; top: 0; left: 1.25rem; right: 1.25rem; border-top: 1px solid rgb(255 255 255 / .15); }
 .footer-bottom a { color: #d9dbe2; }
+
+/* Sections the client adds in the panel. The core prints them as plain HTML (core/blocks/*.php) and this is all the style they get here:
+   a theme draws them its own way (templates/blocks/ holds its own copies, or style the .pb-block classes). */
+.pb-block { max-width: 1180px; margin: 0 auto; padding: 3rem 1.25rem; }
+.pb-block-text, .pb-block-faq, .pb-block-video { max-width: 780px; }
+.pb-block-image_text { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+.pb-block-image_text h2, .pb-block-image_text p { max-width: 60ch; }
+.pb-cards, .pb-numbers, .pb-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin: 0; padding: 0; list-style: none; }
+.pb-card img, .pb-gallery img { width: 100%; }
+.pb-quote { margin: 1.5rem 0; }
+.pb-number strong { display: block; font-size: 2.4rem; line-height: 1.1; color: var(--brand-text); }
+.pb-faq-item { padding: .75rem 0; border-top: 1px solid var(--rule); }
+.pb-faq-item summary { cursor: pointer; font-weight: 600; }
+.pb-block-cta { max-width: none; background: var(--brand); color: var(--on-brand); text-align: center; }
+.pb-button { display: inline-block; padding: .7rem 1.2rem; background: var(--on-brand); color: var(--brand); font-weight: 600; text-decoration: none; }
+.pb-video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+@media (max-width: 800px) { .pb-block-image_text { grid-template-columns: 1fr; } }
