@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.4.0
+
+- **A button that makes the site open only over https://.** Settings → Address and languages has a new card, **Secure connection (https)**. For a site that was installed before its domain had an SSL certificate, one click puts the redirect rules at the top of `.htaccess` (a copy of the file is kept in the backups folder first), and **Turn off** takes them out again, leaving the file exactly as it was. Opened over plain http, the page first makes the browser try the https:// address, so a certificate that is not there can never lock anyone out; the rules do not redirect a visit that a proxy or CDN says is already https (no loop with a "flexible" SSL), nor the certificate authority's own checks (`.well-known`); and the official address of the site becomes https://. If the file cannot be written, the card shows the lines to paste by hand.
+
 ## 1.3.2
 
 - **The message about a refused request says "code or a command".** A host's security filter can refuse a form that has PHP code inside HTML (not only a command like `curl https://…`), and the panel's message named only the command. It now says "a text that looks like code or a command, such as `<?php` or `curl https://…`", and suggests changing or deleting it.
