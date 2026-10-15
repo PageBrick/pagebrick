@@ -121,6 +121,9 @@ switch ($args[0] ?? '') {
         foreach (['core', 'content/themes/default', 'content/plugins/contact-form', 'content/plugins/blog'] as $folder) {
             copy_tree(PB_ROOT . "/$folder", "$root/$folder");
         }
+        // The default theme goes inside core/ too: an update brings core/ even when it is applied by an older version, and the first request after it
+        // renews content/themes/default from this copy (pb_renew_default_theme).
+        copy_tree(PB_ROOT . '/content/themes/default', "$root/core/default-theme");
         foreach (['index.php', '.htaccess', 'LICENSE', 'CHANGELOG.md', 'README.md', 'README.pt-BR.md', 'README.es.md', 'composer.json', 'composer.lock',
                      'content/uploads/.htaccess', 'content/backups/.htaccess'] as $file) {
             if (is_file(PB_ROOT . "/$file")) {

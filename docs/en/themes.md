@@ -36,7 +36,7 @@ content/themes/my-theme/
 └── screenshot.webp     optional: picture shown on the Themes screen (800×500)
 ```
 
-The fastest start is copying `content/themes/default/` and changing the name in `theme.json`:
+The fastest start is copying `content/themes/default/` under another name and changing the name in `theme.json`. Do not edit the default theme in place: it is PageBrick's own (a site falls back to it when its theme breaks), so an update renews it (the old folder is kept in the backups):
 
 ```json
 {

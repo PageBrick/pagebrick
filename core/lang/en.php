@@ -829,4 +829,5 @@ To choose how the site updates: %4$s',
     'Esta página ainda não tem seções. Escolha uma para começar.' => 'This page has no sections yet. Pick one to start.',
     'Adicionar seção' => 'Add section',
     'Que seção você quer adicionar?' => 'Which section do you want to add?',
+    'A hospedagem recusou o envio (erro %s). Costuma ser o filtro de segurança dela: um texto que parece um comando, como "curl https://…", pode causar isso. Mude esse texto e tente de novo.' => 'The host refused the request (error %s). This is usually its security filter: a text that looks like a command, such as "curl https://…", can cause it. Change that text and try again.',
 ];

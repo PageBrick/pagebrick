@@ -829,4 +829,5 @@ Para elegir cómo se actualiza el sitio: %4$s',
     'Esta página ainda não tem seções. Escolha uma para começar.' => 'Esta página aún no tiene secciones. Elige una para empezar.',
     'Adicionar seção' => 'Añadir sección',
     'Que seção você quer adicionar?' => '¿Qué sección quieres añadir?',
+    'A hospedagem recusou o envio (erro %s). Costuma ser o filtro de segurança dela: um texto que parece um comando, como "curl https://…", pode causar isso. Mude esse texto e tente de novo.' => 'El alojamiento rechazó el envío (error %s). Suele ser su filtro de seguridad: un texto que parece un comando, como "curl https://…", puede causarlo. Cambia ese texto e inténtalo de nuevo.',
 ];
