@@ -199,6 +199,33 @@ Las imágenes vienen solo de la biblioteca de medios: PageBrick escribe el `<img
 
 La lista completa de lo que los temas y plugins pueden usar está en [core/api.php](../../core/api.php). Todo lo demás, aunque empiece con `pb_`, es interno y puede cambiar.
 
+## Dejar que el cliente reordene las secciones
+
+En el editor de páginas el cliente ve la página junto al formulario, cambia lo que quiera, arrastra secciones a otro lugar (en la lista o en la propia página) y solo después hace clic en **Publicar**; hasta entonces los visitantes siguen viendo la versión publicada. Que el orden funcione depende de tu tema, en dos pasos, y un tema que no hace nada mantiene su orden fijo (nada se rompe):
+
+1. Lista las secciones en `theme.php`, en `'sections'` de la plantilla. Cada una es el nombre de un campo `group` de esa plantilla (los estándar `hero`, `about`… de la página de inicio, o grupos tuyos), o `'plugins'`, el lugar donde los plugins añaden sus secciones con `pb_slot('home')`.
+2. Imprime las secciones en el orden del cliente en la plantilla: `$page->order($nombres)` devuelve tus nombres en ese orden (los que el cliente aún no colocó van al final), y `pb_section($nombre, $html)` devuelve tu HTML exactamente como está para los visitantes, solo marcando la sección mientras el cliente edita, para poder elegirla y arrastrarla en la página.
+
+```php
+// theme.php: the sections of the home page the client may put in any order
+return [
+    'templates' => [
+        'home' => ['sections' => ['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']],
+    ],
+];
+```
+
+```php
+<?php // templates/home.php
+foreach ($page->order(['hero', 'about', 'services', 'numbers', 'testimonials', 'plugins', 'cta']) as $section) {
+    echo pb_section($section, pb_include(__DIR__ . "/parts/home-$section.php", ['page' => $page, 'title' => $title]));
+}
+```
+
+Los campos que no están en la lista (una cabecera que siempre queda arriba, por ejemplo) se imprimen donde tú los imprimas. La API de contenido añade `section_order` a una página solo cuando el cliente eligió un orden. Mientras el cliente edita, la página de la vista previa tiene la clase `pb-editing` en `<html>`: úsala para apagar lo que espera un desplazamiento para mostrarse (fundidos, animaciones de entrada), porque las secciones se reemplazan allí mientras se miran.
+
+Para un tema que también deba funcionar en un PageBrick anterior a la 1.3, comprueba antes `method_exists($page, 'order')` y `function_exists('pb_section')`.
+
 ## Reemplazar las plantillas de un plugin
 
 Los plugins muestran sus páginas públicas dentro de tu layout. Cuando su HTML no es lo que quieres, copia el archivo a tu tema, en `plugins/{plugin}/` con la misma ruta, y modifícalo:

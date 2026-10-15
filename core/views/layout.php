@@ -38,9 +38,13 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
 <script src="<?= e($asset('editor.js')) ?>" defer></script>
 <?php endif ?>
 <link rel="stylesheet" href="<?= e($asset('admin.css')) ?>">
+<?php if (!empty($studio)): ?>
+<link rel="stylesheet" href="<?= e($asset('studio.css')) ?>">
+<script src="<?= e($asset('studio.js')) ?>" defer></script>
+<?php endif ?>
 <script src="<?= e($asset('admin.js')) ?>" defer></script>
 </head>
-<body class="<?= $user ? 'app' : 'guest-page' . (!empty($narrow) ? ' auth-page' : '') ?>" data-show-password="<?= e(__('Mostrar senha')) ?>" data-hide-password="<?= e(__('Esconder senha')) ?>">
+<body class="<?= $user ? 'app' . (!empty($studio) ? ' studio' : '') : 'guest-page' . (!empty($narrow) ? ' auth-page' : '') ?>" data-show-password="<?= e(__('Mostrar senha')) ?>" data-hide-password="<?= e(__('Esconder senha')) ?>">
 <?php if ($user):
     $siteMode = pb_site_mode();
     $roles = pb_role_labels();
@@ -143,7 +147,7 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
 <?php endif ?>
 <header class="guest"><span class="brand" role="img" aria-label="PageBrick"></span></header>
 <?php endif ?>
-<main id="main"<?= !empty($editor) || !empty($wide) ? ' class="wide"' : (!empty($narrow) ? ' class="narrow"' : '') ?>>
+<main id="main"<?= !empty($studio) ? ' class="studio-main"' : (!empty($editor) || !empty($wide) ? ' class="wide"' : (!empty($narrow) ? ' class="narrow"' : '')) ?>>
     <?php if ($user && pb_safe_mode()): ?>
         <form class="flash error" method="post" action="<?= e(pb_url('/admin/safe-mode/exit')) ?>">
             <?= pb_csrf_field() ?>

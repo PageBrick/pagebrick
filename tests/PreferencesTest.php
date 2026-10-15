@@ -144,6 +144,7 @@ final class PreferencesTest extends TestCase
     public function test_the_preferences_column_comes_with_the_update(): void
     {
         pb_db()->exec('ALTER TABLE ' . pb_table('users') . ' DROP COLUMN prefs');
+        pb_db()->exec('ALTER TABLE ' . pb_table('pages') . ' DROP COLUMN draft, DROP COLUMN draft_at'); // the later migration too: it runs again
         pb_set_option('db_version', '6');
         pb_migrate();
         pb_set_user_pref($this->editor, 'theme', 'dark');

@@ -131,5 +131,5 @@ function pb_content_page(array $page): array
     return pb_content_page_summary($page) + [
         'seo' => ['title' => pb_page_seo_title($page), 'description' => $page['seo_description']],
         'fields' => pb_content_json($fields, $page['data']),
-    ];
+    ] + (!empty($page['data']['_order']) && is_array($page['data']['_order']) ? ['section_order' => array_values($page['data']['_order'])] : []);
 }
