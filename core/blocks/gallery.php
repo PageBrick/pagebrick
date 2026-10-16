@@ -11,7 +11,7 @@
             <?php foreach ($block->items as $item): ?>
                 <?php if (!$item->image->isEmpty()): ?>
                     <li><figure>
-                        <?= $item->image->img() ?>
+                        <?= $item->image->img(sizes: 'auto') ?>
                         <?php if (!$item->caption->isEmpty()): ?><figcaption><?= $item->caption ?></figcaption><?php endif ?>
                     </figure></li>
                 <?php endif ?>

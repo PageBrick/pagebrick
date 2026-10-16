@@ -163,9 +163,11 @@ Imprimir un campo con `<?= ?>` siempre es seguro: el texto se escapa, el texto e
 | `->raw()` | el valor guardado, sin escapar: escápalo tú con `e()` |
 | `->isEmpty()` | `true` cuando el cliente lo dejó en blanco |
 | `->url($size = 'full')` | la dirección de un enlace, página, correo electrónico (`mailto:`), teléfono (`tel:`) o imagen (`'thumb'` para la pequeña). Escápala: `e($value->url())` |
-| `->img($class = '', $size = 'full', $lazy = true)` | `<img>` con `alt`, `width`, `height` y carga diferida; `lazy: false` para imágenes en la parte superior |
+| `->img($class = '', $size = 'full', $lazy = true, $sizes = '')` | `<img>` con `alt`, `width`, `height` y carga diferida; `lazy: false` para imágenes en la parte superior. Con `sizes:` imprime también un `srcset` (ver abajo) |
 | un grupo: `->visible()` | `false` cuando el cliente ocultó esa sección |
 | una lista: `foreach`, `count()`, `->isEmpty()` | sus elementos, cada uno es un grupo |
+
+Un móvil no necesita una foto de 1920 píxeles. PageBrick guarda tres copias de cada foto (480, 960 y el ancho completo, hasta 1920), y `img(sizes: '…')` deja que el navegador tome la más pequeña que aún se vea nítida. `sizes` es el atributo del HTML: indica el ancho que ocupa la foto en la página, por ejemplo `img(sizes: '(min-width: 900px) 560px, 94vw')`. Para una foto más abajo (lazy), `sizes: 'auto'` deja que el navegador mida el lugar por sí mismo; para una en la parte superior, indica el ancho real, como `'100vw'` en un banner de lado a lado. Sin `sizes` la etiqueta es exactamente la de las versiones anteriores, así que un tema solo cambia cuando su autor quiere. Las fotos subidas antes de PageBrick 1.8.0 solo tienen la miniatura y la completa hasta que se use **Medios → Rehacer los tamaños**.
 
 Con `'debug' => true` en `config.php`, leer un campo que no existe genera una advertencia, así los errores de tipeo aparecen mientras desarrollas.
 

@@ -16,3 +16,18 @@ Options -Indexes
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# BEGIN PageBrick cache (made by Settings, Address and languages: take it out there)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule \.(avif|webp|jpe?g|png|gif|svg|ico|css|m?js)$ - [E=PB_CACHE_WEEK:1]
+    RewriteCond %{QUERY_STRING} (^|&)v=[0-9]+(&|$)
+    RewriteRule \.(avif|webp|jpe?g|png|gif|svg|ico|css|m?js)$ - [E=PB_CACHE_YEAR:1]
+    RewriteRule \.woff2?$ - [E=PB_CACHE_YEAR:1]
+    RewriteRule ^content/uploads/ - [E=PB_CACHE_YEAR:1]
+</IfModule>
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=604800" env=PB_CACHE_WEEK
+    Header set Cache-Control "public, max-age=31536000, immutable" env=PB_CACHE_YEAR
+</IfModule>
+# END PageBrick cache

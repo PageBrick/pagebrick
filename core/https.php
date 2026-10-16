@@ -43,21 +43,29 @@ function pb_https_writable(): bool
     return is_file($file) ? is_writable($file) : is_writable(dirname($file));
 }
 
+/** True when the .htaccess has the block that starts with $begin. */
+function pb_htaccess_has(string $begin): bool
+{
+    $file = @file_get_contents(pb_htaccess_file());
+    return is_string($file) && str_contains($file, $begin);
+}
+
 /**
- * Puts the block at the top of the .htaccess ($on) or takes it out. The file as it was is kept in the backups folder (closed to the web) first.
- * Throws with a message to read when the file can't be written.
+ * Puts a block (its first line is $begin, its last is $end) in the .htaccess, at the top or at the end ($on), or takes it out. The file as it was is kept in the
+ * backups folder (closed to the web) first. Throws $unwritable (a message to read) when the file can't be written.
  */
-function pb_https_set(bool $on): void
+function pb_htaccess_block(string $begin, string $end, string $block, bool $on, bool $top, string $unwritable): void
 {
     $file = pb_htaccess_file();
     $current = is_file($file) ? (string) file_get_contents($file) : '';
-    $without = (string) preg_replace('~' . preg_quote(PB_HTTPS_BEGIN, '~') . '.*?' . preg_quote(PB_HTTPS_END, '~') . "[ \t]*\r?\n?~s", '', $current);
-    $next = $on ? pb_https_block() . $without : $without;
+    // a block at the end took a blank line with it when it went in: the same line goes out
+    $without = (string) preg_replace('~' . ($top ? '' : "(?:\r?\n)?") . preg_quote($begin, '~') . '.*?' . preg_quote($end, '~') . "[ \t]*\r?\n?~s", '', $current);
+    $next = !$on ? $without : ($top ? $block . $without : rtrim($without, "\r\n") . ($without === '' ? '' : "\n\n") . $block);
     if ($next === $current) {
         return;
     }
     if (!pb_https_writable()) {
-        throw new InvalidArgumentException(__('O PageBrick não conseguiu escrever no arquivo .htaccess. Peça à hospedagem para liberar a escrita nele, ou cole as linhas abaixo no começo do arquivo, no gerenciador de arquivos.'));
+        throw new InvalidArgumentException($unwritable);
     }
     if ($current !== '') {
         $dir = pb_backups_dir();
@@ -68,8 +76,15 @@ function pb_https_set(bool $on): void
         }
     }
     if (file_put_contents($file, $next, LOCK_EX) === false) {
-        throw new InvalidArgumentException(__('O PageBrick não conseguiu escrever no arquivo .htaccess. Peça à hospedagem para liberar a escrita nele, ou cole as linhas abaixo no começo do arquivo, no gerenciador de arquivos.'));
+        throw new InvalidArgumentException($unwritable);
     }
+}
+
+/** Puts the https rules at the top of the .htaccess ($on) or takes them out. */
+function pb_https_set(bool $on): void
+{
+    pb_htaccess_block(PB_HTTPS_BEGIN, PB_HTTPS_END, pb_https_block(), $on, true,
+        __('O PageBrick não conseguiu escrever no arquivo .htaccess. Peça à hospedagem para liberar a escrita nele, ou cole as linhas abaixo no começo do arquivo, no gerenciador de arquivos.'));
 }
 
 /**

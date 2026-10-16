@@ -11,7 +11,7 @@
         <ul class="pb-cards">
             <?php foreach ($block->items as $item): ?>
                 <li class="pb-card">
-                    <?= $item->image->img() ?>
+                    <?= $item->image->img(sizes: 'auto') ?>
                     <?php if (!$item->title->isEmpty()): ?>
                         <h3><?= $item->link->isEmpty() ? $item->title : '<a href="' . e($item->link->url()) . '">' . $item->title . '</a>' ?></h3>
                     <?php endif ?>

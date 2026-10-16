@@ -13,7 +13,7 @@ $about = $page->about;
                 <div class="prose"><?= $about->text ?></div>
             </div>
             <?php if (!$about->image->isEmpty()): ?>
-                <figure class="framed"><?= $about->image->img() ?></figure>
+                <figure class="framed"><?= $about->image->img(sizes: 'auto') ?></figure>
             <?php endif ?>
         </div>
     </section>

@@ -12,7 +12,7 @@
     </div>
 </header>
 <?php if (!$page->image->isEmpty()): ?>
-    <figure class="wrap page-image"><?= $page->image->img(lazy: false) ?></figure>
+    <figure class="wrap page-image"><?= $page->image->img(lazy: false, sizes: '100vw') ?></figure>
 <?php endif ?>
 <?php if (!$page->body->isEmpty()): ?>
     <div class="wrap narrow section-tight"><div class="prose"><?= $page->body ?></div></div>

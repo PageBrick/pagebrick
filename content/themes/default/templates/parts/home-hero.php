@@ -17,7 +17,7 @@ $hero = $page->hero;
                 <?php endif ?>
             </div>
             <?php if (!$hero->image->isEmpty()): ?>
-                <figure class="hero-image"><?= $hero->image->img(lazy: false) ?></figure>
+                <figure class="hero-image"><?= $hero->image->img(lazy: false, sizes: '100vw') ?></figure>
             <?php endif ?>
         </div>
     </section>
