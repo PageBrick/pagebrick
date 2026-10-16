@@ -54,4 +54,6 @@ pb_add_filter('sitemap_urls', fn(array $urls) => array_merge($urls, pbb_sitemap_
 pb_add_filter('head_html', fn(string $html) => $html . pbb_stylesheet());
 pb_add_filter('link_targets', fn(array $targets) => $targets + pbb_link_targets());
 pb_add_filter('live_stamp', fn(string $stamp) => $stamp . pbb_live_stamp()); // a saved post shows up on the site by itself, for the bar of people in the panel
-pb_add_admin_page('blog', pbb_title(), 'pbb_admin');
+// In the Content list of the menu (after Contact), with a pencil: writing posts is something the client does every week. A PageBrick whose
+// pb_add_admin_page() does not know the last two arguments (before 1.6.0) ignores them and lists the screen under Plugins, where it always worked.
+pb_add_admin_page('blog', pbb_title(), 'pbb_admin', 'editor', 'content', 'pencil');

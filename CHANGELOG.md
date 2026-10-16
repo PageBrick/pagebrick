@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## Blog plugin 1.2.0 and Contact form plugin 1.1.0
+
+Both are official plugins, so a site that already has them gets these versions from the catalog (**Plugins → Update**).
+
+- **The Blog and the messages of the contact form are in the Content list of the menu**, after Contact (a pencil and an envelope), instead of behind the Plugins icon: they are what the client opens every week. They use the two optional arguments `pb_add_admin_page()` has had since PageBrick 1.6.0; on an older PageBrick the arguments are ignored and the screens stay under Plugins, as before. Nothing else changes.
+
 ## Blog plugin 1.1.0
 
 The Blog is an official plugin, so a site that already has it gets this one from the catalog (**Plugins → Update**), not from the PageBrick update; a new installation carries it from the next PageBrick release on.

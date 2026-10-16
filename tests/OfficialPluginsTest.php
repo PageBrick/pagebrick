@@ -19,6 +19,21 @@ final class OfficialPluginsTest extends TestCase
         pb_load_plugins();
     }
 
+    public function test_the_screens_of_the_official_plugins_are_in_the_content_list_after_contact(): void
+    {
+        $editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
+        $nav = pb_admin_nav(pb_find_user($editor), '/admin');
+        $urls = fn(string $id) => array_column(array_values(array_filter($nav['sections'], fn($section) => $section['id'] === $id))[0]['items'] ?? [], 'url');
+
+        $content = $urls('content');
+        $this->assertSame(['/admin', '/admin/pages', '/admin/media', '/admin/menus', '/admin/settings'], array_slice($content, 0, 5), 'the standard screens first, Contact last of them');
+        $after = array_slice($content, 5);
+        sort($after); // the order among plugins is the order they were switched on
+        $this->assertSame(['/admin/p/blog', '/admin/p/mensagens'], $after, 'the Blog and the messages of the contact form come after Contact');
+        $this->assertNotContains('/admin/p/blog', $urls('plugins'));
+        $this->assertNotContains('/admin/p/mensagens', $urls('plugins'));
+    }
+
     private function visit(string $path): string
     {
         unset($GLOBALS['pbcf_used']); // per-request flag; each visit is a new request
@@ -57,8 +72,11 @@ final class OfficialPluginsTest extends TestCase
 
         $home = $open('/admin');
         preg_match('~<section class="nav-group" data-section="plugins".*?</section>~s', $home, $menu);
-        $this->assertStringContainsString('href="/admin/p/mensagens"', $menu[0], 'the messages of the contact form');
-        $this->assertStringContainsString('href="/admin/p/blog"', $menu[0]);
+        $this->assertStringNotContainsString('href="/admin/p/mensagens"', $menu[0], 'the messages of the contact form are in the Content list now');
+        $this->assertStringNotContainsString('href="/admin/p/blog"', $menu[0]);
+        preg_match('~<section class="nav-group" data-section="content".*?</section>~s', $home, $content);
+        $this->assertStringContainsString('href="/admin/p/mensagens"', $content[0], 'the messages of the contact form');
+        $this->assertStringContainsString('href="/admin/p/blog"', $content[0]);
         $this->assertStringContainsString('Configurar Formulário de contato', $menu[0], "and the plugin's settings");
         $this->assertStringNotContainsString('Gerenciar plugins', $menu[0]);
 

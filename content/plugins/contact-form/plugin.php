@@ -35,4 +35,6 @@ pb_plugin_settings([
 pb_add_filter('slot:contact', fn(string $html) => $html . pbcf_form());
 pb_add_filter('head_html', fn(string $html) => $html . pbcf_stylesheet());
 pb_add_route('POST', '/contato/enviar', 'pbcf_submit');
-pb_add_admin_page('mensagens', __('Mensagens'), 'pbcf_admin');
+// In the Content list of the menu (after Contact), with an envelope: the messages people send are what the client opens most. A PageBrick whose
+// pb_add_admin_page() does not know the last two arguments (before 1.6.0) ignores them and lists the screen under Plugins, where it always worked.
+pb_add_admin_page('mensagens', __('Mensagens'), 'pbcf_admin', 'editor', 'content', 'mail');
