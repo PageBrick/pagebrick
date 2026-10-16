@@ -61,23 +61,25 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
     </div>
     <div class="top-actions">
         <a class="view-site" href="<?= e(pb_url('/')) ?>" target="_blank" rel="noopener" title="<?= e(__('Ver o site')) ?>"><?= pb_admin_icon('external') ?><span><?= e(__('Ver o site')) ?></span></a>
-        <?php if (pb_has_role($user, 'admin')): ?>
-            <details class="menu notices">
-                <summary class="icon-btn" title="<?= e(__('Avisos')) ?>" aria-label="<?= e(__('Avisos') . ($nav['notices'] ? ' (' . count($nav['notices']) . ')' : '')) ?>">
-                    <?= pb_admin_icon('bell') ?><?php if ($nav['notices']): ?><span class="dot" aria-hidden="true"></span><?php endif ?>
-                </summary>
-                <div>
-                    <strong class="menu-title"><?= e(__('Avisos')) ?></strong>
-                    <?php foreach ($nav['notices'] as $notice): ?>
-                        <a class="menu-item" href="<?= e(pb_url($notice['url'])) ?>"><?= e($notice['text']) ?></a>
-                    <?php endforeach ?>
-                    <?php if (!$nav['notices']): ?><p class="help"><?= e(__('Tudo em dia.')) ?></p><?php endif ?>
-                </div>
-            </details>
-        <?php endif ?>
+        <details class="menu notices">
+            <summary class="icon-btn" title="<?= e(__('Avisos')) ?>" aria-label="<?= e(__('Avisos') . ($nav['notices'] ? ' (' . count($nav['notices']) . ')' : '')) ?>">
+                <?= pb_admin_icon('bell') ?><?php if ($nav['notices']): ?><span class="dot" aria-hidden="true"></span><?php endif ?>
+            </summary>
+            <div>
+                <strong class="menu-title"><?= e(__('Avisos')) ?></strong>
+                <?php foreach ($nav['notices'] as $notice): ?>
+                    <a class="menu-item" href="<?= e(pb_url($notice['url'])) ?>"><?= e($notice['text']) ?></a>
+                <?php endforeach ?>
+                <?php if (!$nav['notices']): ?><p class="help"><?= e(__('Tudo em dia.')) ?></p><?php endif ?>
+            </div>
+        </details>
         <details class="menu account">
             <summary aria-label="<?= e(__('Minha conta') . ': ' . $user['name']) ?>">
-                <span class="avatar" aria-hidden="true" data-initials="<?= e($initials) ?>"></span>
+                <?php if ($photo = pb_avatar_url($user)): ?>
+                    <img class="avatar" src="<?= e($photo) ?>" alt="" width="32" height="32">
+                <?php else: ?>
+                    <span class="avatar" aria-hidden="true" data-initials="<?= e($initials) ?>"></span>
+                <?php endif ?>
                 <span class="who"><?= e($user['name']) ?></span>
                 <?= pb_admin_icon('chevron-down') ?>
             </summary>

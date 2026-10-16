@@ -35,4 +35,16 @@ pb_plugin_settings([
 pb_add_filter('slot:contact', fn(string $html) => $html . pbcf_form());
 pb_add_filter('head_html', fn(string $html) => $html . pbcf_stylesheet());
 pb_add_route('POST', '/contato/enviar', 'pbcf_submit');
-pb_add_admin_page('mensagens', __('Mensagens'), 'pbcf_admin');
+// In the Content list of the menu (after Contact), with an envelope: the messages people send are what the client opens most. A PageBrick whose
+// pb_add_admin_page() does not know the last two arguments (before 1.6.0) ignores them and lists the screen under Plugins, where it always worked.
+pb_add_admin_page('mensagens', __('Mensagens'), 'pbcf_admin', 'editor', 'content', 'mail');
+// Messages nobody opened yet: a number beside "Mensagens" in the menu and a line in the bell, for whoever can open the screen. They are asked for by
+// PageBrick 1.7.0 or newer ('panel_badges' and 'panel_notices'); an older one never fires those filters, so nothing happens there.
+pb_add_filter('panel_badges', fn(array $badges) => $badges + ['mensagens' => pbcf_unread()]);
+pb_add_filter('panel_notices', function (array $notices) {
+    $unread = pbcf_unread();
+    if ($unread > 0) {
+        $notices[] = ['text' => $unread === 1 ? __('Você tem 1 mensagem nova do formulário de contato.') : sprintf(__('Você tem %d mensagens novas do formulário de contato.'), $unread), 'url' => '/admin/p/mensagens'];
+    }
+    return $notices;
+});

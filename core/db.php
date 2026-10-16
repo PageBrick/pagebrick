@@ -122,6 +122,10 @@ function pb_migrations(): array
         9 => [
             'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN invited_at DATETIME NULL',
         ],
+        // The photo each person can put beside their name in the panel's header (a file under uploads/avatars).
+        10 => [
+            'ALTER TABLE ' . pb_table('users') . ' ADD COLUMN avatar VARCHAR(120) NULL',
+        ],
     ];
 }
 

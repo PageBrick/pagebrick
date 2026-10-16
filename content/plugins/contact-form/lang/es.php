@@ -50,4 +50,6 @@ return [
     'Depois de 12 meses' => 'Después de 12 meses',
     'Depois de 24 meses' => 'Después de 24 meses',
     'Nunca' => 'Nunca',
+    'Você tem 1 mensagem nova do formulário de contato.' => 'Tienes 1 mensaje nuevo del formulario de contacto.',
+    'Você tem %d mensagens novas do formulário de contato.' => 'Tienes %d mensajes nuevos del formulario de contacto.',
 ];

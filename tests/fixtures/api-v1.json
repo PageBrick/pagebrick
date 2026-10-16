@@ -1085,7 +1085,9 @@
         "sitemap_urls",
         "link_targets",
         "admin_bar",
-        "live_stamp"
+        "live_stamp",
+        "panel_notices",
+        "panel_badges"
     ],
     "standard": {
         "menus.footer": "menu",

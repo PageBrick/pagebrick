@@ -2,6 +2,17 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.7.0
+
+- **Messages from the contact form tell the client when they arrive.** The bell at the top of the panel, which only administrators had, is now for everyone who signs in: it says "You have 2 new messages from the contact form", and the **Messages** item of the menu gets a number beside it (the dot of the Content icon lights too). Opening the screen clears them. For this PageBrick gives plugins two filters, `panel_badges` (a number beside a plugin screen in the menu) and `panel_notices` (lines in the bell); they only add: nothing that existed changes, and a plugin that uses them on an older PageBrick just never has them asked. The administrators' own notices (an update, a plugin switched off) stay for administrators. The contact form (plugin 1.2.0, from the catalog) uses them.
+- **A photo beside your name.** **My account** has a **Photo** card: choose a picture (JPG, PNG, WebP or GIF, up to 5 MB), drag it and zoom into place inside a circle, and send; what is inside the circle is what is kept, as a small square (160 pixels), and it takes the place of the initials at the top of the panel. **Remove photo** brings the initials back. It asks for no password. Without script in the browser the picture goes as it is and is cut from the centre. The file lives under `uploads/avatars/` with a random name, the one it replaces is deleted, and so is a photo whose person is deleted. One new column in the database.
+
+## Blog plugin 1.2.0 and Contact form plugin 1.2.0
+
+Both are official plugins, so a site that already has them gets these versions from the catalog (**Plugins → Update**).
+
+- **The Blog and the messages of the contact form are in the Content list of the menu** (and the contact form, from 1.2.0, tells when a message arrives: a number beside **Messages** and a line in the bell, on a PageBrick 1.7.0 or newer), after Contact (a pencil and an envelope), instead of behind the Plugins icon: they are what the client opens every week. They use the two optional arguments `pb_add_admin_page()` has had since PageBrick 1.6.0; on an older PageBrick the arguments are ignored and the screens stay under Plugins, as before. Nothing else changes.
+
 ## Blog plugin 1.1.0
 
 The Blog is an official plugin, so a site that already has it gets this one from the catalog (**Plugins → Update**), not from the PageBrick update; a new installation carries it from the next PageBrick release on.
