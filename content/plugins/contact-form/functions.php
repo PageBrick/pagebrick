@@ -171,3 +171,10 @@ function pbcf_admin(): void
     pb_db()->exec("UPDATE $table SET read_at = NOW() WHERE read_at IS NULL");
     echo pb_include(__DIR__ . '/admin.php', ['messages' => $messages, 'mailOk' => pb_mail_settings()['host'] !== '']);
 }
+
+/** How many messages nobody opened yet (opening the screen marks them all as read). */
+function pbcf_unread(): int
+{
+    // ponytail: counted on every panel page; the table is small (old messages are deleted). Add an index on read_at if a site ever keeps tens of thousands.
+    return (int) pb_db()->query('SELECT COUNT(*) FROM ' . pb_table('contact_messages') . ' WHERE read_at IS NULL')->fetchColumn();
+}

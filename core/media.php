@@ -90,6 +90,18 @@ function pb_media_process_image(string $source, string $mime, string $base): arr
     if ($width * $height > PB_IMAGE_MAX_PIXELS) {
         throw new InvalidArgumentException(__('A imagem tem pixels demais para a hospedagem processar. Reduza o tamanho (por exemplo, para 4000 pixels de largura) e envie de novo.'));
     }
+    $image = pb_image_open($source, $mime);
+
+    $ext = function_exists('imagewebp') ? 'webp' : ($mime === 'image/jpeg' ? 'jpg' : 'png');
+    $full = pb_image_resize($image, PB_IMAGE_MAX_WIDTH);
+    pb_image_save($full, "$base.$ext", $ext);
+    pb_image_save(pb_image_resize($image, PB_THUMB_WIDTH), "$base-thumb.$ext", $ext);
+    return ["$base.$ext", "$base-thumb.$ext", imagesx($full), imagesy($full)];
+}
+
+/** Opens an image file for GD: upright, in true colour and with its transparency. Throws with a message the user can read. */
+function pb_image_open(string $source, string $mime): GdImage
+{
     $image = @imagecreatefromstring((string) file_get_contents($source));
     if (!$image) {
         throw new InvalidArgumentException(__('Não consegui ler esta imagem. Tente salvar como JPG ou PNG.'));
@@ -106,12 +118,7 @@ function pb_media_process_image(string $source, string $mime, string $base): arr
     imagepalettetotruecolor($image);
     imagealphablending($image, false);
     imagesavealpha($image, true);
-
-    $ext = function_exists('imagewebp') ? 'webp' : ($mime === 'image/jpeg' ? 'jpg' : 'png');
-    $full = pb_image_resize($image, PB_IMAGE_MAX_WIDTH);
-    pb_image_save($full, "$base.$ext", $ext);
-    pb_image_save(pb_image_resize($image, PB_THUMB_WIDTH), "$base-thumb.$ext", $ext);
-    return ["$base.$ext", "$base-thumb.$ext", imagesx($full), imagesy($full)];
+    return $image;
 }
 
 function pb_image_resize(GdImage $image, int $maxWidth): GdImage

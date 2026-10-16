@@ -189,7 +189,9 @@ final class PanelNavigationTest extends TestCase
         $this->assertSame(2, $nav['updates']);
 
         $this->assertSame([], pb_admin_nav($this->user($this->editor), '/admin')['notices'], 'editors do not get them');
-        $this->assertStringNotContainsString('class="menu notices"', $this->open($this->editor), 'nor the bell');
+        $bell = $this->open($this->editor);
+        $this->assertStringContainsString('Tudo em dia.', $bell, 'their bell is there for what plugins say (messages waiting), and empty of these');
+        $this->assertStringNotContainsString('9.9.9', $bell);
     }
 
     public function test_the_header_has_the_icon_of_the_brand_not_the_whole_logo(): void
@@ -282,5 +284,41 @@ final class PanelNavigationTest extends TestCase
     {
         $this->assertStringContainsString('action="/admin/site-mode"', $this->open($this->admin));
         $this->assertStringNotContainsString('action="/admin/site-mode"', $this->open($this->editor));
+    }
+
+    public function test_a_plugin_can_put_a_number_beside_its_screen_and_a_line_in_the_bell(): void
+    {
+        pb_add_admin_page('mensagens', 'Mensagens', fn() => null, 'editor', 'content', 'mail');
+        pb_add_filter('panel_badges', fn(array $badges) => $badges + ['mensagens' => 3, 'nao-existe' => 9]);
+        pb_add_filter('panel_notices', fn(array $notices, array $user) => [...$notices, ['text' => 'Você tem 3 mensagens novas.', 'url' => '/admin/p/mensagens'], 'lixo', ['text' => 'sem endereço'], ['text' => 'de fora', 'url' => 'https://example.com']]);
+
+        $nav = pb_admin_nav($this->user($this->editor), '/admin');
+        $content = $this->section($nav, 'content');
+        $this->assertSame(3, end($content['items'])['count'], 'the number is on the screen');
+        $this->assertTrue($content['dot'], 'and the dot of the Content icon is lit');
+        $this->assertSame([['text' => 'Você tem 3 mensagens novas.', 'url' => '/admin/p/mensagens']], $nav['notices'], 'only a well-formed notice, to an address of the panel, gets in the bell');
+
+        $html = $this->open($this->editor);
+        $this->assertStringContainsString('<span class="count">3</span>', $html);
+        $this->assertStringContainsString('class="menu notices"', $html, 'an editor has the bell too');
+        $this->assertStringContainsString('Você tem 3 mensagens novas.', $html);
+    }
+
+    public function test_the_bell_of_an_editor_has_only_what_plugins_say_and_never_the_administrators_notices(): void
+    {
+        $html = $this->open($this->editor);
+        $this->assertStringContainsString('class="menu notices"', $html);
+        $this->assertStringContainsString('Tudo em dia.', $html);
+        $this->assertFalse($this->section(pb_admin_nav($this->user($this->editor), '/admin'), 'content')['dot']);
+    }
+
+    public function test_a_screen_without_anything_to_count_has_no_number(): void
+    {
+        pb_add_admin_page('mensagens', 'Mensagens', fn() => null, 'editor', 'content', 'mail');
+        pb_add_filter('panel_badges', fn(array $badges) => $badges + ['mensagens' => 0]);
+        $content = $this->section(pb_admin_nav($this->user($this->editor), '/admin'), 'content');
+        $this->assertSame(0, end($content['items'])['count']);
+        $this->assertFalse($content['dot']);
+        $this->assertStringNotContainsString('class="count"', $this->open($this->editor));
     }
 }

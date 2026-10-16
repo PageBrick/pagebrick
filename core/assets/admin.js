@@ -323,6 +323,87 @@
         }
     }));
 
+    // The person's photo: after choosing a file it is shown in a circle, to be dragged and zoomed into place; what is in the circle is what is sent
+    // (a square picture, drawn on a canvas). Without this (old browser, script off) the file goes as it is and the server cuts the centre.
+    document.querySelectorAll('form[data-crop]').forEach((form) => {
+        const input = form.querySelector('input[type=file]');
+        const box = form.querySelector('[data-crop-box]');
+        const view = box.querySelector('[data-crop-view]');
+        const img = view.querySelector('img');
+        const zoom = box.querySelector('input[type=range]');
+        const SENT = 320; // pixels of the picture that is sent
+        let base = 1, scale = 1, x = 0, y = 0, ready = false; // x, y: the picture's top-left corner inside the circle, in pixels of the circle
+        const side = () => view.clientWidth;
+        const draw = () => {
+            x = Math.min(0, Math.max(side() - img.naturalWidth * scale, x)); // the picture always covers the circle
+            y = Math.min(0, Math.max(side() - img.naturalHeight * scale, y));
+            img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+        };
+        const zoomTo = (next, cx = side() / 2, cy = side() / 2) => { // around a point of the circle
+            next = Math.max(base, Math.min(base * 4, next));
+            x = cx - (cx - x) * next / scale;
+            y = cy - (cy - y) * next / scale;
+            scale = next;
+            zoom.value = String(scale / base);
+            draw();
+        };
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            ready = false;
+            box.hidden = true;
+            if (!file || !file.type.startsWith('image/')) return;
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                box.hidden = false; // before measuring: a closed box has no size
+                base = scale = side() / Math.min(img.naturalWidth, img.naturalHeight); // the shorter side fills the circle
+                x = (side() - img.naturalWidth * scale) / 2;
+                y = (side() - img.naturalHeight * scale) / 2;
+                zoom.value = '1';
+                ready = true;
+                draw();
+            };
+            img.src = url; // a picture the browser cannot show leaves the box closed: the server does the centred cut
+        });
+        zoom.addEventListener('input', () => zoomTo(base * Number(zoom.value)));
+        let drag = null;
+        view.addEventListener('pointerdown', (event) => { drag = {id: event.pointerId, px: event.clientX, py: event.clientY, x, y}; view.setPointerCapture(event.pointerId); });
+        view.addEventListener('pointermove', (event) => {
+            if (!drag || event.pointerId !== drag.id) return;
+            x = drag.x + event.clientX - drag.px;
+            y = drag.y + event.clientY - drag.py;
+            draw();
+        });
+        ['pointerup', 'pointercancel'].forEach((name) => view.addEventListener(name, () => { drag = null; }));
+        view.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            const at = view.getBoundingClientRect();
+            zoomTo(scale * (event.deltaY < 0 ? 1.1 : 1 / 1.1), event.clientX - at.left, event.clientY - at.top);
+        }, {passive: false});
+        view.addEventListener('keydown', (event) => {
+            const move = {ArrowLeft: [20, 0], ArrowRight: [-20, 0], ArrowUp: [0, 20], ArrowDown: [0, -20]}[event.key];
+            if (move) { event.preventDefault(); x += move[0]; y += move[1]; draw(); }
+            else if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomTo(scale * 1.1); }
+            else if (event.key === '-') { event.preventDefault(); zoomTo(scale / 1.1); }
+        });
+        form.addEventListener('submit', (event) => {
+            if (!ready || form.dataset.cropped) return;
+            event.preventDefault();
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = SENT;
+            canvas.getContext('2d').drawImage(img, -x / scale, -y / scale, side() / scale, side() / scale, 0, 0, SENT, SENT);
+            canvas.toBlob((blob) => {
+                try {
+                    const files = new DataTransfer();
+                    files.items.add(new File([blob], 'foto.' + (blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg'), {type: blob.type}));
+                    input.files = files.files;
+                } catch (error) { /* an old browser: the file goes as it is */ }
+                form.dataset.cropped = '1';
+                HTMLFormElement.prototype.submit.call(form);
+            }, 'image/webp', 0.92);
+        });
+    });
+
     // A button that copies the text of a field (the link of an invitation): data-copy = the field's id, data-done = what the button says after.
     document.querySelectorAll('[data-copy]').forEach((button) => button.addEventListener('click', async () => {
         const field = document.getElementById(button.dataset.copy);

@@ -80,6 +80,18 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .nav-toggle { display: none; }
 .dot { position: absolute; top: .35rem; right: .35rem; width: .65rem; height: .65rem; border: 2px solid var(--card); border-radius: 50%; background: var(--brick); }
 .avatar { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: 50%; background: var(--soft); color: var(--accent); font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
+img.avatar { object-fit: cover; background: var(--soft); }
+.avatar.big { width: 5rem; height: 5rem; font-size: 1.5rem; }
+.photo-row { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-start; }
+.photo-row form { margin: 0; }
+.photo-row form[data-crop] { flex: 1 1 20rem; min-width: 0; }
+.photo-now { display: grid; gap: .75rem; justify-items: center; }
+.crop { margin: 1rem 0; }
+.crop-view { position: relative; width: 14rem; height: 14rem; max-width: 100%; border-radius: 50%; overflow: hidden; background: var(--soft); box-shadow: 0 0 0 2px var(--line-strong); cursor: grab; touch-action: none; user-select: none; }
+.crop-view:active { cursor: grabbing; }
+.crop-view:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.crop-view img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; pointer-events: none; }
+.crop input[type=range] { width: 14rem; max-width: 100%; margin: .25rem 0 .5rem; padding: 0; }
 .avatar::before { content: attr(data-initials); } /* not text of the page: the name beside it is what a screen reader says */
 .who { max-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 

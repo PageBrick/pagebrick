@@ -48,6 +48,7 @@ function pb_admin(string $method, string $path): void
         'POST /admin/general/https' => ['admin', 'pb_admin_https'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
         'POST /admin/account' => ['editor', 'pb_admin_account_save'],
+        'POST /admin/account/avatar' => ['editor', 'pb_admin_account_avatar'],
         'GET /admin/users' => ['admin', 'pb_admin_users'],
         'POST /admin/users' => ['admin', 'pb_admin_users_create'],
         'GET /admin/users/edit' => ['admin', 'pb_admin_user_edit'],
@@ -1136,6 +1137,24 @@ function pb_admin_account(?string $error = null): void
         $user = array_merge($user, ['name' => pb_post('name'), 'email' => pb_post('email')]);
     }
     pb_render('account', ['title' => __('Minha conta'), 'user' => $user, 'error' => $error]);
+}
+
+/** The photo in "Minha conta": send one, or take it away. It asks for no password: it is not a secret. */
+function pb_admin_account_avatar(): void
+{
+    $id = (int) pb_current_user_id();
+    try {
+        if (pb_post('action') === 'remove') {
+            pb_avatar_remove($id);
+            pb_flash('ok', __('Foto removida.'));
+        } else {
+            pb_avatar_set($id, $_FILES['avatar'] ?? []);
+            pb_flash('ok', __('Foto salva.'));
+        }
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    pb_redirect('/admin/account');
 }
 
 function pb_admin_account_save(): void

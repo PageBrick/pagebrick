@@ -59,7 +59,7 @@ function pb_admin_icon(string $name): string
 /**
  * What the navigation shows this person, from the sections (Content, Plugins, Settings: the narrow bar) to the screens
  * of each (the list beside it). 'open' marks the section whose screens the list shows: the one the person is in, or Content.
- * Also the notices an administrator should see (an update, a plugin that was switched off).
+ * Also the notices for the bell: an administrator's (an update, a plugin that was switched off) and the ones plugins add for anyone (messages waiting).
  *
  * @return array{sections: list<array>, notices: list<array{text: string, url: string}>, updates: int, broken: list<string>}
  */
@@ -88,12 +88,14 @@ function pb_admin_nav(array $user, string $current): array
     ]]];
 
     // What plugins add: their screens (for whoever each plugin allows), the settings of the active ones and, for administrators, managing them.
+    // A plugin puts a number beside its screen (messages waiting, say) with the 'panel_badges' filter: [screen slug => number].
+    $badges = pb_apply_filters('panel_badges', [], $user);
     $screens = [];
     foreach ($GLOBALS['pb_admin_pages'] ?? [] as $slug => $page) {
         if (!pb_has_role($user, $page['role'])) {
             continue;
         }
-        $item = $link("/admin/p/$slug", $page['label'], $page['icon'] ?? 'plug', $current === "/admin/p/$slug");
+        $item = $link("/admin/p/$slug", $page['label'], $page['icon'] ?? 'plug', $current === "/admin/p/$slug", max(0, (int) ($badges[$slug] ?? 0)));
         if (($page['section'] ?? 'plugins') === 'content') {
             $sections[0]['items'][] = $item; // a screen of daily use goes in the Content list, after Contact
         } else {
@@ -114,8 +116,9 @@ function pb_admin_nav(array $user, string $current): array
         foreach ($groups as $i => $group) {
             $items = array_merge($items, $i ? [['divider' => true]] : [], $group);
         }
-        $sections[] = ['id' => 'plugins', 'label' => __('Plugins'), 'icon' => 'plug', 'dot' => (bool) $broken, 'items' => $items];
+        $sections[] = ['id' => 'plugins', 'label' => __('Plugins'), 'icon' => 'plug', 'dot' => (bool) $broken || array_sum(array_column($screens, 'count')) > 0, 'items' => $items];
     }
+    $sections[0]['dot'] = array_sum(array_column($sections[0]['items'], 'count')) > 0; // a number inside the Content list lights the dot of its icon
 
     // The technical screens, rarely touched (administrators only).
     if ($admin) {
@@ -149,6 +152,12 @@ function pb_admin_nav(array $user, string $current): array
     }
     if ($broken) {
         $notices[] = ['text' => sprintf(__('Plugin desligado automaticamente por erro: %s.'), implode(', ', $broken)), 'url' => '/admin/plugins'];
+    }
+    // Plugins add their own with the 'panel_notices' filter (a list of ['text' => …, 'url' => '/admin/…']); only well-formed ones are kept.
+    foreach (pb_apply_filters('panel_notices', $notices, $user) as $notice) {
+        if (is_array($notice) && is_string($notice['text'] ?? null) && is_string($notice['url'] ?? null) && str_starts_with($notice['url'], '/') && !in_array($notice, $notices, true)) {
+            $notices[] = ['text' => $notice['text'], 'url' => $notice['url']];
+        }
     }
     return ['sections' => $sections, 'notices' => $notices, 'updates' => $updateCount, 'broken' => $broken];
 }

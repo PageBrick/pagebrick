@@ -34,6 +34,33 @@ final class OfficialPluginsTest extends TestCase
         $this->assertNotContains('/admin/p/mensagens', $urls('plugins'));
     }
 
+    public function test_messages_nobody_opened_show_a_number_and_a_line_in_the_bell_until_the_screen_is_opened(): void
+    {
+        $editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
+        $count = function () use ($editor): array {
+            $nav = pb_admin_nav(pb_find_user($editor), '/admin');
+            $items = array_values(array_filter($nav['sections'][0]['items'], fn($item) => ($item['url'] ?? '') === '/admin/p/mensagens'));
+            return [$items[0]['count'], $nav['notices'], $nav['sections'][0]['dot']];
+        };
+        $insert = fn(string $name) => pb_db()->prepare('INSERT INTO ' . pb_table('contact_messages') . " (name, email, message, ip) VALUES (?, 'x@example.com', 'Oi', '10.0.0.1')")->execute([$name]);
+
+        $this->assertSame([0, [], false], $count(), 'nothing waiting: no number, nothing in the bell');
+        $insert('Cliente 1');
+        $this->assertSame([1, [['text' => 'Você tem 1 mensagem nova do formulário de contato.', 'url' => '/admin/p/mensagens']], true], $count());
+        $insert('Cliente 2');
+        $this->assertSame('Você tem 2 mensagens novas do formulário de contato.', $count()[1][0]['text']);
+
+        $_SESSION['user_id'] = $editor;
+        $_SERVER['REQUEST_URI'] = '/admin/p/mensagens';
+        ob_start();
+        pb_admin('GET', '/admin/p/mensagens');
+        $screen = ob_get_clean();
+        $this->assertStringContainsString('Cliente 2', $screen);
+        $this->assertStringNotContainsString('class="count"', $screen, 'opening the screen marks them read, and the number is gone from the very screen');
+        $this->assertSame([0, [], false], $count());
+        $_SESSION = [];
+    }
+
     private function visit(string $path): string
     {
         unset($GLOBALS['pbcf_used']); // per-request flag; each visit is a new request

@@ -263,7 +263,7 @@ final class MultilingualTest extends TestCase
     {
         // Accounts from before 1.0.3 had none and followed the site: the migration gives them the one they saw.
         pb_db()->exec('UPDATE ' . pb_table('users') . ' SET locale = NULL');
-        pb_db()->exec('ALTER TABLE ' . pb_table('users') . ' DROP COLUMN prefs, DROP COLUMN invited_at'); // a site from that time doesn't have the later columns yet
+        pb_db()->exec('ALTER TABLE ' . pb_table('users') . ' DROP COLUMN prefs, DROP COLUMN invited_at, DROP COLUMN avatar'); // a site from that time doesn't have the later columns yet
         pb_db()->exec('ALTER TABLE ' . pb_table('pages') . ' DROP COLUMN draft, DROP COLUMN draft_at');
         pb_set_option('db_version', '5');
         pb_migrate();

@@ -77,6 +77,85 @@ function pb_update_own_account(array $user, string $currentPassword, string $nam
 }
 
 /** The panel language for one user; '' follows the site's language. */
+// ------------------------------------------------------------------ the person's photo
+
+/** The photo is a square of this many pixels: twice what the header draws, so it stays sharp on dense screens. */
+const PB_AVATAR_SIZE = 160;
+const PB_AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+/** The address of a person's photo, or '' when they have none. */
+function pb_avatar_url(array $user): string
+{
+    return !empty($user['avatar']) ? pb_url('content/uploads/' . $user['avatar']) : '';
+}
+
+/** Saves the photo sent in one entry of $_FILES. Throws with a message the person can read. */
+function pb_avatar_set(int $userId, array $file): void
+{
+    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if ($error !== UPLOAD_ERR_OK || !is_string($file['tmp_name'] ?? null) || !is_uploaded_file($file['tmp_name'])) {
+        throw new InvalidArgumentException(match ($error) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => sprintf(__('O arquivo passa do limite da hospedagem (%s).'), ini_get('upload_max_filesize')),
+            UPLOAD_ERR_NO_FILE => __('Escolha uma foto.'),
+            default => __('O envio falhou. Tente de novo.'),
+        });
+    }
+    pb_avatar_store($userId, $file['tmp_name']);
+}
+
+/**
+ * Makes the photo from a file on disk: its type is read from the content, it is cut to a centred square, shrunk, and written under a random name
+ * (nothing from the person reaches the file system). The one it replaces is deleted.
+ */
+function pb_avatar_store(int $userId, string $source): void
+{
+    if (filesize($source) > PB_AVATAR_MAX_BYTES) {
+        throw new InvalidArgumentException(__('A foto passa de 5 MB.'));
+    }
+    if (!in_array((new finfo(FILEINFO_MIME_TYPE))->file($source), PB_IMAGE_TYPES, true)) {
+        throw new InvalidArgumentException(__('Tipo de arquivo não aceito. Envie JPG, PNG, WebP ou GIF.'));
+    }
+    [$width, $height] = @getimagesize($source) ?: [0, 0];
+    if ($width * $height > PB_IMAGE_MAX_PIXELS) {
+        throw new InvalidArgumentException(__('A imagem tem pixels demais para a hospedagem processar. Reduza o tamanho (por exemplo, para 4000 pixels de largura) e envie de novo.'));
+    }
+    @ini_set('memory_limit', '256M');
+    $image = pb_image_open($source, (string) (new finfo(FILEINFO_MIME_TYPE))->file($source));
+    [$width, $height] = [imagesx($image), imagesy($image)];
+    $side = min($width, $height);
+    $square = imagecreatetruecolor(PB_AVATAR_SIZE, PB_AVATAR_SIZE);
+    imagealphablending($square, false);
+    imagesavealpha($square, true);
+    imagecopyresampled($square, $image, 0, 0, intdiv($width - $side, 2), intdiv($height - $side, 2), PB_AVATAR_SIZE, PB_AVATAR_SIZE, $side, $side);
+
+    $dir = pb_uploads_dir() . '/avatars';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        throw new RuntimeException("Cannot create $dir");
+    }
+    $ext = function_exists('imagewebp') ? 'webp' : 'png';
+    $path = "avatars/$userId-" . bin2hex(random_bytes(6)) . ".$ext";
+    pb_image_save($square, $path, $ext);
+    $before = (string) (pb_find_user($userId)['avatar'] ?? '');
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET avatar = ? WHERE id = ?')->execute([$path, $userId]);
+    pb_avatar_forget($before);
+}
+
+/** Takes the photo away: the initials come back. */
+function pb_avatar_remove(int $userId): void
+{
+    $before = (string) (pb_find_user($userId)['avatar'] ?? '');
+    pb_db()->prepare('UPDATE ' . pb_table('users') . ' SET avatar = NULL WHERE id = ?')->execute([$userId]);
+    pb_avatar_forget($before);
+}
+
+/** Deletes a photo file; only a path of the shape this code writes is ever touched. */
+function pb_avatar_forget(string $path): void
+{
+    if (preg_match('~^avatars/\d+-[0-9a-f]{12}\.(webp|png)$~', $path)) {
+        @unlink(pb_uploads_dir() . "/$path");
+    }
+}
+
 /** The preferences a person keeps in the panel: ['theme' => 'dark' | 'light']. The language has its own column. */
 const PB_USER_PREFS = ['theme' => ['light', 'dark']];
 
@@ -114,7 +193,9 @@ function pb_delete_user(int $id, int $actingUserId): void
     if ($id === $actingUserId) {
         throw new InvalidArgumentException(__('Você não pode excluir a sua própria conta.'));
     }
+    $photo = (string) (pb_find_user($id)['avatar'] ?? '');
     pb_db()->prepare('DELETE FROM ' . pb_table('users') . ' WHERE id = ?')->execute([$id]);
+    pb_avatar_forget($photo);
     pb_db()->prepare('DELETE FROM ' . pb_table('password_resets') . ' WHERE user_id = ?')->execute([$id]); // an invitation not used yet goes with the person
 }
 
