@@ -122,7 +122,7 @@ final class I18nTest extends TestCase
         $screens = [['/admin'], ['/admin/pages'], ['/admin/pages/edit', ['id' => (string) pb_home_page_id()]], ['/admin/media'], ['/admin/menus'],
             ['/admin/settings'], ['/admin/general'], ['/admin/account'], ['/admin/users'], ['/admin/plugins'], ['/admin/plugins/settings', ['plugin' => 'blog']],
             ['/admin/themes'], ['/admin/updates'], ['/admin/email'], ['/admin/p/mensagens'], ['/admin/p/blog'],
-            ['/admin/p/blog', ['aba' => 'categorias', 'editar' => (string) $category]], ['/admin/p/blog', ['editar' => '1']]];
+            ['/admin/p/blog', ['aba' => 'categorias', 'editar' => (string) $category]], ['/admin/p/blog', ['editar' => '1']], ['/admin/p/blog', ['aba' => 'importar']]];
         foreach ($screens as $screen) {
             $panel .= $this->panel(...$screen);
         }

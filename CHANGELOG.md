@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## Blog plugin 1.1.0
+
+The Blog is an official plugin, so a site that already has it gets this one from the catalog (**Plugins → Update**), not from the PageBrick update; a new installation carries it from the next PageBrick release on.
+
+- **The Blog imports posts and categories from a JSON file** (a new **Import** tab, administrators only). Upload the file or paste its content: everything is checked first, and one message lists what to fix (the first eight problems, with the number and title of the post); then it is written all or nothing. A post whose address already exists is skipped, so importing the same file twice changes nothing; categories that already exist are kept as they are. A post without `status` comes in as a draft, so nothing goes public by accident. The text goes through the same cleaning as the editor's. Up to 2 MB and 500 posts per file; photos are not imported. The tab offers an example file to download. No change in the public API or in the tables.
+
 ## 1.6.0
 
 - **A plugin can put its screen in the Content list of the menu.** `pb_add_admin_page()` takes two new optional arguments at the end: `$section` (`'plugins'`, the default, or `'content'`) and `$icon` (the name of one of the panel's own icons, such as `'megaphone'`; an unknown name gives the plug). A screen the client uses every day, like a notices or events screen, can now sit beside Pages, Media, Menus and Contact instead of behind the Plugins icon. Every plugin that calls it as before is listed where it was: nothing existing changes, and a plugin that passes the new arguments to an older PageBrick is simply listed under Plugins (PHP ignores the extra arguments).
