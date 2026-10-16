@@ -17,6 +17,11 @@ final class PanelNavigationTest extends TestCase
         $this->admin = pb_create_user('Ana Souza', 'ana@example.com', 'senha-de-teste-123', 'admin');
         $this->editor = pb_create_user('Bia', 'bia@example.com', 'senha-de-teste-123', 'editor');
         pb_seed_demo();
+        // a live site with the installer's example text has notices of its own (LaunchTest): the owner said they are fine, these tests are about the others
+        foreach (pb_launch_notices()['pages'] as $id => $title) {
+            pb_launch_acknowledge('page', $id);
+        }
+        pb_launch_acknowledge('https');
     }
 
     protected function tearDown(): void

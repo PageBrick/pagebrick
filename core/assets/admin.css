@@ -240,6 +240,7 @@ a.button { margin-top: 0; }
 .flash, .error { padding: .75rem 1rem; border-radius: var(--radius-sm); }
 .flash.ok { background: var(--ok-bg); color: var(--ok); }
 .flash.error, .error { background: var(--err-bg); color: var(--err); }
+.flash.warn { background: var(--warn-bg); color: var(--warn); }
 main > .flash { margin: 0 0 1.25rem; }
 .muted { color: var(--muted); }
 /* Small labels: the state of a page, a plugin, the site. */
@@ -285,6 +286,13 @@ td.actions > * { display: inline-block; margin-left: 1rem; }
 .shortcuts strong { display: block; }
 .shortcuts span { display: block; color: var(--muted); font-size: .875rem; }
 .dash-mode { margin-top: 1.25rem; }
+.launch { margin-bottom: 1.25rem; }
+.launch-list { margin: 0; padding: 0; list-style: none; }
+.launch-list li { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; padding: .6rem 0; border-top: 1px solid var(--line); }
+.launch-list li strong { flex: 1 1 12rem; }
+.launch-list form, .launch-list a.button, .launch-list button { margin: 0; }
+.launch-actions { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: center; }
+.launch-actions form { margin: 0; }
 .dash-mode h2 { margin-top: 0; }
 
 /* Page editor */
