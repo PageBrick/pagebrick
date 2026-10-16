@@ -43,5 +43,5 @@ return [
     'classes' => ['PbGroup', 'PbList', 'PbValue'],
     'constants' => ['PB_VERSION', 'PB_API_VERSION'],
     // Hooks the core fires. Themes are expected to call pb_slot('home') and pb_slot('contact') in those templates.
-    'hooks' => ['init', 'head_html', 'footer_html', 'sitemap_urls', 'link_targets', 'admin_bar', 'live_stamp', 'panel_notices', 'panel_badges'],
+    'hooks' => ['init', 'head_html', 'footer_html', 'sitemap_urls', 'link_targets', 'admin_bar', 'live_stamp', 'panel_notices', 'panel_badges', 'robots_txt'],
 ];
