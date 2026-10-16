@@ -2,6 +2,15 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.8.0
+
+Two things the PageSpeed test of a PageBrick site complained about.
+
+- **A switch for the browser cache of the site's files.** A host that sends no `Cache-Control` makes the browser download the photos, fonts, styles and scripts again at every visit. **Settings → Address and languages → Speed: file cache** puts a few lines at the end of `.htaccess` (a week for pictures, styles and scripts; a year for what has another address when it changes: files asked for with `?v=…`, the uploaded files and the fonts) and takes them out again. A copy of the file is kept in the backups first, the site is asked once afterwards, and the lines go out by themselves if the host answers with an error; a host without `mod_headers` ignores them. A new installation already carries them. The update never touches `.htaccess`, so a site installed before gets them only by pressing the button. If the file cannot be written, the card shows the lines to paste.
+- **Photos come in three sizes, and a theme can ask for the right one.** Every photo sent now also keeps a 960-pixel copy (besides the 480 thumbnail and the full one, up to 1920), and `->img(sizes: '…')` prints a `srcset` so a phone downloads the middle or the small one instead of the large one. The default theme and the core's own sections (photo with text, cards, gallery) use it. **Media** offers **Redo the sizes** for the photos sent before this version (12 at a time, one click each).
+- **HTML changes.** `img()` got a fourth optional argument, `$sizes`. Without it the `<img>` is byte for byte the one of 1.7.1, so a theme prints the same HTML until its author passes `sizes`. The default theme's hero, about, page and services pictures, and the core's photo with text, cards and gallery sections now print `srcset` and `sizes` (`sizes="auto, 100vw"` for the ones below the first screen, `100vw` for the full-width ones at the top) when the photo has a smaller copy. Nothing else in the printed HTML changes.
+- For developers: new optional trailing parameter of `PbValue::img()` (nothing in the public API is removed or changed). Internal helpers `pb_htaccess_block()`, `pb_cache_*()` and `pb_media_*mid*()` are not part of the API.
+
 ## 1.7.1
 
 - **The panel is kept out of `/robots.txt` on every site.** The file said only "allow everything"; it now starts with `Disallow: /admin/` (and `/admin$`, the bare address, for the readers that know the end mark) before `Allow: /`, so readers that take the first matching rule, like Python's, agree with Google's most-specific rule. A page whose address only starts with "admin" is not shut out. The panel already sent a "do not index" header; this is the same said in the place crawlers look first.
