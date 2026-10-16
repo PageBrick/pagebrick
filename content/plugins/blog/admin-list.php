@@ -5,7 +5,7 @@
  * @var string|null $error
  */
 ?>
-<nav class="tabs"><a href="<?= e(pb_url('/admin/p/blog')) ?>" aria-current="page"><?= e(__('Textos')) ?></a><a href="<?= e(pb_url('/admin/p/blog?aba=categorias')) ?>"><?= e(__('Categorias')) ?></a></nav>
+<nav class="tabs"><a href="<?= e(pb_url('/admin/p/blog')) ?>" aria-current="page"><?= e(__('Textos')) ?></a><a href="<?= e(pb_url('/admin/p/blog?aba=categorias')) ?>"><?= e(__('Categorias')) ?></a><?php if (pbb_can_import()): ?><a href="<?= e(pb_url('/admin/p/blog?aba=importar')) ?>"><?= e(__('Importar')) ?></a><?php endif ?></nav>
 <?php if ($error): ?><p class="error" role="alert"><?= e($error) ?></p><?php endif ?>
 <div class="card">
     <h1><?= e(pbb_title()) ?></h1>

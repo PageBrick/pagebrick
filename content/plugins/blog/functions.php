@@ -433,6 +433,13 @@ function pbb_admin(): void
                     pbb_delete_category((int) pb_post('id'));
                     pb_flash('ok', __('Categoria excluída. Os textos dela continuam publicados.'));
                     pb_redirect("$self?aba=categorias");
+                case 'import':
+                    if (!pbb_can_import()) {
+                        throw new InvalidArgumentException(__('Só administradores importam textos.'));
+                    }
+                    $result = pbb_import(pbb_import_parse(pbb_import_text()));
+                    pb_flash('ok', sprintf(__('Importação concluída: %1$d textos cadastrados, %2$d já existiam (não foram tocados) e %3$d categorias novas.'), $result['created'], $result['skipped'], $result['categories']));
+                    pb_redirect("$self?aba=importar");
             }
         }
     } catch (InvalidArgumentException $e) {
@@ -447,6 +454,13 @@ function pbb_admin(): void
         }
     }
 
+    if (pb_query('aba') === 'importar' || $action === 'import') {
+        if (pbb_can_import() && pb_query('exemplo') === '1') {
+            pbb_import_download_example();
+        }
+        echo pb_include(__DIR__ . '/admin-import.php', ['allowed' => pbb_can_import(), 'error' => $error ?? null]);
+        return;
+    }
     $tree = pbb_category_tree();
     if (pb_query('aba') === 'categorias') {
         $editingCategory = $tree[(int) pb_query('editar')] ?? null;
@@ -469,3 +483,5 @@ function pbb_live_stamp(): string
     $categories = pb_db()->query('SELECT COUNT(*), SUM(CRC32(CONCAT(name, slug, description))) FROM ' . pb_table('blog_categories'))->fetch(PDO::FETCH_NUM);
     return json_encode([$posts, $categories]);
 }
+
+require_once __DIR__ . '/import.php';

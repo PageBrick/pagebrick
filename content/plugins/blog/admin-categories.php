@@ -6,7 +6,7 @@
  */
 $form = $editing ?? ['id' => 0, 'name' => '', 'slug' => '', 'parent_id' => null, 'description' => ''];
 ?>
-<nav class="tabs"><a href="<?= e(pb_url('/admin/p/blog')) ?>"><?= e(__('Textos')) ?></a><a href="<?= e(pb_url('/admin/p/blog?aba=categorias')) ?>" aria-current="page"><?= e(__('Categorias')) ?></a></nav>
+<nav class="tabs"><a href="<?= e(pb_url('/admin/p/blog')) ?>"><?= e(__('Textos')) ?></a><a href="<?= e(pb_url('/admin/p/blog?aba=categorias')) ?>" aria-current="page"><?= e(__('Categorias')) ?></a><?php if (pbb_can_import()): ?><a href="<?= e(pb_url('/admin/p/blog?aba=importar')) ?>"><?= e(__('Importar')) ?></a><?php endif ?></nav>
 <?php if ($error): ?><p class="error" role="alert"><?= e($error) ?></p><?php endif ?>
 <div class="card">
     <h1><?= e(__('Categorias')) ?></h1>
