@@ -6,7 +6,7 @@ if (PHP_VERSION_ID < 80200) {
     exit('PageBrick requer PHP 8.2 ou mais novo.');
 }
 
-const PB_VERSION = '1.8.0';
+const PB_VERSION = '1.9.0';
 
 if (is_file(PB_ROOT . '/vendor/autoload.php')) {
     require PB_ROOT . '/vendor/autoload.php'; // PHPMailer
@@ -23,6 +23,7 @@ require __DIR__ . '/theme.php';
 require __DIR__ . '/blocks.php';
 require __DIR__ . '/https.php';
 require __DIR__ . '/speed.php';
+require __DIR__ . '/launch.php';
 require __DIR__ . '/headless.php';
 require __DIR__ . '/plugins.php';
 require __DIR__ . '/packages.php';

@@ -153,6 +153,15 @@ function pb_admin_nav(array $user, string $current): array
     if ($broken) {
         $notices[] = ['text' => sprintf(__('Plugin desligado automaticamente por erro: %s.'), implode(', ', $broken)), 'url' => '/admin/plugins'];
     }
+    if ($admin) {
+        $launch = pb_launch_notices();
+        if ($launch['pages']) {
+            $notices[] = ['text' => count($launch['pages']) === 1 ? __('Há 1 página no ar com texto de exemplo.') : sprintf(__('Há %d páginas no ar com texto de exemplo.'), count($launch['pages'])), 'url' => '/admin'];
+        }
+        if ($launch['https']) {
+            $notices[] = ['text' => __('O site ainda abre sem o cadeado (https).'), 'url' => '/admin/general#https'];
+        }
+    }
     // Plugins add their own with the 'panel_notices' filter (a list of ['text' => …, 'url' => '/admin/…']); only well-formed ones are kept.
     foreach (pb_apply_filters('panel_notices', $notices, $user) as $notice) {
         if (is_array($notice) && is_string($notice['text'] ?? null) && is_string($notice['url'] ?? null) && str_starts_with($notice['url'], '/') && !in_array($notice, $notices, true)) {

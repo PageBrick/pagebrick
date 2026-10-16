@@ -17,6 +17,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/logout' => ['editor', 'pb_admin_logout'],
         'GET /admin' => ['editor', 'pb_admin_dashboard'],
         'POST /admin/site-mode' => ['admin', 'pb_admin_site_mode_save'],
+        'POST /admin/launch/draft' => ['admin', 'pb_admin_launch_draft'],
+        'POST /admin/launch/keep' => ['admin', 'pb_admin_launch_keep'],
         'GET /admin/live' => ['editor', 'pb_admin_live'],
         'GET /admin/pages' => ['editor', 'pb_admin_pages'],
         'POST /admin/pages' => ['editor', 'pb_admin_pages_create'],
@@ -207,6 +209,7 @@ function pb_admin_dashboard(): void
         'user' => pb_current_user(),
         'siteTitle' => pb_option('site_title', 'PageBrick'),
         'siteMode' => pb_site_mode(),
+        'launch' => pb_has_role(pb_current_user(), 'admin') ? pb_launch_notices() : ['pages' => [], 'https' => false],
         'siteModeMessage' => pb_option('site_mode_message', ''),
         'stats' => [
             'published' => count(array_filter($main, fn($page) => $page['status'] === 'published')),
@@ -231,6 +234,25 @@ function pb_admin_site_mode_save(): void
     } catch (InvalidArgumentException $e) {
         pb_flash('error', $e->getMessage());
     }
+    pb_redirect('/admin');
+}
+
+/** The dashboard card: a page that still has the example text goes back to being a draft. */
+function pb_admin_launch_draft(): void
+{
+    try {
+        pb_page_unpublish((int) pb_post('id'), pb_current_user_id());
+        pb_flash('ok', __('A página saiu do ar e virou rascunho.'));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    pb_redirect('/admin');
+}
+
+/** The dashboard card: "leave it as it is" for one page or for the https notice. */
+function pb_admin_launch_keep(): void
+{
+    pb_launch_acknowledge(pb_post('what'), (int) pb_post('id'));
     pb_redirect('/admin');
 }
 

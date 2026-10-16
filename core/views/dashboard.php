@@ -4,6 +4,7 @@
  * @var string $siteTitle
  * @var string $siteMode         'live', 'construction' or 'maintenance'
  * @var string $siteModeMessage
+ * @var array  $launch           pages (id => title) with example text still on the air, https (bool): see pb_launch_notices()
  * @var array  $stats            published, drafts, media, languages
  * @var array  $recent           the pages edited last (translations too)
  */
@@ -23,6 +24,38 @@ $statuses = ['draft' => __('Rascunho'), 'published' => __('Publicada')];
             <a href="<?= e(pb_url('/admin/updates')) ?>"><?= e(__('Ver atualizações')) ?></a>
         </p>
     <?php endif ?>
+<?php endif ?>
+<?php if (!empty($launch['pages']) || !empty($launch['https'])):
+    $keep = fn(string $what, int $id = 0) => '<form method="post" action="' . e(pb_url('/admin/launch/keep')) . '" class="inline">' . pb_csrf_field()
+        . '<input type="hidden" name="what" value="' . $what . '"><input type="hidden" name="id" value="' . $id . '"><button type="submit" class="link">' . e(__('Deixar assim')) . '</button></form>'; ?>
+    <div class="card launch">
+        <h2><?= e(__('Antes de divulgar o site')) ?></h2>
+        <?php if ($launch['pages']): ?>
+            <p><?= e(__('Estas páginas estão no ar e ainda têm o texto de exemplo da instalação: quem visitar, e o Google, vai ler esse texto. Edite, ou tire a página do ar por enquanto.')) ?></p>
+            <ul class="launch-list">
+                <?php foreach ($launch['pages'] as $id => $title): ?>
+                    <li>
+                        <strong><?= e($title) ?></strong>
+                        <a class="button secondary" href="<?= e(pb_url('/admin/pages/edit?id=' . $id)) ?>"><?= e(__('Editar')) ?></a>
+                        <?php if ($id !== pb_home_page_id()): ?>
+                            <form method="post" action="<?= e(pb_url('/admin/launch/draft')) ?>" class="inline">
+                                <?= pb_csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>">
+                                <button type="submit" class="secondary"><?= e(__('Passar para rascunho')) ?></button>
+                            </form>
+                        <?php endif ?>
+                        <?= $keep('page', $id) ?>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+        <?php endif ?>
+        <?php if ($launch['https']): ?>
+            <p class="flash warn"><?= e(__('O site ainda abre sem o cadeado: quem digitar http:// entra sem proteção, e o Google pode guardar os dois endereços.')) ?></p>
+            <div class="launch-actions">
+                <a class="button" href="<?= e(pb_url('/admin/general#https')) ?>"><?= e(__('Usar só https')) ?></a>
+                <?= $keep('https') ?>
+            </div>
+        <?php endif ?>
+    </div>
 <?php endif ?>
 <div class="page-head">
     <div>

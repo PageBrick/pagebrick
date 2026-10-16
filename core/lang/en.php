@@ -911,4 +911,13 @@ If you were not expecting this invitation, ignore this e-mail: nothing happens u
     'A hospedagem não aceitou estas linhas (o site respondeu com erro) e o PageBrick as tirou: o arquivo ficou como estava.' => 'The hosting did not accept these lines (the site answered with an error) and PageBrick took them out: the file is as it was.',
     'Pronto: as fotos, as fontes e os arquivos do site ficam guardados no navegador de quem volta.' => 'Done: the photos, fonts and files of the site are kept in the browser of people who come back.',
     'Desligado: o navegador volta a pedir os arquivos do site a cada visita.' => 'Turned off: the browser asks for the site\'s files again on every visit.',
+    'Há 1 página no ar com texto de exemplo.' => 'There is 1 page on the air with example text.',
+    'Há %d páginas no ar com texto de exemplo.' => 'There are %d pages on the air with example text.',
+    'O site ainda abre sem o cadeado (https).' => 'The site still opens without the padlock (https).',
+    'Antes de divulgar o site' => 'Before you announce the site',
+    'Estas páginas estão no ar e ainda têm o texto de exemplo da instalação: quem visitar, e o Google, vai ler esse texto. Edite, ou tire a página do ar por enquanto.' => 'These pages are on the air and still have the example text from the installation: visitors, and Google, will read it. Edit them, or take the page off the air for now.',
+    'Passar para rascunho' => 'Turn into a draft',
+    'Deixar assim' => 'Leave it as it is',
+    'O site ainda abre sem o cadeado: quem digitar http:// entra sem proteção, e o Google pode guardar os dois endereços.' => 'The site still opens without the padlock: anyone who types http:// gets in unprotected, and Google may keep both addresses.',
+    'Usar só https' => 'Use https only',
 ];

@@ -2,6 +2,15 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.9.0
+
+The panel now says what is easy to forget when a site opens to everybody. It only says: nothing is changed on its own, and nothing in the HTML of the site changes.
+
+- **A card on the dashboard, "Before you announce the site".** While the site is live (**No ar**), an administrator sees the published pages that still carry the example text the installer wrote ("Say here, in one sentence, what your company does…", the privacy-policy template with its [brackets]). Each one has **Edit**, **Turn into a draft** (not offered for the home page, which has to stay published) and **Leave it as it is**, which is remembered for that page. The example text is recognised in Portuguese, English and Spanish whatever the panel's language is, and a page counts as done as soon as the example sentences are gone from it. Pages the installer did not write are never listed. Nothing is said while the site is under construction or in maintenance.
+- **The same card says when the site still opens without the padlock.** If nothing makes it open only over https (the rules of **Settings → Address and languages → Secure connection**), the card says so, with **Use https only** (it goes to that card) and **Leave it as it is**, for the sites whose host or CDN already does it. The host can answer on http:// and on the address without www with the same page until someone sets this up; the notice is the reminder.
+- **A line in the bell for each thing** ("There are 5 pages on the air with example text", "The site still opens without the padlock (https)"), for administrators only.
+- For developers: a new option `launch_ack` (what the owner said is fine) and `sample_texts` (the example sentences, rebuilt once per version). No new table or column, and no change to the public API.
+
 ## 1.8.0
 
 Two things the PageSpeed test of a PageBrick site complained about.

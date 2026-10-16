@@ -911,4 +911,13 @@ Si no esperabas esta invitación, ignora este correo: no pasa nada mientras no s
     'A hospedagem não aceitou estas linhas (o site respondeu com erro) e o PageBrick as tirou: o arquivo ficou como estava.' => 'El hosting no aceptó estas líneas (el sitio respondió con error) y PageBrick las quitó: el archivo quedó como estaba.',
     'Pronto: as fotos, as fontes e os arquivos do site ficam guardados no navegador de quem volta.' => 'Listo: las fotos, las fuentes y los archivos del sitio quedan guardados en el navegador de quien vuelve.',
     'Desligado: o navegador volta a pedir os arquivos do site a cada visita.' => 'Desactivado: el navegador vuelve a pedir los archivos del sitio en cada visita.',
+    'Há 1 página no ar com texto de exemplo.' => 'Hay 1 página en línea con texto de ejemplo.',
+    'Há %d páginas no ar com texto de exemplo.' => 'Hay %d páginas en línea con texto de ejemplo.',
+    'O site ainda abre sem o cadeado (https).' => 'El sitio todavía abre sin el candado (https).',
+    'Antes de divulgar o site' => 'Antes de dar a conocer el sitio',
+    'Estas páginas estão no ar e ainda têm o texto de exemplo da instalação: quem visitar, e o Google, vai ler esse texto. Edite, ou tire a página do ar por enquanto.' => 'Estas páginas están en línea y todavía tienen el texto de ejemplo de la instalación: quien visite el sitio, y Google, lo leerá. Edítalas, o saca la página de línea por ahora.',
+    'Passar para rascunho' => 'Pasar a borrador',
+    'Deixar assim' => 'Dejarlo así',
+    'O site ainda abre sem o cadeado: quem digitar http:// entra sem proteção, e o Google pode guardar os dois endereços.' => 'El sitio todavía abre sin el candado: quien escriba http:// entra sin protección, y Google puede guardar las dos direcciones.',
+    'Usar só https' => 'Usar solo https',
 ];
