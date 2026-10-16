@@ -62,6 +62,8 @@ pb_add_filter('sitemap_urls', fn(array $urls) => [...$urls, ['/offers', '2026-10
 
 // A screen in the panel at /admin/p/leads ('editor' or 'admin' can open it).
 pb_add_admin_page('leads', __('Leads'), 'myplugin_admin', 'admin');
+// A screen the client uses every day can sit in the Content list of the menu (after Contact), with an icon of the panel.
+pb_add_admin_page('notices', __('Notices'), 'myplugin_notices', 'editor', 'content', 'megaphone');
 
 // Code that runs at the start of every request.
 pb_add_action('init', fn() => null);
@@ -73,7 +75,7 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | change a value; a filter must return the same type it received |
 | `pb_add_route($method, $path, $handler)` | a public address; the handler echoes the answer |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | show a template of the plugin as a page of the site, inside the theme's layout, with SEO tags |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | a panel screen under the Plugins icon; the handler echoes it for GET and POST. `'editor'` lets editors and administrators in, `'admin'` only administrators. Installing, switching on and off and deleting plugins is always for administrators |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $section = 'plugins', $icon = 'plug')` | a panel screen; the handler echoes it for GET and POST. `'editor'` lets editors and administrators in, `'admin'` only administrators. It is listed under the Plugins icon, or, with `$section = 'content'`, in the Content list (after Contact) for a screen the client uses every day; `$icon` is the name of one of the panel's own icons (`'megaphone'`, `'bell'`, `'mail'`…; an unknown name gives the plug). Installing, switching on and off and deleting plugins is always for administrators |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | settings screen and its values (read like theme fields: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | the plugin's tables; name them with `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | address of a file of the plugin (or of the theme's copy of it) |

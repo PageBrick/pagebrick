@@ -12,7 +12,7 @@
 //   pb_add_filter('sitemap_urls', fn($urls) => …)      add [path, last change] entries to sitemap.xml
 //   pb_add_filter('link_targets', fn($t) => $t + ['/blog' => 'Blog'])   addresses offered in menus and buttons
 //   pb_add_route('POST', '/meu-plugin/enviar', fn() => …)   a public address ('/noticias/*' matches a prefix)
-//   pb_add_admin_page('mensagens', 'Mensagens', fn() => …)  a screen in the panel menu
+//   pb_add_admin_page('mensagens', 'Mensagens', fn() => …)  a screen in the panel menu (under Plugins, or in the Content list)
 //   pb_plugin_settings([...fields])                    a settings screen built from fields
 //   pb_plugin_migrations([1 => ['CREATE TABLE …']])    the plugin's own tables
 //
@@ -327,12 +327,18 @@ function pb_match_route(string $method, string $path): ?array
 }
 
 /**
- * A screen in the panel at /admin/p/{slug}, listed under the Plugins icon for whoever $role allows ('editor' lets
- * editors and administrators in, 'admin' only administrators). The handler echoes the screen (GET and POST).
+ * A screen in the panel at /admin/p/{slug}, listed for whoever $role allows ('editor' lets editors and administrators in,
+ * 'admin' only administrators). The handler echoes the screen (GET and POST).
+ * $section says where the menu lists it: 'plugins' (the default: under the Plugins icon) or 'content' (in the Content list, after
+ * Contact, for a screen the client uses every day, like a notices or events screen). $icon is the name of one of the panel's own
+ * icons (see pb_admin_icon(): 'megaphone', 'bell', 'mail'…); an unknown name, or none, gives the plug.
  */
-function pb_add_admin_page(string $slug, string $label, callable $handler, string $role = 'editor'): void
+function pb_add_admin_page(string $slug, string $label, callable $handler, string $role = 'editor', string $section = 'plugins', string $icon = 'plug'): void
 {
-    $GLOBALS['pb_admin_pages'][$slug] = ['label' => $label, 'handler' => $handler, 'role' => $role, 'owner' => $GLOBALS['pb_running_plugin'] ?? null];
+    $GLOBALS['pb_admin_pages'][$slug] = [
+        'label' => $label, 'handler' => $handler, 'role' => $role, 'owner' => $GLOBALS['pb_running_plugin'] ?? null,
+        'section' => $section === 'content' ? 'content' : 'plugins', 'icon' => pb_admin_icon($icon) !== '' ? $icon : 'plug',
+    ];
 }
 
 /** Fields for the plugin's settings screen, same types as theme fields. Read the values with pb_plugin_settings_values(). */

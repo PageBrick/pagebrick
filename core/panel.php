@@ -90,8 +90,14 @@ function pb_admin_nav(array $user, string $current): array
     // What plugins add: their screens (for whoever each plugin allows), the settings of the active ones and, for administrators, managing them.
     $screens = [];
     foreach ($GLOBALS['pb_admin_pages'] ?? [] as $slug => $page) {
-        if (pb_has_role($user, $page['role'])) {
-            $screens[] = $link("/admin/p/$slug", $page['label'], 'plug', $current === "/admin/p/$slug");
+        if (!pb_has_role($user, $page['role'])) {
+            continue;
+        }
+        $item = $link("/admin/p/$slug", $page['label'], $page['icon'] ?? 'plug', $current === "/admin/p/$slug");
+        if (($page['section'] ?? 'plugins') === 'content') {
+            $sections[0]['items'][] = $item; // a screen of daily use goes in the Content list, after Contact
+        } else {
+            $screens[] = $item;
         }
     }
     $settings = [];
