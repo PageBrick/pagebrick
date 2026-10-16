@@ -854,6 +854,16 @@
                     "name": "role",
                     "type": "string",
                     "optional": true
+                },
+                {
+                    "name": "section",
+                    "type": "string",
+                    "optional": true
+                },
+                {
+                    "name": "icon",
+                    "type": "string",
+                    "optional": true
                 }
             ],
             "returns": "void"

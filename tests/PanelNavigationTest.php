@@ -91,6 +91,32 @@ final class PanelNavigationTest extends TestCase
         $this->assertSame('/admin/p/vitrine', $this->section($nav, 'plugins')['url'], 'the plug opens the first screen');
     }
 
+    public function test_a_plugin_screen_can_ask_for_the_content_list_with_its_own_icon(): void
+    {
+        pb_add_admin_page('avisos', 'Avisos', fn() => null, 'editor', 'content', 'megaphone');
+        pb_add_admin_page('vitrine', 'Vitrine', fn() => null);
+        pb_add_admin_page('chaves', 'Chaves', fn() => null, 'admin', 'content');
+        pb_add_admin_page('enfeite', 'Enfeite', fn() => null, 'editor', 'qualquer-coisa', 'icone-que-nao-existe');
+
+        $editor = pb_admin_nav($this->user($this->editor), '/admin');
+        $content = $this->section($editor, 'content')['items'];
+        $this->assertSame(['/admin', '/admin/pages', '/admin/media', '/admin/menus', '/admin/settings', '/admin/p/avisos'], array_column($content, 'url'), 'after Contact');
+        $this->assertSame('megaphone', end($content)['icon']);
+        $this->assertSame(['/admin/p/vitrine', '/admin/p/enfeite'], array_column($this->section($editor, 'plugins')['items'], 'url'), 'the others stay under Plugins');
+        $this->assertSame(['plug', 'plug'], array_column($this->section($editor, 'plugins')['items'], 'icon'), 'no icon, or an unknown one, is the plug');
+        $this->assertNotContains('/admin/p/chaves', array_column($content, 'url'), 'for administrators only');
+
+        $admin = $this->user($this->admin);
+        $this->assertContains('/admin/p/chaves', array_column($this->section(pb_admin_nav($admin, '/admin'), 'content')['items'], 'url'));
+
+        $nav = pb_admin_nav($this->user($this->editor), '/admin/p/avisos');
+        $this->assertSame(['/admin/p/avisos'], $this->current($nav));
+        $this->assertSame(['content'], array_column(array_filter($nav['sections'], fn($s) => $s['open']), 'id'), 'being on it keeps the Content list open');
+
+        $html = $this->open($this->editor, '/admin/p/avisos');
+        $this->assertMatchesRegularExpression('~<section class="nav-group" data-section="content" data-open.*?<a href="/admin/p/avisos" aria-current="page">.*?Avisos~s', $html);
+    }
+
     public function test_the_list_beside_the_bar_follows_where_the_person_is(): void
     {
         pb_add_admin_page('vitrine', 'Vitrine', fn() => null);

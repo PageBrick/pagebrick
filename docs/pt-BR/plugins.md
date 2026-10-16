@@ -62,6 +62,8 @@ pb_add_filter('sitemap_urls', fn(array $urls) => [...$urls, ['/offers', '2026-10
 
 // Uma tela no painel em /admin/p/leads ('editor' ou 'admin' podem abrir).
 pb_add_admin_page('leads', __('Contatos'), 'myplugin_admin', 'admin');
+// Uma tela que o cliente usa todo dia pode ficar na lista de Conteúdo do menu (depois de Contato), com um ícone do painel.
+pb_add_admin_page('notices', __('Avisos'), 'myplugin_notices', 'editor', 'content', 'megaphone');
 
 // Código que roda no início de cada requisição.
 pb_add_action('init', fn() => null);
@@ -73,7 +75,7 @@ pb_add_action('init', fn() => null);
 | `pb_add_filter($hook, $callback, $priority = 10)` / `pb_apply_filters($hook, $value, ...$args)` | alterar um valor; um filtro precisa retornar o mesmo tipo que recebeu |
 | `pb_add_route($method, $path, $handler)` | um endereço público; o handler imprime a resposta com `echo` |
 | `pb_render_in_theme($file, $vars, ['title' => …, 'description' => …, 'path' => …])` | mostrar um template do plugin como uma página do site, dentro do layout do tema, com as tags de SEO |
-| `pb_add_admin_page($slug, $label, $handler, $role = 'editor')` | uma tela do painel, sob o ícone de Plugins; o handler imprime a tela com `echo`, em GET e POST. `'editor'` deixa entrar editores e administradores, `'admin'` só administradores. Instalar, ligar, desligar e excluir plugins é sempre dos administradores |
+| `pb_add_admin_page($slug, $label, $handler, $role = 'editor', $section = 'plugins', $icon = 'plug')` | uma tela do painel; o handler imprime a tela com `echo`, em GET e POST. `'editor'` deixa entrar editores e administradores, `'admin'` só administradores. Ela aparece sob o ícone de Plugins ou, com `$section = 'content'`, na lista de Conteúdo (depois de Contato), para uma tela que o cliente usa todo dia; `$icon` é o nome de um dos ícones do próprio painel (`'megaphone'`, `'bell'`, `'mail'`…; um nome desconhecido dá a tomada). Instalar, ligar, desligar e excluir plugins é sempre dos administradores |
 | `pb_plugin_settings($fields)` / `pb_plugin_settings_values($slug)` | a tela de configurações e os valores dela (lidos como os campos de tema: `->notify->raw()`) |
 | `pb_plugin_migrations([1 => [sql, …], 2 => …])` | as tabelas do plugin; dê nome a elas com `pb_table('myplugin_…')` |
 | `pb_plugin_url($slug, $path)` | endereço de um arquivo do plugin (ou da cópia dele no tema) |

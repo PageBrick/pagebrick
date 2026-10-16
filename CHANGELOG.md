@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.6.0
+
+- **A plugin can put its screen in the Content list of the menu.** `pb_add_admin_page()` takes two new optional arguments at the end: `$section` (`'plugins'`, the default, or `'content'`) and `$icon` (the name of one of the panel's own icons, such as `'megaphone'`; an unknown name gives the plug). A screen the client uses every day, like a notices or events screen, can now sit beside Pages, Media, Menus and Contact instead of behind the Plugins icon. Every plugin that calls it as before is listed where it was: nothing existing changes, and a plugin that passes the new arguments to an older PageBrick is simply listed under Plugins (PHP ignores the extra arguments).
+
 ## 1.5.0
 
 - **Add a person by name, e-mail and role, and they choose their own password.** Settings → Users: leave **Password (optional)** empty and the person gets an e-mail with a link; they open it, choose a password and go straight into the panel, with no second step. The link works once and for 7 days (the one of "I forgot my password" lasts 1 hour), only its hash is stored, and until it is used the account has a password nobody knows. Typing a password still makes the account at once, as before.
