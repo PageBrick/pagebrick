@@ -556,6 +556,21 @@ function pb_readable_color(string $color, string $background = '#ffffff'): strin
 
 // ------------------------------------------------------------------ public routes
 
+/**
+ * What /robots.txt says: everybody may read the site except the panel, and where the sitemap is. The Disallow comes first because some readers (Python's, for
+ * one) take the first rule that matches, and "Allow: /" would win over it. "/admin/" keeps out every screen of the panel without also shutting out a page
+ * whose address merely starts with "admin"; "/admin$" is the bare address, for the readers that know the end-of-address mark (the others ignore it).
+ * The 'robots_txt' filter gets the text and returns it, so a theme or plugin can add lines (an AI agent by name, say) with no file in the site's root.
+ * An agent that has a group of its own ignores the "*" one: such a group must repeat the Disallow lines.
+ */
+function pb_robots_txt(): string
+{
+    $panel = pb_url('/admin');
+    $text = "User-agent: *\nDisallow: $panel/\nDisallow: $panel\$\nAllow: /\nSitemap: " . pb_absolute_url('/sitemap.xml') . "\n";
+    $filtered = pb_apply_filters('robots_txt', $text);
+    return is_string($filtered) && $filtered !== '' ? $filtered : $text;
+}
+
 function pb_public(string $method, string $path): void
 {
     $GLOBALS['pb_public_request'] = true; // theme preview applies to the site only, never to the panel
@@ -615,7 +630,7 @@ function pb_public(string $method, string $path): void
     }
     if ($path === '/robots.txt') {
         header('Content-Type: text/plain; charset=utf-8');
-        echo "User-agent: *\nAllow: /\nSitemap: " . pb_absolute_url('/sitemap.xml') . "\n";
+        echo pb_robots_txt();
         return;
     }
 

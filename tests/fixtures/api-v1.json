@@ -1087,7 +1087,8 @@
         "admin_bar",
         "live_stamp",
         "panel_notices",
-        "panel_badges"
+        "panel_badges",
+        "robots_txt"
     ],
     "standard": {
         "menus.footer": "menu",

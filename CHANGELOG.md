@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.7.1
+
+- **The panel is kept out of `/robots.txt` on every site.** The file said only "allow everything"; it now starts with `Disallow: /admin/` (and `/admin$`, the bare address, for the readers that know the end mark) before `Allow: /`, so readers that take the first matching rule, like Python's, agree with Google's most-specific rule. A page whose address only starts with "admin" is not shut out. The panel already sent a "do not index" header; this is the same said in the place crawlers look first.
+- **A theme or plugin can add lines to it** with the new `robots_txt` filter (it receives the text and returns it), with no file in the site's root; an agent with a group of its own ignores the `*` one, so such a group repeats the `Disallow` lines. A real `robots.txt` file in the site's root still wins over the generated one.
+
 ## 1.7.0
 
 - **Messages from the contact form tell the client when they arrive.** The bell at the top of the panel, which only administrators had, is now for everyone who signs in: it says "You have 2 new messages from the contact form", and the **Messages** item of the menu gets a number beside it (the dot of the Content icon lights too). Opening the screen clears them. For this PageBrick gives plugins two filters, `panel_badges` (a number beside a plugin screen in the menu) and `panel_notices` (lines in the bell); they only add: nothing that existed changes, and a plugin that uses them on an older PageBrick just never has them asked. The administrators' own notices (an update, a plugin switched off) stay for administrators. The contact form (plugin 1.2.0, from the catalog) uses them.
