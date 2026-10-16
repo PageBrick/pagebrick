@@ -26,7 +26,7 @@
             <label for="blog-import-file"><?= e(__('Arquivo .json')) ?></label>
             <input id="blog-import-file" type="file" name="file" accept=".json,application/json">
             <label for="blog-import-json"><?= e(__('Ou cole o conteúdo do arquivo')) ?></label>
-            <textarea id="blog-import-json" name="json" rows="8" spellcheck="false"></textarea>
+            <textarea id="blog-import-json" name="json" rows="8" spellcheck="false"><?= e($error ? pb_post('json') : '') ?></textarea>
             <button type="submit" name="action" value="import"><?= e(__('Importar')) ?></button>
         </form>
     <?php endif ?>
