@@ -11,6 +11,16 @@
     <p class="help"><?= e(__('Fotos grandes são reduzidas automaticamente para o site ficar rápido.')) ?></p>
 </div>
 
+<?php if (!empty($withoutMid)): ?>
+    <div class="card">
+        <form method="post" action="<?= e(pb_url('/admin/media/sizes')) ?>" class="inline">
+            <?= pb_csrf_field() ?>
+            <p><?= e(sprintf(__('%d fotos foram enviadas antes de o PageBrick guardar o tamanho para celular. No celular elas ainda carregam grandes demais.'), $withoutMid)) ?></p>
+            <button type="submit"><?= e(__('Refazer os tamanhos')) ?></button>
+        </form>
+    </div>
+<?php endif ?>
+
 <?php if (!$items): ?>
     <p class="muted"><?= e(__('Nenhum arquivo ainda.')) ?></p>
 <?php endif ?>

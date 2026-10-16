@@ -363,15 +363,20 @@ final class PbValue implements Stringable
         };
     }
 
-    /** <img> tag for an image field, '' when empty. Use lazy: false for images at the top of the page. */
-    public function img(string $class = '', string $size = 'full', bool $lazy = true): string
+    /**
+     * <img> tag for an image field, '' when empty. Use lazy: false for images at the top of the page. $sizes (as the HTML attribute: "(min-width: 900px) 560px, 94vw")
+     * lets the browser choose among the smaller copies of the picture (srcset): a phone then downloads a fraction of the original. For a picture that is lazy,
+     * 'auto' lets the browser measure the place the picture has. Without $sizes the tag is exactly the one of older versions.
+     */
+    public function img(string $class = '', string $size = 'full', bool $lazy = true, string $sizes = ''): string
     {
         $m = $this->media();
         if (!$m) {
             return '';
         }
-        return sprintf('<img src="%s" alt="%s" width="%d" height="%d" %s%s>',
-            e(pb_media_url($m, $size)), e($m['alt']), $m['width'], $m['height'],
+        $set = $sizes !== '' && $size === 'full' ? pb_media_srcset($m) : '';
+        return sprintf('<img src="%s"%s alt="%s" width="%d" height="%d" %s%s>',
+            e(pb_media_url($m, $size)), $set === '' ? '' : ' srcset="' . e($set) . '" sizes="' . e($sizes === 'auto' ? 'auto, 100vw' : $sizes) . '"', e($m['alt']), $m['width'], $m['height'],
             $lazy ? 'loading="lazy" decoding="async"' : 'fetchpriority="high"', $class === '' ? '' : ' class="' . e($class) . '"');
     }
 

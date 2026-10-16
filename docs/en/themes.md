@@ -163,9 +163,11 @@ Printing a field with `<?= ?>` is always safe: text is escaped, rich text was cl
 | `->raw()` | the stored value, unescaped: escape it yourself with `e()` |
 | `->isEmpty()` | `true` when the client left it blank |
 | `->url($size = 'full')` | the address of a link, page, e-mail (`mailto:`), phone (`tel:`) or image (`'thumb'` for the small one). Escape it: `e($value->url())` |
-| `->img($class = '', $size = 'full', $lazy = true)` | `<img>` with `alt`, `width`, `height` and lazy loading; `lazy: false` for images at the top |
+| `->img($class = '', $size = 'full', $lazy = true, $sizes = '')` | `<img>` with `alt`, `width`, `height` and lazy loading; `lazy: false` for images at the top. With `sizes:` it also prints a `srcset` (see below) |
 | a group: `->visible()` | `false` when the client hid that section |
 | a list: `foreach`, `count()`, `->isEmpty()` | its items, each one a group |
+
+A phone does not need a 1920-pixel picture. PageBrick keeps three copies of every photo (480, 960 and the full width, up to 1920), and `img(sizes: '…')` lets the browser take the smallest one that is sharp enough. `sizes` is the HTML attribute: say how wide the picture is on the page, for example `img(sizes: '(min-width: 900px) 560px, 94vw')`. For a picture far down the page (lazy), `sizes: 'auto'` lets the browser measure the place by itself; for one at the top, give the real width, such as `'100vw'` for a full-width banner. Without `sizes` the tag is exactly the one of older versions, so a theme changes only when its author chooses to. Photos sent before PageBrick 1.8.0 have only the thumbnail and the full one until **Media → Redo the sizes** is used.
 
 With `'debug' => true` in `config.php`, reading a field that doesn't exist raises a warning, so typos show up while you develop.
 

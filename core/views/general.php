@@ -69,3 +69,25 @@ $check = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . pb_url('/admin/lo
         <?php endif ?>
     </div>
 </form>
+
+<?php $cached = pb_cache_on() ?>
+<form method="post" action="<?= e(pb_url('/admin/general/cache')) ?>" id="velocidade">
+    <?= pb_csrf_field() ?>
+    <input type="hidden" name="action" value="<?= $cached ? 'off' : 'on' ?>">
+    <div class="card">
+        <h2><?= e(__('Velocidade: cache de arquivos')) ?></h2>
+        <?php if ($cached): ?>
+            <p class="flash ok"><?= e(__('Ligado: as fotos, as fontes, os estilos e os scripts do site ficam guardados no navegador de quem volta, e a página abre mais depressa.')) ?></p>
+            <button type="submit" class="secondary"><?= e(__('Desligar')) ?></button>
+        <?php else: ?>
+            <p><?= e(__('As fotos, as fontes, os estilos e os scripts do site são os mesmos a cada visita, mas esta hospedagem manda o navegador baixá-los de novo toda vez. Ligando, quem volta ao site não baixa nada disso outra vez.')) ?></p>
+            <p class="help"><?= e(__('O botão acrescenta algumas linhas no fim do arquivo .htaccess; o PageBrick guarda uma cópia do arquivo antes, confere se o site continua abrindo e tira as linhas sozinho se a hospedagem não as aceitar. Você pode desligar aqui quando quiser.')) ?></p>
+            <?php if (!pb_https_writable()): ?>
+                <p class="error" role="alert"><?= e(__('O PageBrick não conseguiu escrever no arquivo .htaccess. Peça à hospedagem para liberar a escrita nele, ou cole as linhas abaixo no fim do arquivo, no gerenciador de arquivos.')) ?></p>
+                <textarea readonly rows="14" aria-label="<?= e(__('Linhas para o arquivo .htaccess')) ?>"><?= e(pb_cache_block()) ?></textarea>
+            <?php else: ?>
+                <button type="submit"><?= e(__('Ligar o cache de arquivos')) ?></button>
+            <?php endif ?>
+        <?php endif ?>
+    </div>
+</form>

@@ -32,6 +32,7 @@ function pb_admin(string $method, string $path): void
         'GET /admin/media' => ['editor', 'pb_admin_media'],
         'POST /admin/media' => ['editor', 'pb_admin_media_upload'],
         'POST /admin/media/alt' => ['editor', 'pb_admin_media_alt'],
+        'POST /admin/media/sizes' => ['editor', 'pb_admin_media_sizes'],
         'POST /admin/media/delete' => ['editor', 'pb_admin_media_delete'],
         'GET /admin/menus' => ['editor', 'pb_admin_menus'],
         'POST /admin/menus' => ['editor', 'pb_admin_menus_save'],
@@ -46,6 +47,7 @@ function pb_admin(string $method, string $path): void
         'GET /admin/general' => ['admin', 'pb_admin_general'],
         'POST /admin/general' => ['admin', 'pb_admin_general_save'],
         'POST /admin/general/https' => ['admin', 'pb_admin_https'],
+        'POST /admin/general/cache' => ['admin', 'pb_admin_cache'],
         'GET /admin/account' => ['editor', 'pb_admin_account'],
         'POST /admin/account' => ['editor', 'pb_admin_account_save'],
         'POST /admin/account/avatar' => ['editor', 'pb_admin_account_avatar'],
@@ -449,7 +451,7 @@ function pb_admin_page_restore(): void
 
 function pb_admin_media(): void
 {
-    pb_render('media', ['title' => __('Mídia'), 'items' => pb_media_list()]);
+    pb_render('media', ['title' => __('Mídia'), 'items' => pb_media_list(), 'withoutMid' => count(pb_media_without_mid())]);
 }
 
 /** One or more files from <input name="file[]">; answers JSON when the picker asks for it. */
@@ -484,6 +486,19 @@ function pb_admin_media_upload(): void
     }
     if ($ids) {
         pb_flash('ok', sprintf(__('%d arquivo(s) enviado(s).'), count($ids)));
+    }
+    pb_redirect('/admin/media');
+}
+
+/** Makes the middle copy of some of the pictures sent before it existed (a few at a time: each is decoded in memory); the screen says how many are left. */
+function pb_admin_media_sizes(): void
+{
+    $done = pb_media_make_mids(12);
+    $left = count(pb_media_without_mid());
+    if ($done === 0 && $left > 0) {
+        pb_flash('error', sprintf(__('Não consegui refazer o tamanho de %d fotos (grandes demais para a hospedagem ou arquivos que sumiram).'), $left));
+    } else {
+        pb_flash('ok', $left === 0 ? __('Pronto: todas as fotos têm o tamanho para celular.') : sprintf(__('Tamanhos refeitos em %1$d fotos. Faltam %2$d: clique de novo.'), $done, $left));
     }
     pb_redirect('/admin/media');
 }
@@ -665,6 +680,17 @@ function pb_admin_https(): void
 {
     try {
         pb_flash('ok', pb_https_apply(pb_post('action') === 'on', pb_post('https_ok') === '1'));
+    } catch (InvalidArgumentException $e) {
+        pb_flash('error', $e->getMessage());
+    }
+    pb_redirect('/admin/general');
+}
+
+/** The switch of the browser cache for the site's files (core/speed.php). */
+function pb_admin_cache(): void
+{
+    try {
+        pb_flash('ok', pb_cache_apply(pb_post('action') === 'on'));
     } catch (InvalidArgumentException $e) {
         pb_flash('error', $e->getMessage());
     }

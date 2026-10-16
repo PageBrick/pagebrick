@@ -4,6 +4,8 @@
 const PB_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const PB_IMAGE_MAX_WIDTH = 1920;
 const PB_THUMB_WIDTH = 480;
+/** The copy in between: a phone (about 400 px, two or three pixels each) takes this one instead of the 1920 px original. */
+const PB_MID_WIDTH = 960;
 /** Larger images would need more memory than shared hosting gives PHP (about 4 bytes per pixel). */
 const PB_IMAGE_MAX_PIXELS = 50_000_000;
 const PB_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -17,6 +19,30 @@ function pb_media_url(array $media, string $size = 'full'): string
 {
     $path = $size === 'thumb' && $media['thumb_path'] !== '' ? $media['thumb_path'] : $media['path'];
     return pb_url('content/uploads/' . $path);
+}
+
+/** Where the middle copy of a picture lives (path = "2026/10/abc.webp" → "2026/10/abc-960.webp"); only pictures made since 1.8.0 (or "redone", see pb_media_make_mid) have it. */
+function pb_media_mid_path(string $path): string
+{
+    return (string) preg_replace('~\.(\w+)$~', '-' . PB_MID_WIDTH . '.$1', $path);
+}
+
+/**
+ * The srcset of a picture: the copies it has, smallest first, each with its width ("thumb 480w, mid 960w, full 1920w"). '' when it has no smaller copy.
+ * Only an <img> that asks for it (PbValue::img() with $sizes) gets it, so the HTML a theme already prints stays as it was.
+ */
+function pb_media_srcset(array $media): string
+{
+    $width = (int) ($media['width'] ?? 0);
+    $set = [];
+    if (($media['thumb_path'] ?? '') !== '' && $width > PB_THUMB_WIDTH) {
+        $set[] = pb_url('content/uploads/' . $media['thumb_path']) . ' ' . PB_THUMB_WIDTH . 'w';
+    }
+    $mid = pb_media_mid_path((string) ($media['path'] ?? ''));
+    if ($width > PB_MID_WIDTH && is_file(pb_uploads_dir() . "/$mid")) {
+        $set[] = pb_url("content/uploads/$mid") . ' ' . PB_MID_WIDTH . 'w';
+    }
+    return $set ? implode(', ', [...$set, pb_media_url($media) . " {$width}w"]) : '';
 }
 
 function pb_media_find(int $id): ?array
@@ -96,6 +122,9 @@ function pb_media_process_image(string $source, string $mime, string $base): arr
     $full = pb_image_resize($image, PB_IMAGE_MAX_WIDTH);
     pb_image_save($full, "$base.$ext", $ext);
     pb_image_save(pb_image_resize($image, PB_THUMB_WIDTH), "$base-thumb.$ext", $ext);
+    if (imagesx($full) > PB_MID_WIDTH) {
+        pb_image_save(pb_image_resize($image, PB_MID_WIDTH), "$base-" . PB_MID_WIDTH . ".$ext", $ext);
+    }
     return ["$base.$ext", "$base-thumb.$ext", imagesx($full), imagesy($full)];
 }
 
@@ -159,10 +188,50 @@ function pb_media_delete(int $id): void
     if (!$media) {
         return;
     }
-    foreach ([$media['path'], $media['thumb_path']] as $path) {
+    foreach ([$media['path'], $media['thumb_path'], $media['path'] !== '' && $media['mime'] !== 'application/pdf' ? pb_media_mid_path($media['path']) : ''] as $path) {
         if ($path !== '' && is_file(pb_uploads_dir() . "/$path")) {
             unlink(pb_uploads_dir() . "/$path");
         }
     }
     pb_db()->prepare('DELETE FROM ' . pb_table('media') . ' WHERE id = ?')->execute([$id]);
+}
+
+/** The pictures of the library that are wide enough to have a middle copy and do not have it yet (the ones sent before 1.8.0). */
+function pb_media_without_mid(): array
+{
+    return array_values(array_filter(pb_media_list(true), fn($m) => (int) $m['width'] > PB_MID_WIDTH && $m['path'] !== ''
+        && !is_file(pb_uploads_dir() . '/' . pb_media_mid_path($m['path']))));
+}
+
+/** Makes the middle copy of up to $max pictures that lack it. Returns how many it made. */
+function pb_media_make_mids(int $max): int
+{
+    $done = 0;
+    foreach (array_slice(pb_media_without_mid(), 0, $max) as $media) {
+        $done += pb_media_make_mid($media) ? 1 : 0;
+    }
+    return $done;
+}
+
+/** Makes the middle copy of one picture from its full-size file. Returns false when it cannot (the file is gone, or the picture is too big for the host). */
+function pb_media_make_mid(array $media): bool
+{
+    $source = pb_uploads_dir() . '/' . $media['path'];
+    if (!is_file($source) || (int) $media['width'] <= PB_MID_WIDTH) {
+        return false;
+    }
+    try {
+        $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->file($source);
+        [$width, $height] = @getimagesize($source) ?: [0, 0];
+        if (!in_array($mime, PB_IMAGE_TYPES, true) || $width * $height > PB_IMAGE_MAX_PIXELS) {
+            return false;
+        }
+        @ini_set('memory_limit', '256M');
+        $image = pb_image_open($source, $mime);
+        pb_image_save(pb_image_resize($image, PB_MID_WIDTH), pb_media_mid_path($media['path']), (string) pathinfo($media['path'], PATHINFO_EXTENSION));
+        return true;
+    } catch (Throwable $e) {
+        error_log('PageBrick: no middle copy of ' . $media['path'] . ': ' . $e->getMessage());
+        return false;
+    }
 }

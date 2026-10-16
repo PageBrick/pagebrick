@@ -70,7 +70,7 @@ Options -Indexes
     RewriteRule ^ index.php [L]
 </IfModule>
 
-HT,
+HT . "\n" . pb_cache_block(), // a new site starts with its files cached by the browser (Settings → Address and languages has the switch)
         'content/uploads/.htaccess' => <<<'HT'
 # Uploaded files are data, never code.
 <FilesMatch "\.(php\d?|phtml|phar|pl|py|cgi|sh)$">
