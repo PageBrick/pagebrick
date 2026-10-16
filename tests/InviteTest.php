@@ -12,8 +12,8 @@ final class InviteTest extends TestCase
         pb_test_fresh_db();
         $GLOBALS['pb_config'] = pb_test_config();
         pb_migrate();
-        pb_set_option('site_title', 'Paróquia');
-        pb_set_option('site_url', 'https://paroquia.example');
+        pb_set_option('site_title', 'Acme');
+        pb_set_option('site_url', 'https://acme.example');
         $this->admin = pb_create_user('Ana', 'ana@example.com', 'senha-de-teste-123', 'admin');
         $GLOBALS['pb_sent_mail'] = [];
     }
@@ -39,12 +39,12 @@ final class InviteTest extends TestCase
         $this->assertNotEmpty(pb_find_user((int) $invite['user']['id'])['invited_at'], 'pending until the password is chosen');
         $mail = $GLOBALS['pb_sent_mail'][0];
         $this->assertSame('bia@example.com', $mail['to']);
-        $this->assertSame('Convite para o painel de Paróquia', $mail['subject']);
+        $this->assertSame('Convite para o painel de Acme', $mail['subject']);
         $this->assertStringContainsString('Ana convidou você', $mail['text']);
         $this->assertStringContainsString('como Editor', $mail['text']);
         $this->assertStringContainsString('7 dias', $mail['text']);
         $this->assertStringContainsString($invite['link'], $mail['text']);
-        $this->assertStringStartsWith('https://paroquia.example/admin/reset?token=', $invite['link']);
+        $this->assertStringStartsWith('https://acme.example/admin/reset?token=', $invite['link']);
     }
 
     public function test_the_link_lasts_a_week_and_only_its_hash_is_kept(): void
@@ -126,7 +126,7 @@ final class InviteTest extends TestCase
         pb_set_option('locale', 'en');
         pb_set_locale('pt-BR'); // the person inviting has the panel in Portuguese
         pb_invite_user('Bia', 'bia@example.com', 'admin', 'Ana');
-        $this->assertSame('Invitation to the Paróquia dashboard', $GLOBALS['pb_sent_mail'][0]['subject']);
+        $this->assertSame('Invitation to the Acme dashboard', $GLOBALS['pb_sent_mail'][0]['subject']);
         $this->assertStringContainsString('as Administrator', $GLOBALS['pb_sent_mail'][0]['text']);
         $this->assertSame('pt-BR', pb_locale(), 'and the panel goes on in the language it was in');
     }
@@ -192,7 +192,7 @@ final class InviteTest extends TestCase
     {
         $invite = pb_invite_user('Bia', 'bia@example.com', 'editor', 'Ana');
         $html = $this->screen('GET', '/admin/reset', ['token' => $this->token($invite['link'])]);
-        $this->assertStringContainsString('Bem-vindo ao painel de Paróquia', $html);
+        $this->assertStringContainsString('Bem-vindo ao painel de Acme', $html);
         $this->assertStringContainsString('Criar a senha e entrar', $html);
 
         pb_password_reset_request('ana@example.com', '10.0.0.5');
