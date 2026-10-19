@@ -42,7 +42,7 @@ Hacer clic en **Actualizar** nunca debe romper un sitio que alguien construyó. 
 - Panel limpio, con menú lateral, claro, oscuro o el del sistema (el predeterminado), que cada persona elige en el menú de su cuenta.
 - API de contenido (JSON) para front-ends hechos con Next.js, Astro o cualquier otro framework.
 - Interruptores de "En construcción" y "En mantenimiento": los visitantes ven un aviso, quien inició sesión ve el sitio.
-- SEO básico (título y descripción por página, direcciones amigables, sitemap.xml, robots.txt), imágenes redimensionadas a WebP, sin cookies para los visitantes.
+- SEO básico (título y descripción por página, direcciones amigables, sitemap.xml, robots.txt), imágenes redimensionadas a WebP, sin cookies para los visitantes (salvo que el dueño active Google Analytics o el píxel de Meta, y entonces solo después de que el visitante acepte).
 - Dos roles: Administrador (instala, temas, plugins y ajustes) y Editor (escribe el contenido).
 
 ## Requisitos

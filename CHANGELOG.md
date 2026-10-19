@@ -2,6 +2,19 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.10.0
+
+- **Google Analytics 4 and the Meta pixel, from the panel.** **Settings → Tracking** (administrators) has a field for the GA4 measurement ID (`G-…`) and one for the Meta pixel number. Only the code: PageBrick writes the official snippet itself (checked before it is saved: an old `UA-…` or a Tag Manager `GTM-…` code is refused with a plain explanation), and it comes out through `pb_head()` and `pb_footer()`, which every theme already calls, so no theme has to change.
+- **The visitor is asked first, by default.** A plain "Accept / Decline" notice (HTML with inline styles, like the bars) appears, Google and Meta are loaded only after "Accept", and the choice is kept in the browser. The switch **Ask for the visitor's consent** can be turned off, for a site that already has another cookie-notice tool; the screen then warns that the law (the LGPD, for one) usually asks for consent. A theme or plugin can draw its own notice with the new `consent_html` filter; any element with `data-pb-consent="yes"` or `"no"` is a button, and `data-pb-consent="ask"` on a link shows the notice again.
+- **Nobody signed in to the panel is counted, and nothing is counted while the site is not live** (under construction or in maintenance). A preview is not counted either.
+- **The contact form counts as a lead.** New function `pb_track($event, $once = '')` (only `'lead'` exists: `generate_lead` in Google, `Lead` in Meta); the Contact form plugin 1.3.0 uses it when a message was stored, with a signed mark in the thank-you address, so a reload, a typed-by-hand `?enviado=1` or a robot counts nothing.
+- **HTML changes.** A site with no code saved prints exactly what it printed before. With a code saved, `pb_head()` and `pb_footer()` also print the snippet and, by default, the notice. The promise "the core adds no JavaScript and no cookies" now has the owner's own exception, said in the themes guide and in the README.
+- For developers: new function `pb_track()` and new filter `consent_html` in the public API (additions only); options `track_ga4`, `track_meta`, `track_consent`.
+
+## Contact form plugin 1.3.0
+
+It is an official plugin, so a site that already has it gets this version from the catalog (**Plugins → Update**). It reports each stored message as a lead to `pb_track()` (PageBrick 1.10.0 or newer; on an older one nothing happens). The thank-you address now carries `&l=` with a signed mark. Nothing else changes.
+
 ## 1.9.0
 
 The panel now says what is easy to forget when a site opens to everybody. It only says: nothing is changed on its own, and nothing in the HTML of the site changes.

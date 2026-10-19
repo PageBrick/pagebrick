@@ -366,4 +366,31 @@ final class OfficialPluginsTest extends TestCase
         pb_save_plugin_settings('blog', ['path' => 'api']);
         $this->assertSame('blog', pbb_base());
     }
+
+    public function test_a_message_that_was_stored_counts_as_a_lead_once_and_nothing_else_does(): void
+    {
+        pb_tracking_save('G-AB12CD34EF', '1234567890123456', false);
+        $mark = pbcf_lead_mark();
+        $this->assertMatchesRegularExpression('/^\d+\.[0-9a-f]{64}$/', $mark);
+
+        unset($GLOBALS['pb_track_events']);
+        pbcf_track_lead($mark);
+        $this->assertSame([['lead', $mark]], $GLOBALS['pb_track_events'], 'the address the visitor came back to proves it');
+        $this->assertStringContainsString('pbTrack("lead","' . $mark . '")', pb_tracking_footer());
+
+        foreach (['', '1', 'abc.def', time() . '.' . str_repeat('0', 64), (time() - 3600) . '.' . pb_sign('lead:' . (time() - 3600)),
+                     (time() + 3600) . '.' . pb_sign('lead:' . (time() + 3600)), explode('.', $mark)[0] . '.' . strrev(explode('.', $mark)[1])] as $bad) {
+            unset($GLOBALS['pb_track_events']);
+            pbcf_track_lead($bad);
+            $this->assertArrayNotHasKey('pb_track_events', $GLOBALS, "'$bad' is not a lead: typed by hand, forged, an hour old or from the future");
+        }
+    }
+
+    public function test_the_success_address_carries_the_mark_only_for_a_real_message(): void
+    {
+        // pbcf_submit() ends in exit, so its two redirects are read from the source
+        $source = (string) file_get_contents(dirname(__DIR__) . '/content/plugins/contact-form/functions.php');
+        $this->assertStringContainsString("pbcf_redirect(\$back . '?enviado=1&l=' . pbcf_lead_mark() . '#contato-form');", $source, 'after the message is stored');
+        $this->assertStringContainsString("pbcf_redirect(\$back . '?enviado=1#contato-form'); // a robot", $source, 'the robot that filled the invisible field gets no mark');
+    }
 }

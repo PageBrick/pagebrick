@@ -738,6 +738,21 @@
             ],
             "returns": "string"
         },
+        "pb_track": {
+            "params": [
+                {
+                    "name": "event",
+                    "type": "string",
+                    "optional": false
+                },
+                {
+                    "name": "once",
+                    "type": "string",
+                    "optional": true
+                }
+            ],
+            "returns": "void"
+        },
         "pb_add_action": {
             "params": [
                 {
@@ -1068,6 +1083,11 @@
                         "name": "lazy",
                         "type": "bool",
                         "optional": true
+                    },
+                    {
+                        "name": "sizes",
+                        "type": "string",
+                        "optional": true
                     }
                 ],
                 "returns": "string"
@@ -1088,7 +1108,8 @@
         "live_stamp",
         "panel_notices",
         "panel_badges",
-        "robots_txt"
+        "robots_txt",
+        "consent_html"
     ],
     "standard": {
         "menus.footer": "menu",

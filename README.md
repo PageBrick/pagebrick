@@ -42,7 +42,7 @@ Clicking **Update** must never break a site someone built. Every promise below i
 - A clean panel with a side menu that is light, dark or the system's (the default), chosen by each person in their account menu.
 - Content API (JSON) for front ends built with Next.js, Astro or any other framework.
 - "Under construction" and "Maintenance" switches: visitors see a notice, people logged in see the site.
-- SEO basics (title and description per page, friendly addresses, sitemap.xml, robots.txt), images resized to WebP, no cookies for visitors.
+- SEO basics (title and description per page, friendly addresses, sitemap.xml, robots.txt), images resized to WebP, no cookies for visitors (unless the owner turns on Google Analytics or the Meta pixel, and then only after the visitor accepts).
 - Two roles: Administrator (installs, themes, plugins and settings) and Editor (writes the content).
 
 ## Requirements

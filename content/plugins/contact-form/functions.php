@@ -20,6 +20,7 @@ function pbcf_form(): string
 {
     $GLOBALS['pbcf_used'] = true;
     if (($_GET['enviado'] ?? '') === '1') {
+        pbcf_track_lead((string) ($_GET['l'] ?? ''));
         $message = pbcf_settings()->success->raw() ?: __('Recebemos sua mensagem e respondemos em breve.');
         return '<div class="pb-form" id="contato-form"><p class="pb-form-ok" role="status">' . e($message) . '</p></div>';
     }
@@ -31,6 +32,25 @@ function pbcf_form(): string
         'time' => (string) time(),
         'pageId' => (int) ($GLOBALS['pb_current_page']['id'] ?? 0),
     ]);
+}
+
+/**
+ * What the sent form is worth to Google Analytics and the Meta pixel (PageBrick 1.10.0 or newer, with the codes saved in Settings → Tracking): a "lead", once.
+ * The address the visitor comes back to carries a signed, short-lived mark made only when a message was really stored, so opening
+ * ?enviado=1 by hand, or a robot that filled the invisible field, counts nothing. An older PageBrick has no pb_track(): nothing happens.
+ */
+function pbcf_lead_mark(): string
+{
+    $time = time();
+    return $time . '.' . pb_sign("lead:$time");
+}
+
+function pbcf_track_lead(string $mark): void
+{
+    [$time, $signature] = array_pad(explode('.', $mark, 2), 2, '');
+    if (function_exists('pb_track') && ctype_digit($time) && time() - (int) $time <= 900 && time() >= (int) $time && pb_signature_valid("lead:$time", $signature)) {
+        pb_track('lead', $mark);
+    }
 }
 
 /** The stylesheet goes only on pages that show the form (templates render before the layout's <head>). */
@@ -67,7 +87,7 @@ function pbcf_submit(): void
     $errors = pbcf_validate($in, pb_post('_t'), pb_post('_s'), $ip);
     if (!$errors) {
         pbcf_store_and_send($in, $page['id'] ?? null, $ip);
-        pbcf_redirect($back . '?enviado=1#contato-form');
+        pbcf_redirect($back . '?enviado=1&l=' . pbcf_lead_mark() . '#contato-form');
     }
     if (!$page) {
         pbcf_redirect($back);

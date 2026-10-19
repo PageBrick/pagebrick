@@ -32,6 +32,8 @@ return [
         // themes
         'pb_head', 'pb_footer', 'pb_slot', 'pb_section', 'pb_sections', 'pb_block', 'pb_youtube_id', 'pb_theme_url', 'pb_render_in_theme', 'pb_render_not_found',
         'pb_whatsapp_url', 'pb_map_url', 'pb_contrast', 'pb_text_color_on', 'pb_readable_color',
+        // events for Google Analytics and the Meta pixel, when the owner has set them in Settings → Tracking (only 'lead' exists)
+        'pb_track',
         // plugins
         'pb_add_action', 'pb_add_filter', 'pb_do_action', 'pb_apply_filters', 'pb_add_route', 'pb_add_admin_page',
         // content API (core/headless.php): plugins answer /api/v1/{plugin} with these
@@ -43,5 +45,5 @@ return [
     'classes' => ['PbGroup', 'PbList', 'PbValue'],
     'constants' => ['PB_VERSION', 'PB_API_VERSION'],
     // Hooks the core fires. Themes are expected to call pb_slot('home') and pb_slot('contact') in those templates.
-    'hooks' => ['init', 'head_html', 'footer_html', 'sitemap_urls', 'link_targets', 'admin_bar', 'live_stamp', 'panel_notices', 'panel_badges', 'robots_txt'],
+    'hooks' => ['init', 'head_html', 'footer_html', 'sitemap_urls', 'link_targets', 'admin_bar', 'live_stamp', 'panel_notices', 'panel_badges', 'robots_txt', 'consent_html'],
 ];
