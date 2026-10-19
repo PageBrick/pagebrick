@@ -78,7 +78,7 @@ final class PanelNavigationTest extends TestCase
         $nav = pb_admin_nav($this->user($this->admin), '/admin');
         $this->assertSame(['content', 'plugins', 'settings'], $this->sections($nav));
         $this->assertSame(['/admin', '/admin/pages', '/admin/media', '/admin/menus', '/admin/settings'], array_column($this->section($nav, 'content')['items'], 'url'));
-        $this->assertSame(['/admin/general', '/admin/themes', '/admin/appearance', '/admin/updates', '/admin/email', '/admin/users'], array_column($this->section($nav, 'settings')['items'], 'url'));
+        $this->assertSame(['/admin/general', '/admin/themes', '/admin/appearance', '/admin/tracking', '/admin/updates', '/admin/email', '/admin/users'], array_column($this->section($nav, 'settings')['items'], 'url'));
         $this->assertSame(['/admin/plugins'], array_column($this->section($nav, 'plugins')['items'], 'url'), 'administrators always manage plugins');
     }
 

@@ -42,7 +42,7 @@ Clicar em **Atualizar** nunca pode quebrar um site que alguém construiu. Cada p
 - Painel limpo, com menu lateral, claro, escuro ou o do sistema (o padrão), escolhido por cada pessoa no menu da conta.
 - API de conteúdo (JSON) para front-ends feitos com Next.js, Astro ou qualquer outro framework.
 - Chaves de "Em construção" e "Em manutenção": visitantes veem um aviso, quem está logado vê o site.
-- SEO básico (título e descrição por página, endereços amigáveis, sitemap.xml, robots.txt), imagens redimensionadas para WebP, nenhum cookie para os visitantes.
+- SEO básico (título e descrição por página, endereços amigáveis, sitemap.xml, robots.txt), imagens redimensionadas para WebP, nenhum cookie para os visitantes (a não ser que o dono ligue o Google Analytics ou o pixel da Meta, e então só depois de o visitante aceitar).
 - Dois papéis: Administrador (instala, temas, plugins e configurações) e Editor (escreve o conteúdo).
 
 ## Requisitos

@@ -295,7 +295,7 @@ function pb_footer(): string
 {
     $preview = pb_preview_bar();
     $bar = $preview === '' ? pb_admin_bar() : '';
-    return $preview . ($bar !== '' ? $bar : pb_site_mode_bar()) . pb_apply_filters('footer_html', '');
+    return $preview . ($bar !== '' ? $bar : pb_site_mode_bar()) . pb_tracking_footer() . pb_apply_filters('footer_html', '');
 }
 
 // ------------------------------------------------------------------ site under construction / in maintenance
@@ -465,7 +465,7 @@ function pb_head(array $options = []): string
     if ($page['preview'] || $page['status'] !== 'published') {
         $tags[] = '<meta name="robots" content="noindex">';
     }
-    return implode("\n", $tags) . "\n" . pb_apply_filters('head_html', '');
+    return implode("\n", $tags) . "\n" . pb_tracking_head() . pb_apply_filters('head_html', '');
 }
 
 // ------------------------------------------------------------------ helpers for themes

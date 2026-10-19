@@ -6,7 +6,7 @@ A theme is the whole front end of a PageBrick site: every byte of HTML, CSS and 
 
 ## Your freedom, and what you can count on
 
-- **The core adds nothing to the site you didn't ask for.** No CSS, no JavaScript, no cookies, no Content-Security-Policy. SEO tags appear only where you call `pb_head()`, plugin scripts only where you call `pb_footer()`, plugin HTML only where you call `pb_slot()`. The one exception is for people signed in to the panel, never for visitors: where you call `pb_footer()` they get a small bar at the bottom of the page (the way back to the panel, quick actions and a live view). It draws itself in a shadow root, away from your CSS, and you can switch it off: `pb_add_filter('admin_bar', fn() => false);` in your `layout.php`, before `pb_footer()`.
+- **The core adds nothing to the site you didn't ask for.** No CSS, no JavaScript, no cookies, no Content-Security-Policy (the owner can ask for Google Analytics 4 and the Meta pixel in **Settings → Tracking**: until then `pb_head()` and `pb_footer()` print nothing of it, and after it the visitor is asked first, by default). SEO tags appear only where you call `pb_head()`, plugin scripts only where you call `pb_footer()`, plugin HTML only where you call `pb_slot()`. The one exception is for people signed in to the panel, never for visitors: where you call `pb_footer()` they get a small bar at the bottom of the page (the way back to the panel, quick actions and a live view). It draws itself in a shadow root, away from your CSS, and you can switch it off: `pb_add_filter('admin_bar', fn() => false);` in your `layout.php`, before `pb_footer()`.
 - **Any HTML, CSS and JavaScript.** Use Tailwind, Sass, Vite, Alpine, React islands, plain CSS: whatever you build goes in your theme folder. Any static file under your theme is served as is (PHP files never are).
 - **Plugins don't impose their markup.** Your theme can replace any template or stylesheet a plugin shows on the site (see [Replacing a plugin's templates](#replacing-a-plugins-templates)).
 - **Headers are yours too.** The core sends `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN` and `Referrer-Policy`; call `header()` in your layout to change them or add your own.
@@ -169,6 +169,8 @@ Printing a field with `<?= ?>` is always safe: text is escaped, rich text was cl
 
 A phone does not need a 1920-pixel picture. PageBrick keeps three copies of every photo (480, 960 and the full width, up to 1920), and `img(sizes: '…')` lets the browser take the smallest one that is sharp enough. `sizes` is the HTML attribute: say how wide the picture is on the page, for example `img(sizes: '(min-width: 900px) 560px, 94vw')`. For a picture far down the page (lazy), `sizes: 'auto'` lets the browser measure the place by itself; for one at the top, give the real width, such as `'100vw'` for a full-width banner. Without `sizes` the tag is exactly the one of older versions, so a theme changes only when its author chooses to. Photos sent before PageBrick 1.8.0 have only the thumbnail and the full one until **Media → Redo the sizes** is used.
 
+**The cookie notice and tracking.** When the owner saves a Google Analytics 4 or Meta pixel code in Settings → Tracking, `pb_head()` and `pb_footer()` write the official snippet themselves (a theme changes nothing) and, by default, `pb_footer()` also prints a plain "Accept / Decline" notice; Google and Meta are loaded only after "Accept", and the choice is kept in the browser. Nobody signed in to the panel is counted, and nothing is while the site is not live. The notice has inline styles, like the bars, and a theme can draw its own with the `consent_html` filter (it receives the notice and the tools' names): the buttons are any element with `data-pb-consent="yes"` or `"no"`, the box is `#pb-consent` (hidden until needed, shown with `display:flex`), and `data-pb-consent="ask"` on any link shows it again.
+
 With `'debug' => true` in `config.php`, reading a field that doesn't exist raises a warning, so typos show up while you develop.
 
 ### Rich text: style what your client can write
@@ -191,7 +193,7 @@ Pictures come only from the media library: PageBrick writes the `<img>` itself (
 | `pb_url('/path')`, `pb_absolute_url('/path')` | addresses that work when the site lives in a subfolder |
 | `pb_theme_url('assets/app.js')` | a file of your theme, with `?v=` so browsers pick up changes |
 | `pb_head($options)` | title, description, canonical, Open Graph and plugin tags. Leave it out and write your own if you prefer |
-| `pb_footer()` | plugin scripts, the bar of people signed in to the panel and, for an administrator previewing a theme, the preview bar |
+| `pb_footer()` | plugin scripts, the bar of people signed in to the panel and, for an administrator previewing a theme, the preview bar; and, only when the owner saved Google Analytics or Meta codes in Settings → Tracking, the cookie notice (see below) |
 | `pb_slot('home')`, `pb_slot('contact')` | where plugins add HTML; call them in those two templates |
 | `pb_menu_html('main', 'class')`, `pb_menu('main')` | a menu as `<ul>`, or as an array of `label`, `url`, `current` to build your own markup |
 | `pb_whatsapp_url($number, $message)`, `pb_map_url($address)` | WhatsApp and map links |

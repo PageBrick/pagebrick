@@ -17,6 +17,8 @@ function pb_admin(string $method, string $path): void
         'POST /admin/logout' => ['editor', 'pb_admin_logout'],
         'GET /admin' => ['editor', 'pb_admin_dashboard'],
         'POST /admin/site-mode' => ['admin', 'pb_admin_site_mode_save'],
+        'GET /admin/tracking' => ['admin', 'pb_admin_tracking'],
+        'POST /admin/tracking' => ['admin', 'pb_admin_tracking_save'],
         'POST /admin/launch/draft' => ['admin', 'pb_admin_launch_draft'],
         'POST /admin/launch/keep' => ['admin', 'pb_admin_launch_keep'],
         'GET /admin/live' => ['editor', 'pb_admin_live'],
@@ -235,6 +237,27 @@ function pb_admin_site_mode_save(): void
         pb_flash('error', $e->getMessage());
     }
     pb_redirect('/admin');
+}
+
+/** Settings → Tracking: the codes of Google Analytics 4 and the Meta pixel (core/tracking.php). */
+function pb_admin_tracking(?string $error = null): void
+{
+    $ids = pb_tracking_ids();
+    pb_render('tracking', ['title' => __('Rastreamento'), 'error' => $error,
+        'ga4' => $error ? pb_post('ga4') : $ids['ga4'], 'meta' => $error ? pb_post('meta') : $ids['meta'],
+        'consent' => $error ? pb_post('consent') === '1' : pb_tracking_consent_required()]);
+}
+
+function pb_admin_tracking_save(): void
+{
+    try {
+        pb_tracking_save(pb_post('ga4'), pb_post('meta'), pb_post('consent') === '1');
+    } catch (InvalidArgumentException $e) {
+        pb_admin_tracking($e->getMessage());
+        return;
+    }
+    pb_flash('ok', __('Salvo.'));
+    pb_redirect('/admin/tracking');
 }
 
 /** The dashboard card: a page that still has the example text goes back to being a draft. */
