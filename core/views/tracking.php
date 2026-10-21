@@ -3,6 +3,7 @@
  * @var string|null $error
  * @var string      $ga4      the Google Analytics 4 code in the field
  * @var string      $meta     the Meta pixel number in the field
+ * @var string      $pathranker the Path Ranker collector's tag (as PageBrick writes it), or what was typed when saving failed
  * @var bool        $consent  the switch "ask the visitor first"
  */
 $saved = pb_tracking_ids();
@@ -33,6 +34,10 @@ $privacy = $any ? pb_page_by_slug(__('politica-de-privacidade'), pb_site_locale(
             <p class="flash warn"><?= e(__('Sem o aviso, o Google e a Meta gravam cookies nos visitantes sem perguntar, e leis como a LGPD costumam exigir o consentimento.')) ?></p>
         <?php endif ?>
 
+        <label for="pathranker"><?= e(__('Coletor de comportamento (Path Ranker)')) ?></label>
+        <textarea id="pathranker" name="pathranker" rows="3" spellcheck="false" autocomplete="off" placeholder="&lt;script src=&quot;https://…/pr-collect.js&quot; data-site=&quot;www.exemplo.com.br&quot; data-key=&quot;…&quot; defer&gt;&lt;/script&gt;"><?= e($pathranker) ?></textarea>
+        <p class="help"><?= e(__('No Path Ranker, em Integrações, copie o código da linha do seu domínio e cole aqui, inteiro. O PageBrick confere e escreve o código de novo antes de pôr nas páginas: só um script do Path Ranker é aceito. Deixe em branco para não usar.')) ?></p>
+
         <button type="submit"><?= e(__('Salvar')) ?></button>
     </div>
 </form>
@@ -42,6 +47,7 @@ $privacy = $any ? pb_page_by_slug(__('politica-de-privacidade'), pb_site_locale(
     <ul>
         <li><?= e(__('Quem está logado no painel nunca é contado, para você não inflar os seus próprios números.')) ?></li>
         <li><?= e(__('Só conta com o site "No ar". Em construção ou em manutenção, nada é medido.')) ?></li>
+        <li><?= e(__('O Path Ranker diz que o coletor não usa cookies nem dados pessoais e respeita Do Not Track e Global Privacy Control; por isso ele não passa pelo aviso de cookies. Sai no começo de cada página pública, nunca no painel nem na pré-visualização.')) ?></li>
         <li><?= e(__('Cada envio do formulário de contato conta como "lead" (generate_lead no Google, Lead na Meta). Isso precisa do plugin Formulário de contato 1.3.0 ou mais novo.')) ?></li>
     </ul>
     <?php if ($any): ?>
