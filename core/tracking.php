@@ -1,5 +1,5 @@
 <?php
-// Google Analytics 4 and the Meta pixel, from Settings → Tracking. The owner gives only the codes (G-… and the pixel's number); PageBrick writes the official
+// Google Analytics 4, the Meta pixel and the Path Ranker collector, from Settings → Tracking. The owner gives only the codes (G-… and the pixel's number); PageBrick writes the official
 // snippet itself, so there is nothing to paste wrong and no theme to change: pb_head() and pb_footer(), which every theme already calls, print it. A site that
 // has no code saved prints exactly what it always printed.
 //
@@ -20,15 +20,24 @@ function pb_tracking_consent_required(): bool
     return pb_option('track_consent', '1') !== '0';
 }
 
-/** Whether this very page view is counted: a code is saved, the site is live, nobody is signed in to the panel, and it is not a preview. */
+/** Whether this page view is one that anything measures: the site is live, nobody is signed in to the panel, and it is not a preview. */
+function pb_tracking_counts_visit(): bool
+{
+    return pb_site_mode() === 'live' && !pb_current_user() && empty($GLOBALS['pb_current_page']['preview']);
+}
+
+/** Whether this very page view is counted by Google or Meta: a code is saved and it is a visit that counts. */
 function pb_tracking_active(): bool
 {
     $ids = pb_tracking_ids();
-    return ($ids['ga4'] !== '' || $ids['meta'] !== '') && pb_site_mode() === 'live' && !pb_current_user() && empty($GLOBALS['pb_current_page']['preview']);
+    return ($ids['ga4'] !== '' || $ids['meta'] !== '') && pb_tracking_counts_visit();
 }
 
-/** Checks and saves the two codes and the switch; throws with a message to read. Empty means "off". */
-function pb_tracking_save(string $ga4, string $meta, bool $consent): void
+/**
+ * Checks and saves the two codes, the switch and, when given, the Path Ranker snippet (null leaves it as it was, '' takes it out); throws with a message to
+ * read. Empty means "off". Nothing is saved unless everything is valid.
+ */
+function pb_tracking_save(string $ga4, string $meta, bool $consent, ?string $pathRanker = null): void
 {
     $ga4 = strtoupper(trim($ga4));
     $meta = trim($meta);
@@ -42,9 +51,96 @@ function pb_tracking_save(string $ga4, string $meta, bool $consent): void
     if ($meta !== '' && !preg_match('/^\d{8,20}$/', $meta)) {
         throw new InvalidArgumentException(__('O pixel da Meta é só um número, como 1234567890123456. Copie o número que aparece embaixo do nome do pixel.'));
     }
+    $collector = $pathRanker === null ? null : (trim($pathRanker) === '' ? '' : json_encode(pb_pathranker_parse($pathRanker)));
     pb_set_option('track_ga4', $ga4);
     pb_set_option('track_meta', $meta);
     pb_set_option('track_consent', $consent ? '1' : '0');
+    if ($collector !== null) {
+        pb_set_option('track_pathranker', $collector);
+    }
+}
+
+// ------------------------------------------------------------------ the Path Ranker collector
+// The behaviour collector of Path Ranker (clicks, scrolling, forms, JavaScript errors of real visitors) is one <script src=".../pr-collect.js" data-key="…">. It goes
+// into every public page, so what the owner pastes is never printed back: it must be exactly one such tag, its three values are taken out and checked, and the tag is
+// written again here with every attribute escaped. Anything else (another script, loose HTML, an event attribute) is refused with a message.
+
+const PB_PATHRANKER_ATTRS = ['src', 'data-site', 'data-key', 'defer', 'async'];
+
+/** Checks the three values of the collector and returns them clean: ['src' => …, 'site' => … or '', 'key' => …]. Throws with a message to read. */
+function pb_pathranker_check(string $src, string $site, string $key): array
+{
+    $parts = parse_url(trim($src));
+    $host = is_array($parts) ? strtolower((string) ($parts['host'] ?? '')) : '';
+    $scheme = is_array($parts) ? strtolower((string) ($parts['scheme'] ?? '')) : '';
+    $path = is_array($parts) ? (string) ($parts['path'] ?? '') : '';
+    $local = in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
+    $hostOk = $host === '[::1]' || preg_match('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/', $host);
+    if (!is_array($parts) || !$hostOk || !($scheme === 'https' || ($scheme === 'http' && $local)) || isset($parts['user']) || isset($parts['pass'])
+        || isset($parts['query']) || isset($parts['fragment']) || (isset($parts['port']) && ($parts['port'] < 1 || $parts['port'] > 65535))
+        || !preg_match('~^[A-Za-z0-9/_.-]*/pr-collect\.js$~', $path)) {
+        throw new InvalidArgumentException(__('O endereço do script (src) precisa começar com https:// e terminar em /pr-collect.js. O http:// só vale para localhost.'));
+    }
+    $site = strtolower(trim($site));
+    if ($site !== '' && !preg_match('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$/', $site)) {
+        throw new InvalidArgumentException(__('O data-site precisa ser um endereço de site, como www.exemplo.com.br.'));
+    }
+    $key = trim($key);
+    if ($key === '') {
+        throw new InvalidArgumentException(__('O código não traz a chave (data-key). Copie o código pronto no Path Ranker, em Integrações, na linha do domínio.'));
+    }
+    if (!preg_match('~^[A-Za-z0-9_.+/=:-]{1,256}$~', $key)) {
+        throw new InvalidArgumentException(__('A chave (data-key) tem caracteres que uma chave não tem. Copie o código de novo, sem mudar nada.'));
+    }
+    return ['src' => $scheme . '://' . $host . (isset($parts['port']) ? ':' . (int) $parts['port'] : '') . $path, 'site' => $site, 'key' => $key];
+}
+
+/** What the owner pasted, as the values it carries. It must be one <script …></script> with only the attributes the collector's own snippet has. Throws with a message to read. */
+function pb_pathranker_parse(string $snippet): array
+{
+    $snippet = trim($snippet);
+    if (!preg_match('~^<script(\s[^<>]*)?>\s*</script>$~i', $snippet, $tag)) {
+        throw new InvalidArgumentException(stripos($snippet, '<script') === false
+            ? __('Cole o código do Path Ranker inteiro, de <script até </script>.')
+            : __('Só um <script> do Path Ranker é aceito, sem mais nada antes ou depois dele e sem código dentro.'));
+    }
+    $rest = trim($tag[1] ?? '');
+    $attrs = [];
+    while ($rest !== '') {
+        if (!preg_match('~^([a-z][a-z0-9-]*)(?:\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'=<>`]+)))?\s*~i', $rest, $a)) {
+            throw new InvalidArgumentException(__('Não consegui ler o código. Copie o código pronto no Path Ranker, sem mudar nada.'));
+        }
+        $name = strtolower($a[1]);
+        if (!in_array($name, PB_PATHRANKER_ATTRS, true)) {
+            throw new InvalidArgumentException(sprintf(__('O código tem um atributo que o PageBrick não aceita (%s). Cole o código exatamente como o Path Ranker entrega.'), $name));
+        }
+        if (isset($attrs[$name])) {
+            throw new InvalidArgumentException(__('Não consegui ler o código. Copie o código pronto no Path Ranker, sem mudar nada.'));
+        }
+        $attrs[$name] = ($a[2] ?? '') !== '' ? $a[2] : (($a[3] ?? '') !== '' ? $a[3] : ($a[4] ?? ''));
+        $rest = substr($rest, strlen($a[0]));
+    }
+    return pb_pathranker_check($attrs['src'] ?? '', $attrs['data-site'] ?? '', $attrs['data-key'] ?? '');
+}
+
+/** The collector the owner saved, checked again: ['src', 'site', 'key'] or null when there is none (or when what is stored is not a valid collector). */
+function pb_pathranker_saved(): ?array
+{
+    $saved = json_decode((string) pb_option('track_pathranker', ''), true);
+    if (!is_array($saved)) {
+        return null;
+    }
+    try {
+        return pb_pathranker_check((string) ($saved['src'] ?? ''), (string) ($saved['site'] ?? ''), (string) ($saved['key'] ?? ''));
+    } catch (InvalidArgumentException) {
+        return null;
+    }
+}
+
+/** The tag, written here: every attribute escaped, and always deferred (the collector never holds the page back). */
+function pb_pathranker_html(array $collector): string
+{
+    return '<script src="' . e($collector['src']) . '"' . ($collector['site'] !== '' ? ' data-site="' . e($collector['site']) . '"' : '') . ' data-key="' . e($collector['key']) . '" defer></script>';
 }
 
 /**
@@ -75,13 +171,21 @@ function pb_tracking_script(): string
         . 'q.splice(0).forEach(send)}})(window,document);';
 }
 
-/** What goes in <head> (called by pb_head()): the tools start right away, when visitors are not asked first. */
+/**
+ * What goes in <head> (called by pb_head()): the Path Ranker collector, when the owner saved one; and the tools of Google and Meta, which start right away when
+ * visitors are not asked first. The collector uses no cookies and respects Do Not Track, so it does not wait for the notice. Only for visits that count.
+ */
 function pb_tracking_head(): string
 {
-    if (!pb_tracking_active() || pb_tracking_consent_required()) {
+    if (!pb_tracking_counts_visit()) {
         return '';
     }
-    return '<script>' . pb_tracking_script() . 'pbTrackStart();</script>' . "\n";
+    $saved = pb_pathranker_saved();
+    $out = $saved ? pb_pathranker_html($saved) . "\n" : '';
+    if (pb_tracking_active() && !pb_tracking_consent_required()) {
+        $out .= '<script>' . pb_tracking_script() . 'pbTrackStart();</script>' . "\n";
+    }
+    return $out;
 }
 
 /** The tools' names for the notice: ['Google Analytics', 'Meta']. */

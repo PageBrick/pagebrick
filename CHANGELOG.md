@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.11.0
+
+- **The Path Ranker behaviour collector, from the panel.** **Settings → Tracking** has a new field, **Behaviour collector (Path Ranker)**, for the snippet that Path Ranker gives for each domain (under Integrations): `<script src="https://…/pr-collect.js" data-site="…" data-key="…" defer></script>`. It goes into every public page, so it is checked strictly: it must be exactly one `<script>` whose `src` is https (http only for localhost) and ends in `/pr-collect.js`, with a `data-key`; `data-site` is optional, and no other attribute is accepted (no `onload`, no `type`…). PageBrick takes the three values out and writes the tag again, escaped, always deferred: what was typed is never printed back. Anything else (another script, loose HTML, code inside the tag) is refused with a message, and nothing is saved.
+- **Only where it should be.** In the `<head>` of public pages of a live site, for people who are not signed in to the panel; never in the panel, the editor or a preview. An empty field prints nothing. The collector uses no cookies (Path Ranker says so, and that it respects Do Not Track and Global Privacy Control), so it does not wait for the cookie notice of Google and Meta.
+- For developers: new option `track_pathranker` (the three checked values, checked again whenever the tag is written). No change in the public API and no new table.
+
 ## 1.10.0
 
 - **Google Analytics 4 and the Meta pixel, from the panel.** **Settings → Tracking** (administrators) has a field for the GA4 measurement ID (`G-…`) and one for the Meta pixel number. Only the code: PageBrick writes the official snippet itself (checked before it is saved: an old `UA-…` or a Tag Manager `GTM-…` code is refused with a plain explanation), and it comes out through `pb_head()` and `pb_footer()`, which every theme already calls, so no theme has to change.

@@ -243,15 +243,17 @@ function pb_admin_site_mode_save(): void
 function pb_admin_tracking(?string $error = null): void
 {
     $ids = pb_tracking_ids();
+    $collector = pb_pathranker_saved();
     pb_render('tracking', ['title' => __('Rastreamento'), 'error' => $error,
         'ga4' => $error ? pb_post('ga4') : $ids['ga4'], 'meta' => $error ? pb_post('meta') : $ids['meta'],
+        'pathranker' => $error ? pb_post('pathranker') : ($collector ? pb_pathranker_html($collector) : ''),
         'consent' => $error ? pb_post('consent') === '1' : pb_tracking_consent_required()]);
 }
 
 function pb_admin_tracking_save(): void
 {
     try {
-        pb_tracking_save(pb_post('ga4'), pb_post('meta'), pb_post('consent') === '1');
+        pb_tracking_save(pb_post('ga4'), pb_post('meta'), pb_post('consent') === '1', pb_post('pathranker'));
     } catch (InvalidArgumentException $e) {
         pb_admin_tracking($e->getMessage());
         return;
