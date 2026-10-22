@@ -35,7 +35,7 @@ $privacy = $any ? pb_page_by_slug(__('politica-de-privacidade'), pb_site_locale(
         <?php endif ?>
 
         <label for="pathranker"><?= e(__('Coletor de comportamento (Path Ranker)')) ?></label>
-        <textarea id="pathranker" name="pathranker" rows="3" spellcheck="false" autocomplete="off" placeholder="&lt;script src=&quot;https://…/pr-collect.js&quot; data-site=&quot;www.exemplo.com.br&quot; data-key=&quot;…&quot; defer&gt;&lt;/script&gt;"><?= e($pathranker) ?></textarea>
+        <textarea id="pathranker" name="pathranker" rows="3" spellcheck="false" autocomplete="off" data-code placeholder="&lt;script src=&quot;https://…/pr-collect.js&quot; data-site=&quot;www.exemplo.com.br&quot; data-key=&quot;…&quot; defer&gt;&lt;/script&gt;"><?= e($pathranker) ?></textarea>
         <p class="help"><?= e(__('No Path Ranker, em Integrações, copie o código da linha do seu domínio e cole aqui, inteiro. O PageBrick confere e escreve o código de novo antes de pôr nas páginas: só um script do Path Ranker é aceito. Deixe em branco para não usar.')) ?></p>
 
         <button type="submit"><?= e(__('Salvar')) ?></button>

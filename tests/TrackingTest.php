@@ -439,4 +439,51 @@ final class TrackingTest extends TestCase
         $this->assertStringContainsString('evil.example', $error, 'the box keeps what was typed so it can be fixed');
         $this->assertSame('abc123DEF-456', pb_pathranker_saved()['key'], 'and the saved one is untouched');
     }
+
+    /** What the panel's script sends for a code box: the < and > written as the quotation marks that a host's firewall does not mind. */
+    private function wrapped(string $code): string
+    {
+        return strtr($code, ['<' => mb_chr(0x2039), '>' => mb_chr(0x203A)]);
+    }
+
+    public function test_a_code_box_sent_without_angle_brackets_is_written_back_and_checked_the_same(): void
+    {
+        $sent = $this->wrapped(self::COLLECTOR);
+        $this->assertStringNotContainsString('<', $sent, 'nothing a firewall looks for travels');
+        $this->assertStringNotContainsString('>', $sent);
+        $this->assertSame(self::COLLECTOR, pb_code_unwrap($sent));
+        $this->assertSame('a < b > c', pb_code_unwrap('a ' . mb_chr(0x2039) . ' b ' . mb_chr(0x203A) . ' c'), 'both marks are written back');
+        $this->assertSame('sem sinais', pb_code_unwrap('sem sinais'), 'a text without them is left alone');
+
+        pb_tracking_save('', '', true, pb_code_unwrap($sent));
+        $this->assertSame('abc123DEF-456', pb_pathranker_saved()['key']);
+        $this->assertStringContainsString(self::COLLECTOR, $this->home());
+    }
+
+    public function test_a_wrapped_box_that_is_not_a_clean_snippet_is_refused_with_the_same_messages(): void
+    {
+        $_SESSION['user_id'] = $this->admin;
+        foreach ([
+            [self::COLLECTOR . '<script>alert(1)</script>', 'Só um <script> do Path Ranker é aceito'],
+            [str_replace('defer>', 'defer onload="alert(1)">', self::COLLECTOR), '(onload)'],
+            ['<img src=x onerror=alert(1)>', 'Cole o código do Path Ranker inteiro'],
+        ] as [$code, $message]) {
+            $_POST = ['ga4' => '', 'meta' => '', 'consent' => '1', 'pathranker' => $this->wrapped($code)];
+            ob_start();
+            pb_admin_tracking_save();
+            $screen = ob_get_clean();
+            $this->assertStringContainsString(e($message), $screen, $code);
+            $this->assertStringNotContainsString(mb_chr(0x2039), $screen, 'the box shows what was typed, with the real signs');
+            $this->assertNull(pb_pathranker_saved());
+        }
+    }
+
+    public function test_the_code_box_asks_the_panel_script_to_wrap_it(): void
+    {
+        $_SESSION['user_id'] = $this->admin;
+        ob_start();
+        pb_admin('GET', '/admin/tracking');
+        $this->assertMatchesRegularExpression('~<textarea id="pathranker"[^>]* data-code[ >]~', ob_get_clean());
+        $this->assertStringContainsString('textarea[data-code]', (string) file_get_contents(dirname(__DIR__) . '/core/assets/admin.js'));
+    }
 }

@@ -323,6 +323,15 @@
         }
     }));
 
+    // A box that takes code (the Path Ranker collector of Settings, Tracking) is sent with its < and > written as the single quotation marks ‹ and ›: the firewall
+    // of many hosts (Mod_Security) refuses any form that carries "<script" and answers "Not Acceptable". The server writes them back before it checks anything, so the
+    // check is the same; without script in the browser the text goes as typed.
+    document.addEventListener('submit', (event) => {
+        event.target.querySelectorAll?.('textarea[data-code]').forEach((box) => {
+            box.value = box.value.replaceAll('<', String.fromCharCode(0x2039)).replaceAll('>', String.fromCharCode(0x203a));
+        });
+    });
+
     // The person's photo: after choosing a file it is shown in a circle, to be dragged and zoomed into place; what is in the circle is what is sent
     // (a square picture, drawn on a canvas). Without this (old browser, script off) the file goes as it is and the server cuts the centre.
     document.querySelectorAll('form[data-crop]').forEach((form) => {
