@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.11.1
+
+- **The Path Ranker box can be saved on a host whose firewall refuses `<script`.** On some hosts the web server's firewall (Mod_Security) answers "Not Acceptable" to any form that carries the text `<script`, so pasting the collector's snippet in **Settings → Tracking** ended on the host's error page and nothing was saved. The panel now sends that box with its `<` and `>` written as the quotation marks `‹` and `›`, and PageBrick writes them back before it checks anything: the snippet is checked exactly as before (one `<script>`, its address, its key), and the box still shows the tag as PageBrick wrote it. Without script in the browser the text goes as typed. Nothing else changes.
+
 ## 1.11.0
 
 - **The Path Ranker behaviour collector, from the panel.** **Settings → Tracking** has a new field, **Behaviour collector (Path Ranker)**, for the snippet that Path Ranker gives for each domain (under Integrations): `<script src="https://…/pr-collect.js" data-site="…" data-key="…" defer></script>`. It goes into every public page, so it is checked strictly: it must be exactly one `<script>` whose `src` is https (http only for localhost) and ends in `/pr-collect.js`, with a `data-key`; `data-site` is optional, and no other attribute is accepted (no `onload`, no `type`…). PageBrick takes the three values out and writes the tag again, escaped, always deferred: what was typed is never printed back. Anything else (another script, loose HTML, code inside the tag) is refused with a message, and nothing is saved.
