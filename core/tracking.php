@@ -67,6 +67,15 @@ function pb_tracking_save(string $ga4, string $meta, bool $consent, ?string $pat
 
 const PB_PATHRANKER_ATTRS = ['src', 'data-site', 'data-key', 'defer', 'async'];
 
+/**
+ * A box that takes code is sent by the panel with its < and > written as the quotation marks ‹ and › (core/assets/admin.js): the firewall of many hosts (Mod_Security)
+ * answers "Not Acceptable" to any form that carries "<script". This writes them back, so the box is checked exactly as if it had come as typed.
+ */
+function pb_code_unwrap(string $text): string
+{
+    return strtr($text, [mb_chr(0x2039) => '<', mb_chr(0x203A) => '>']);
+}
+
 /** Checks the three values of the collector and returns them clean: ['src' => …, 'site' => … or '', 'key' => …]. Throws with a message to read. */
 function pb_pathranker_check(string $src, string $site, string $key): array
 {
