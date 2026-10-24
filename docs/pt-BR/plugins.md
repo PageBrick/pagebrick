@@ -93,6 +93,7 @@ Ganchos (hooks) disparados pelo núcleo: `init`, `head_html`, `footer_html`, `si
 
 - **Escape tudo o que você imprime** com `e()`. Os valores lidos por campos (`pb_plugin_settings_values()`) já são seguros quando impressos com `<?= ?>`.
 - **As telas do painel** recebem proteção contra CSRF do núcleo; coloque `<?= pb_csrf_field() ?>` em todo formulário.
+- **Os formulários do painel chegam à sua tela já abertos.** O painel manda o que a pessoa escreve num campo só (`pb_form`, para o firewall da hospedagem não ter o que recusar) e o núcleo abre antes da sua tela rodar: `pb_post()` e `$_POST` funcionam como sempre. Se a sua tela envia um formulário com script próprio (`fetch`), monte o corpo com `window.pbSeal(formData)`; um formulário que precisa ir como está leva `data-plain`.
 - **Os formulários públicos** não usam sessões (os visitantes não recebem cookies). Assine um timestamp quando mostrar o formulário e confira quando ele voltar:
 
   ```php

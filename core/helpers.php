@@ -68,6 +68,26 @@ function pb_redirect(string $path, int $status = 302): never
     exit;
 }
 
+/**
+ * The panel sends what a person writes as ONE field, "pb_form": the fields as a query string, in base64 (core/assets/admin.js). The firewall of many hosts (Mod_Security)
+ * reads every field of a form and answers "Not Acceptable" to what looks like an attack: a link to another site, "<script", a few words of a database command. That is
+ * everyday text for whoever writes a site, so the panel hands the firewall nothing to read. This puts the fields back in $_POST and no screen knows the difference; the
+ * token and the files travel outside it. Only a signed-in person may use it: for anyone else it would be a way past the firewall, so the field is thrown away.
+ */
+function pb_unseal_post(bool $signedIn): void
+{
+    $sealed = $_POST['pb_form'] ?? null;
+    unset($_POST['pb_form']);
+    // sent without the "=" padding at its end: a firewall reads "==" as an SQL operator
+    $text = $signedIn && is_string($sealed) ? base64_decode(str_pad($sealed, (int) ceil(strlen($sealed) / 4) * 4, '='), true) : false;
+    if ($text === false) {
+        return;
+    }
+    parse_str($text, $fields);
+    unset($fields['_csrf']); // the token that was checked is the one that counts
+    $_POST = $fields + $_POST;
+}
+
 /** Reads a POST field as a string; anything else (arrays, missing) becomes ''. */
 function pb_post(string $key): string
 {

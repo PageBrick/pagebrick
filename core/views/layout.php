@@ -38,6 +38,7 @@ $savedTheme = $user ? (pb_user_prefs($user)['theme'] ?? '') : ''; // kept on the
 <script src="<?= e($asset('editor.js')) ?>" defer></script>
 <?php endif ?>
 <link rel="stylesheet" href="<?= e($asset('admin.css')) ?>">
+<script src="<?= e($asset('seal.js')) ?>" defer></script>
 <?php if (!empty($studio)): ?>
 <link rel="stylesheet" href="<?= e($asset('studio.css')) ?>">
 <script src="<?= e($asset('studio.js')) ?>" defer></script>

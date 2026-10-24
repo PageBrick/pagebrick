@@ -93,7 +93,7 @@
             const data = new FormData(form);
             data.delete('action');
             data.set('organizer', '1');
-            const response = await fetch(form.dataset.previewUrl, {method: 'POST', body: data, signal: controller.signal});
+            const response = await fetch(form.dataset.previewUrl, {method: 'POST', body: window.pbSeal?.(data) ?? data, signal: controller.signal});
             if (!response.ok) throw Object.assign(new Error('refused'), {status: response.status}); // the answer is an error page, not the site: keep the page that is showing
             await apply(await response.text());
             previewStatus.textContent = '';
@@ -127,7 +127,7 @@
             const data = new FormData(form);
             data.delete('action');
             if (explicit === true) data.set('explicit', '1'); // the button, not the timer: a page never published keeps a version in its history
-            const response = await fetch(form.dataset.autosaveUrl, {method: 'POST', body: data, headers: {Accept: 'application/json'}});
+            const response = await fetch(form.dataset.autosaveUrl, {method: 'POST', body: window.pbSeal?.(data) ?? data, headers: {Accept: 'application/json'}});
             if (!response.ok) throw Object.assign(new Error('refused'), {status: response.status});
             const answer = await response.json();
             if (answer.ok) {
@@ -325,7 +325,7 @@
             const data = new FormData(form);
             data.delete('action');
             Object.entries(fields).forEach(([key, value]) => data.set(key, value));
-            const response = await fetch(gallery.dataset.sectionUrl, {method: 'POST', body: data, headers: {Accept: 'application/json'}});
+            const response = await fetch(gallery.dataset.sectionUrl, {method: 'POST', body: window.pbSeal?.(data) ?? data, headers: {Accept: 'application/json'}});
             const answer = await response.json().catch(() => null);
             if (!answer?.ok) throw new Error(answer?.error || (response.status >= 400 ? fill(texts.refused, response.status) : texts.offline));
             return answer;

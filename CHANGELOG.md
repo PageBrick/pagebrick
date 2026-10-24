@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org/). Within API version 1, nothing in [core/api.php](core/api.php) is removed or changed ([docs/en/compatibility.md](docs/en/compatibility.md)). Any change to the HTML the core prints for themes is listed under **HTML changes**.
 
+## 1.11.2
+
+- **The panel's forms can be saved on a host whose firewall refuses what looks like an attack.** On some hosts the web server's firewall (Mod_Security) answers "Not Acceptable" to a form that carries a link to another site (a LinkedIn address in **Settings** was refused), `<script` or a few words of a database command, and nothing is saved. Every form of the panel now sends what was written as one field (`pb_form`: the fields as a query string, in base64), which the server opens before the screen reads it; the CSRF token and the files travel outside it, only a signed-in person can use it, and the sign-in screen is unchanged. The page editor's draft, preview and sections do the same, including the preview it sends as it opens. Without script in the browser the forms go as before. Nothing changes for themes, plugins or the public site. Checked in a real browser behind the OWASP Core Rule Set at paranoia levels 1 and 2. A plugin screen that sends a form with a script of its own can build the body with `window.pbSeal(formData)`.
+
 ## 1.11.1
 
 - **The Path Ranker box can be saved on a host whose firewall refuses `<script`.** On some hosts the web server's firewall (Mod_Security) answers "Not Acceptable" to any form that carries the text `<script`, so pasting the collector's snippet in **Settings → Tracking** ended on the host's error page and nothing was saved. The panel now sends that box with its `<` and `>` written as the quotation marks `‹` and `›`, and PageBrick writes them back before it checks anything: the snippet is checked exactly as before (one `<script>`, its address, its key), and the box still shows the tag as PageBrick wrote it. Without script in the browser the text goes as typed. Nothing else changes.

@@ -93,6 +93,7 @@ Hooks (ganchos) que dispara el core: `init`, `head_html`, `footer_html`, `sitema
 
 - **Escapa todo lo que imprimas** con `e()`. Los valores leídos a través de campos (`pb_plugin_settings_values()`) ya son seguros cuando se imprimen con `<?= ?>`.
 - **Las pantallas del panel** reciben protección CSRF del core; pon `<?= pb_csrf_field() ?>` en cada formulario.
+- **Los formularios del panel llegan a tu pantalla ya abiertos.** El panel envía lo que la persona escribe en un solo campo (`pb_form`, para que el firewall del hosting no tenga qué rechazar) y el core lo abre antes de que tu pantalla corra: `pb_post()` y `$_POST` funcionan como siempre. Si tu pantalla envía un formulario con un script propio (`fetch`), arma el cuerpo con `window.pbSeal(formData)`; un formulario que debe ir tal cual lleva `data-plain`.
 - **Los formularios públicos** no usan sesiones (los visitantes no reciben cookies). Firma una marca de tiempo al mostrar el formulario y verifícala cuando vuelve:
 
   ```php

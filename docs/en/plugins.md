@@ -93,6 +93,7 @@ Hooks fired by the core: `init`, `head_html`, `footer_html`, `sitemap_urls`, `li
 
 - **Escape everything you print** with `e()`. Values read through fields (`pb_plugin_settings_values()`) are already safe when printed with `<?= ?>`.
 - **Panel screens** get CSRF protection from the core; put `<?= pb_csrf_field() ?>` in every form.
+- **Panel forms reach your screen opened.** The panel sends what a person writes as one field (`pb_form`, so a host's firewall has nothing to refuse) and the core opens it before your screen runs: `pb_post()` and `$_POST` work as always. If your screen sends a form with a script of its own (`fetch`), build the body with `window.pbSeal(formData)`; a form that must go as it is carries `data-plain`.
 - **Public forms** don't use sessions (visitors get no cookies). Sign a timestamp when you show the form and check it when it comes back:
 
   ```php

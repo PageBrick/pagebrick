@@ -44,6 +44,9 @@ function pb_handle_request(): void
     register_shutdown_function('pb_auto_update_after_response'); // looks for updates now and then, after the answer
     // The panel speaks its user's language (before signing in, the browser's); the site always speaks the site's.
     $user = $isAdmin ? pb_current_user() : null;
+    if ($isAdmin && $method === 'POST') {
+        pb_unseal_post($user !== null); // what the panel wrote comes in one field, so no firewall refuses it (helpers.php)
+    }
     pb_set_locale(!empty($user['locale']) ? $user['locale'] : ($isAdmin ? pb_browser_locale(pb_site_locale()) : pb_site_locale()));
     if ($isAdmin && isset($_GET['socorro']) && hash_equals(pb_recovery_key(), pb_query('socorro'))) {
         $_SESSION['pb_safe_mode'] = true; // recovery link: this session runs without plugins
