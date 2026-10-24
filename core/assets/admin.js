@@ -332,6 +332,21 @@
         });
     });
 
+    // Every form of a signed-in person's screens goes in one field, "pb_form" (window.pbSeal, core/assets/seal.js: see there why). It comes after the code boxes above, so the
+    // sealed text is the one they wrote. Without script in the browser the form goes as it is; a form that must stay readable carries data-plain.
+    document.addEventListener('submit', (event) => {
+        const form = event.target;
+        const seal = window.pbSeal;
+        if (!seal || !document.querySelector('meta[name=pb-csrf]') || event.defaultPrevented || !(form instanceof HTMLFormElement) || form.hasAttribute('data-plain')) return;
+        if ((event.submitter?.formMethod || form.method).toLowerCase() !== 'post') return;
+        const box = Object.assign(document.createElement('input'), {type: 'hidden', name: 'pb_form', value: seal(new FormData(form, event.submitter)).get('pb_form')});
+        // The browser reads the form right after this handler: its text fields are switched off for that moment (the files and the token stay) and the one field takes their place.
+        const off = [...form.elements].filter((field) => field.name && !field.disabled && field.type !== 'file' && field.name !== '_csrf');
+        off.forEach((field) => { field.disabled = true; });
+        form.append(box);
+        setTimeout(() => { box.remove(); off.forEach((field) => { field.disabled = false; }); }, 0);
+    });
+
     // The person's photo: after choosing a file it is shown in a circle, to be dragged and zoomed into place; what is in the circle is what is sent
     // (a square picture, drawn on a canvas). Without this (old browser, script off) the file goes as it is and the server cuts the centre.
     document.querySelectorAll('form[data-crop]').forEach((form) => {
