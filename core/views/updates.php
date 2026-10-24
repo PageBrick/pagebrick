@@ -80,6 +80,28 @@
     <button type="submit"><?= e(__('Salvar')) ?></button>
 </form>
 
+<form class="card" method="post" action="<?= e(pb_url('/admin/updates')) ?>">
+    <?= pb_csrf_field() ?>
+    <h2><?= e(__('Catálogo adicional')) ?></h2>
+    <p class="help"><?= e(__('Uma segunda lista de plugins e temas, além da loja pública: por exemplo, os plugins fechados que a sua agência instala no site. Cole o endereço que ela entregou (ele leva a chave do site). Os pacotes de lá aparecem em Plugins e em Temas, com os botões Instalar e Atualizar, e continuam conferidos pela assinatura do projeto.')) ?></p>
+    <?php if ($extra['label'] !== ''): ?>
+        <p><?= e(sprintf(__('Em uso: %s'), $extra['label'])) ?> · <?= e(sprintf(__('%d plugins e temas'), $extra['count'])) ?></p>
+        <?php if ($extra['error']): ?><p class="error"><?= e(sprintf(__('Não consegui verificar o catálogo adicional: %s'), $extra['error'])) ?></p><?php endif ?>
+    <?php endif ?>
+    <?php if ($extra['fixed']): ?>
+        <p class="muted"><?= e(__('O endereço está definido no config.php deste site.')) ?></p>
+    <?php else: ?>
+        <label for="extra-url"><?= e($extra['label'] !== '' ? __('Trocar o endereço') : __('Endereço do catálogo adicional')) ?></label>
+        <input id="extra-url" type="url" name="extra_url" placeholder="https://…" autocomplete="off" spellcheck="false">
+        <div class="action-row">
+            <button type="submit" name="action" value="extra-catalog"><?= e(__('Salvar')) ?></button>
+            <?php if ($extra['label'] !== ''): ?>
+                <button type="submit" name="action" value="extra-catalog-remove" class="link danger" data-confirm="<?= e(__('Remover o catálogo adicional? Os plugins que já estão instalados continuam, mas deixam de receber aviso de versão nova.')) ?>"><?= e(__('Remover')) ?></button>
+            <?php endif ?>
+        </div>
+    <?php endif ?>
+</form>
+
 <div class="card">
     <h2><?= e(__('Plugins e temas')) ?></h2>
     <?php if (!$updates['plugin'] && !$updates['theme']): ?>
