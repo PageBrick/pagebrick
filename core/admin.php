@@ -979,13 +979,16 @@ function pb_admin_updates(): void
 {
     pb_catalog(); // refreshes the cache when it's older than 12 hours
     $updates = pb_available_updates();
+    $cache = json_decode(pb_option('catalog_cache', 'null'), true);
     pb_render('updates', [
         'title' => __('Atualizações'),
         'updates' => $updates,
         'blockers' => $updates['core'] ? pb_core_update_blockers($updates['core']) : [],
         'lastResult' => json_decode(pb_option('core_update_result', 'null'), true),
         'catalogError' => pb_catalog_error(),
-        'checkedAt' => json_decode(pb_option('catalog_cache', 'null'), true)['fetched_at'] ?? null,
+        'checkedAt' => $cache['fetched_at'] ?? null,
+        'extra' => ['label' => pb_extra_catalog_label(), 'error' => pb_extra_catalog_error(), 'fixed' => isset($GLOBALS['pb_config']['extra_catalog_url']),
+            'count' => count($cache['extra']['plugins'] ?? []) + count($cache['extra']['themes'] ?? [])],
         'coreBackups' => pb_backups('core_'),
     ]);
 }
@@ -1023,6 +1026,10 @@ function pb_admin_updates_action(): void
             'update-core' => [pb_update_core(), __('Atualização instalada. O resultado da conferência do site aparece logo abaixo.')][1],
             'restore-core' => [pb_restore_core(), __('Versão anterior do PageBrick restaurada.')][1],
             'mode' => [pb_set_auto_update_mode(pb_post('mode')), __('Preferência de atualização salva.')][1],
+            'extra-catalog' => pb_post('extra_url') === ''
+                ? throw new InvalidArgumentException(__('Cole o endereço do catálogo adicional.'))
+                : sprintf(__('Catálogo adicional salvo: %d plugins e temas à disposição, em Plugins e Temas.'), pb_set_extra_catalog_url(pb_post('extra_url'))),
+            'extra-catalog-remove' => [pb_set_extra_catalog_url(''), __('Catálogo adicional removido.')][1],
         };
         pb_flash('ok', $message);
     } catch (InvalidArgumentException $e) {

@@ -370,7 +370,7 @@ final class PackagesTest extends TestCase
         }
         $this->assertSame(30, $timeouts['timeout'], 'a file download keeps its 30 seconds');
         $source = (string) file_get_contents(PB_ROOT . '/core/packages.php');
-        $this->assertStringContainsString('pb_download(pb_catalog_url(), 2 * 1024 * 1024, 5)', $source, 'the catalog is a small file: five seconds are plenty, and the old copy stays if it does not answer');
+        $this->assertStringContainsString('pb_download($url, 2 * 1024 * 1024, 5)', $source, 'the catalog is a small file: five seconds are plenty, and the old copy stays if it does not answer');
     }
 
     public function test_after_files_were_replaced_every_request_makes_its_code_cache_look_at_them(): void

@@ -235,8 +235,45 @@ function pb_catalog_url(): string
 }
 
 /**
- * The catalog: ['format' => 1, 'core' => entry, 'plugins' => [entries], 'themes' => [entries]].
+ * The address of the additional catalog ('' for none): a second list, for plugins and themes that are not in the public one (the closed plugins of an agency). The address
+ * carries the site's key, so it is a secret: config.php may set it ('extra_catalog_url'), or an administrator on the Updates screen. Its entries need the same signature.
+ */
+function pb_extra_catalog_url(): string
+{
+    return trim((string) ($GLOBALS['pb_config']['extra_catalog_url'] ?? pb_option('extra_catalog_url', '')));
+}
+
+/** A catalog file: a small JSON. Five seconds are plenty, and the old copy stays when it does not answer. */
+function pb_fetch_catalog(string $url): array
+{
+    $file = pb_download($url, 2 * 1024 * 1024, 5);
+    $data = json_decode((string) file_get_contents($file), true);
+    unlink($file);
+    if (!is_array($data) || ($data['format'] ?? null) !== 1) {
+        throw new InvalidArgumentException(__('O catálogo veio num formato desconhecido.'));
+    }
+    return $data;
+}
+
+/** The public catalog plus the plugins and themes of the additional one: never its core, and never a slug the public catalog has (it cannot replace an official package). */
+function pb_merge_catalogs(?array $base, ?array $extra): ?array
+{
+    foreach (['plugins', 'themes'] as $type) {
+        $slugs = array_column(array_filter($base[$type] ?? [], 'is_array'), 'slug');
+        foreach (array_slice(array_filter($extra[$type] ?? [], 'is_array'), 0, 50) as $entry) {
+            if ($base !== null && is_string($entry['slug'] ?? null) && !in_array($entry['slug'], $slugs, true)) {
+                $base[$type][] = $entry;
+                $slugs[] = $entry['slug'];
+            }
+        }
+    }
+    return $base;
+}
+
+/**
+ * The catalog: ['format' => 1, 'core' => entry, 'plugins' => [entries], 'themes' => [entries]], the public one with the additional one's plugins and themes.
  * Cached for 12 hours, also after a failure, so a slow catalog never slows the panel down. Null when never fetched.
+ * Each catalog keeps its own last good copy ('base', 'extra'): one that does not answer never takes the other's entries away.
  */
 function pb_catalog(bool $refresh = false): ?array
 {
@@ -244,19 +281,62 @@ function pb_catalog(bool $refresh = false): ?array
     if (!$refresh && is_array($cache) && time() - $cache['fetched_at'] < PB_CATALOG_TTL) {
         return $cache['data'];
     }
+    $base = $cache['base'] ?? $cache['data'] ?? null;
+    $extra = pb_extra_catalog_url() === '' ? null : ($cache['extra'] ?? null);
+    $error = $extraError = null;
     try {
-        $file = pb_download(pb_catalog_url(), 2 * 1024 * 1024, 5);
-        $data = json_decode((string) file_get_contents($file), true);
-        unlink($file);
-        if (!is_array($data) || ($data['format'] ?? null) !== 1) {
-            throw new InvalidArgumentException(__('O catálogo veio num formato desconhecido.'));
-        }
-        $error = null;
+        $base = pb_fetch_catalog(pb_catalog_url());
     } catch (InvalidArgumentException $e) {
-        [$data, $error] = [$cache['data'] ?? null, $e->getMessage()];
+        $error = $e->getMessage();
     }
-    pb_set_option('catalog_cache', json_encode(['fetched_at' => time(), 'data' => $data, 'error' => $error], JSON_UNESCAPED_UNICODE));
+    if (pb_extra_catalog_url() !== '') {
+        try {
+            $extra = pb_fetch_catalog(pb_extra_catalog_url());
+        } catch (InvalidArgumentException $e) {
+            $extraError = $e->getMessage();
+        }
+    }
+    $data = pb_merge_catalogs($base, $extra);
+    pb_set_option('catalog_cache', json_encode(['fetched_at' => time(), 'data' => $data, 'error' => $error, 'base' => $base, 'extra' => $extra, 'extra_error' => $extraError], JSON_UNESCAPED_UNICODE));
     return $data;
+}
+
+/**
+ * Saves the address of the additional catalog (an empty one removes it), after asking it once. Returns how many plugins and themes it offers.
+ * Throws with a message to read when it is not an address or does not answer as a catalog.
+ */
+function pb_set_extra_catalog_url(string $url): int
+{
+    $url = trim($url);
+    $count = 0;
+    if ($url !== '') {
+        // only https (local development, with allow_insecure_urls, may use a file or http)
+        if (strlen($url) > 600 || (empty($GLOBALS['pb_config']['allow_insecure_urls']) && !preg_match('~^https://[^\s/]+(/\S*)?$~i', $url))) {
+            throw new InvalidArgumentException(__('O endereço do catálogo adicional precisa começar com https:// e não ter espaços.'));
+        }
+        try {
+            $offered = pb_fetch_catalog($url);
+        } catch (InvalidArgumentException $e) {
+            throw new InvalidArgumentException(sprintf(__('O catálogo adicional não respondeu como esperado: %s'), $e->getMessage()));
+        }
+        $count = count($offered['plugins'] ?? []) + count($offered['themes'] ?? []);
+    }
+    pb_set_option('extra_catalog_url', $url);
+    pb_catalog(true);
+    return $count;
+}
+
+/** The additional catalog without its secret part (the key travels in the address): "https://host/…", or '' for none. */
+function pb_extra_catalog_label(): string
+{
+    $host = parse_url(pb_extra_catalog_url(), PHP_URL_HOST);
+    return is_string($host) && $host !== '' ? "https://$host/…" : '';
+}
+
+/** Why the additional catalog did not answer the last time, or null. */
+function pb_extra_catalog_error(): ?string
+{
+    return json_decode(pb_option('catalog_cache', 'null'), true)['extra_error'] ?? null;
 }
 
 /** Why the last catalog fetch failed, or null. */

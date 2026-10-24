@@ -42,6 +42,10 @@ A site can use another catalog, or trust another key, in `config.php`:
 'trusted_keys' => ['base64 public key'],
 ```
 
+### An additional catalog
+
+For packages that must not sit in the public catalog (an agency's closed plugins), a site can read a second list next to the public one: **Settings → Updates → Additional catalog** (administrators), or `'extra_catalog_url' => 'https://…'` in `config.php`. Its plugins and themes join the public ones, with the same Install and Update buttons and the same signature check (a package that the project's key did not sign is refused). It can add packages and nothing else: it cannot offer PageBrick itself and it cannot replace a package that the public catalog has. The address is a secret (the one who runs it puts the site's key in it), so after saving the panel shows only its host. Each catalog keeps its own last good copy: one that is down never takes the other's entries off the list. The hourly check renews both. A plugin is still updated by a click: only PageBrick itself installs fixes by itself.
+
 ## Commands
 
 All in [tools/pagebrick.php](../../tools/pagebrick.php), run from the repository (needs PHP with `sodium` and `zip`):
